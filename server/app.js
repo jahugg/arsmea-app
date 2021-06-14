@@ -20,7 +20,14 @@ app.get("/api/getContactById/:id", (request, response) => {
   const { id } = request.params;
   const db = database.getDatabaseInstance();
   const result = db.getContactById(id);
-  result.then((data) => response.json({ user: data })).catch((err) => console.log(err));
+  result.then((data) => response.json(data)).catch((err) => console.log(err));
+});
+
+app.get("/api/searchContact/:firstname", (request, response) => {
+  const { firstname } = request.params;
+  const db = database.getDatabaseInstance();
+  const result = db.searchByName(firstname);
+  result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
 app.post("/insert", (request, response) => {
