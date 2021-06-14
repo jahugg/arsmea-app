@@ -16,18 +16,18 @@ app.post("/api/insertContact", (request, response) => {
   result.then((id) => response.json({ id: id })).catch((err) => console.log(err));
 });
 
-app.get("/searchContactById/:id", (request, response) => {
+app.get("/api/getContactById/:id", (request, response) => {
   const { id } = request.params;
   const db = database.getDatabaseInstance();
   const result = db.getContactById(id);
-  result.then((data) => response.json({ data: data })).catch((err) => console.log(err));
+  result.then((data) => response.json({ user: data })).catch((err) => console.log(err));
 });
 
 app.post("/insert", (request, response) => {
   const { name } = request.body;
   const db = database.getDatabaseInstance();
   const result = db.insertNewName(name);
-  result.then((data) => response.json({ data: data })).catch((err) => console.log(err));
+  result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
 // read

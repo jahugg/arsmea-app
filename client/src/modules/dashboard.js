@@ -46,6 +46,6 @@ function submitNewContact(event) {
     body: new URLSearchParams(new FormData(event.target)),
   })
     .then((response) => response.json())
-    .then((body) => (window.location.href = `/edit-contact?id=${body.id}`))
+    .then((body) => (window.location.href = `/contact?id=${body.id}`))
     .catch((error) => console.log(error));
 }

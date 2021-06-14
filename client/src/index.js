@@ -7,9 +7,9 @@ const pages = {
     module: import("./modules/dashboard.js"),
   },
   editContact: {
-    title: "Edit Contact",
-    slug: "/edit-contact",
-    module: import('./modules/editContact.js'),
+    title: "Contact",
+    slug: "/contact",
+    module: import('./modules/contact.js'),
   },
   info: {
     title: "Info",
@@ -29,8 +29,6 @@ function init() {
 function navigateToCurrentURL() {
   // read slug from url
   let urlSlug = window.location.pathname;
-
-  console.log(urlSlug);
 
   // check slug for validity
   let pageKey = defaultPage;
