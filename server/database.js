@@ -22,6 +22,7 @@ class DbService {
 
   async insertNewContact(data) {
     try {
+      // delete empty entries
       Object.keys(data).forEach((key) => !data[key] && data[key] !== undefined && delete data[key]);
       data.date_added = new Date();
       const dataKeys = Object.keys(data);
@@ -40,7 +41,23 @@ class DbService {
         });
       });
 
-      return data;
+      return data.id;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async getContactById(id) {
+    try {
+      const response = await new Promise((resolve, reject) => {
+        const query = "SELECT * FROM contacts WHERE id = ?;";
+        connection.query(query, [id], (err, results) => {
+          if (err) reject(new Error(err.message));
+          resolve(results);
+        });
+      });
+
+      return response;
     } catch (error) {
       console.log(error);
     }

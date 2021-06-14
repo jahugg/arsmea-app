@@ -4,19 +4,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="main.css" />
-    <title>Crud app</title>
+    <title>Vlowers Application</title>
   </head>
   <body>
-    <main>
+    <main id="main">
+      <h1>Tutorial</h1>
       <label for="name-input">Name</label>
       <input type="text" id="name-input" />
       <button id="add-name-btn">Add name</button>
-
       <div>
         <input type="text" placeholder="lsearch by name" id="search-input" />
         <button id="search-btn">Search</button>
       </div>
-
       <table id="table">
         <thead>
           <th>ID</th>
@@ -27,13 +26,12 @@
         </thead>
         <tbody></tbody>
       </table>
-
       <section hidden id="update-row">
         <label for="update-name-input">Name:</label>
         <input type="text" id="update-name-input" />
         <button id="update-row-btn">Update</button>
       </section>
-      <script src="index.js"></script>
     </main>
+    <script type="module" src="./index.js"></script>
   </body>
 </html>

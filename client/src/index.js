@@ -1,9 +1,87 @@
+const serverURL = "http://localhost:5000";
+const defaultPage = "dashboard";
+const pages = {
+  dashboard: {
+    title: "Dashboard",
+    slug: "/",
+    module: import("./modules/dashboard.js"),
+  },
+  editContact: {
+    title: "Edit Contact",
+    slug: "/edit-contact",
+    module: import('./modules/editContact.js'),
+  },
+  info: {
+    title: "Info",
+    slug: "/info",
+    // module: import('./modules/info.js'),
+  },
+};
+
+function init() {
+  // handle history pop state events
+  window.addEventListener("popstate", (event) => {
+    let stateObj = { pageKey: event.state.pageKey };
+    buildPage(stateObj, false);
+  });
+}
+
+function navigateToCurrentURL() {
+  // read slug from url
+  let urlSlug = window.location.pathname;
+
+  console.log(urlSlug);
+
+  // check slug for validity
+  let pageKey = defaultPage;
+  for (let key in pages) if (pages[key].slug === urlSlug) pageKey = key;
+
+  // create state object
+  let stateObj = { pageKey: pageKey };
+
+  // build page
+  buildPage(stateObj, true);
+}
+
+function buildPage(stateObj, addToHistory) {
+  let pageKey = stateObj.pageKey;
+  let page = pages[pageKey];
+
+  // check if main exists
+  // let main = document.getElementById('main');
+  // if (main) {
+  //   // reset stuff
+  //   main.innerHTML = '';
+  // }
+
+  // set page title
+  let title = 'Vlowers';
+  if (stateObj.pageKey !== defaultPage) title += ' - ' + page.title;
+  document.title = title;
+
+  // push page into browser history
+  // if (addToHistory) window.history.pushState(stateObj, page.title, page.slug);
+
+  // load page module
+  page.module
+    .then((module) => {
+      module.render();
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
-  fetch("http://localhost:5000/getAll")
-    .then((response) => response.json())
-    .then((data) => loadHTMLTable(data["data"]));
+  navigateToCurrentURL();
+  // fetch("http://localhost:5000/getAll")
+  //   .then((response) => response.json())
+  //   .then((data) => loadHTMLTable(data["data"]));
 });
 
+// ------------------------------------
+// ------------------------------------
+// TUTORIAL STUFF
 const addBtn = document.querySelector("#add-name-btn");
 document.querySelector("table tbody").addEventListener("click", function (event) {
   if (event.target.className === "delete-row-btn") {
@@ -20,13 +98,13 @@ const searchBtn = document.querySelector("#search-btn");
 searchBtn.addEventListener("click", () => {
   const searchValue = document.querySelector("#search-input").value;
 
-  fetch(`http://localhost:5000/search/${searchValue}`)
+  fetch(`${serverURL}/search/${searchValue}`)
     .then((response) => response.json())
     .then((data) => loadHTMLTable(data["data"]));
 });
 
 function deleteRowById(id) {
-  fetch(`http://localhost:5000/delete/${id}`, {
+  fetch(`${serverURL}/delete/${id}`, {
     method: "DELETE",
   })
     .then((response) => response.json())
@@ -45,7 +123,7 @@ function handleEditRow(id) {
 
 updateBtn.addEventListener("click", () => {
   const updateNameInput = document.querySelector("#update-name-input");
-  fetch("http://localhost:5000/update", {
+  fetch(`${serverURL}/update`, {
     method: "PATCH",
     headers: {
       "Content-type": "application/json",
@@ -68,7 +146,7 @@ addBtn.addEventListener("click", () => {
   const name = nameInput.value;
   nameInput.value = "";
 
-  fetch("http://localhost:5000/insert", {
+  fetch(`${serverURL}/insert`, {
     headers: {
       "Content-type": "application/json",
     },
@@ -125,3 +203,5 @@ function loadHTMLTable(data) {
     table.innerHTML = tableHtml;
   }
 }
+
+init();

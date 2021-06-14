@@ -1,0 +1,18 @@
+main {
+}
+
+.form {
+  background: lightgray;
+}
+
+#new-contact label {
+  display: none;
+}
+
+#new-contact #new-contact__gender label {
+  display: inline;
+}
+
+input:required {
+  border: solid 1px red;
+}
