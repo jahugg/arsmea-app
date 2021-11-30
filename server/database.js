@@ -136,11 +136,11 @@ class DbService {
     }
   }
 
-  async searchByName(firstname) {
+  async searchContactByName(string) {
     try {
       const response = await new Promise((resolve, reject) => {
-        const query = "SELECT * FROM contact WHERE firstname = ?;";
-        connection.query(query, [firstname], (err, results) => {
+        const query = `SELECT * FROM contacts WHERE firstname LIKE '${string}%' OR lastname LIKE '${string}%';`;
+        connection.query(query, [string], (err, results) => {
           if (err) reject(new Error(err.message));
           resolve(results);
         });

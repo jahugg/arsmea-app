@@ -1,4 +1,4 @@
-const serverURL = "http://localhost:5000";
+const serverURL = "http://localhost:5123";
 const defaultPage = "dashboard";
 const pages = {
   dashboard: {
@@ -6,15 +6,15 @@ const pages = {
     slug: "/",
     module: import("./modules/dashboard.js"),
   },
-  editContact: {
+  contact: {
     title: "Contact",
     slug: "/contact",
     module: import('./modules/contact.js'),
   },
-  info: {
-    title: "Info",
-    slug: "/info",
-    // module: import('./modules/info.js'),
+  contacts: {
+    title: "Contacts",
+    slug: "/contacts",
+    module: import('./modules/contacts.js'),
   },
 };
 
@@ -72,7 +72,7 @@ function buildPage(stateObj, addToHistory) {
 
 document.addEventListener("DOMContentLoaded", function () {
   navigateToCurrentURL();
-  // fetch("http://localhost:5000/getAll")
+  // fetch("http://localhost:5123/getAll")
   //   .then((response) => response.json())
   //   .then((data) => loadHTMLTable(data["data"]));
 });

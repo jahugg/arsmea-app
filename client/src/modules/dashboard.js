@@ -1,8 +1,7 @@
 export function render() {
-  let main = document.getElementById("main");
   main.innerHTML = `
   <h1>Create New Contact</h1>
-    <form action="http://localhost:5000/api/insertContact" method="POST" id="new-contact" class="form">
+    <form action="http://localhost:5123/api/insertContact" method="POST" id="new-contact" class="form">
     <div>
         <label for="new-contact__firstname">First name</label>
         <input type="text" pattern="[^0-9]*" name="firstname" id="new-contact__firstname" placeholder="First name" required/>

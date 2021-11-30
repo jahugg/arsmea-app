@@ -16,3 +16,7 @@ main {
 input:required {
   border: solid 1px red;
 }
+
+p {
+  white-space: pre-wrap;
+}
