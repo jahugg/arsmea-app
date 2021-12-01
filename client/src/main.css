@@ -2,15 +2,11 @@ main {
 }
 
 .form {
-  background: lightgray;
+  background: powderblue;
 }
 
 #new-contact label {
   display: none;
-}
-
-#new-contact #new-contact__gender label {
-  display: inline;
 }
 
 input:required {
@@ -19,4 +15,8 @@ input:required {
 
 p {
   white-space: pre-wrap;
+}
+
+address a {
+  display: block;
 }

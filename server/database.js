@@ -63,10 +63,10 @@ class DbService {
     }
   }
 
-  async getAllData() {
+  async getAllContacts() {
     try {
       const response = await new Promise((resolve, reject) => {
-        const query = "SELECT * FROM contacts;";
+        const query = "SELECT * FROM contacts ORDER BY lastname;";
         connection.query(query, (err, results) => {
           if (err) reject(new Error(err.message));
           resolve(results);
@@ -100,11 +100,11 @@ class DbService {
     }
   }
 
-  async deleteRowById(id) {
+  async deleteContactById(id) {
     try {
       id = parseInt(id, 10);
       const response = await new Promise((resolve, reject) => {
-        const query = "DELETE FROM contact WHERE id = ?;";
+        const query = "DELETE FROM contacts WHERE id = ?;";
 
         connection.query(query, [id], (err, result) => {
           if (err) reject(new Error(err.message));

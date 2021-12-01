@@ -38,10 +38,10 @@ app.post("/insert", (request, response) => {
 });
 
 // read
-app.get("/getAll", (request, response) => {
+app.get("/api/getAll", (request, response) => {
   const db = database.getDatabaseInstance();
-  const result = db.getAllData();
-  result.then((data) => response.json({ data: data })).catch((err) => console.log(err));
+  const result = db.getAllContacts();
+  result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
 // update
@@ -53,10 +53,10 @@ app.patch("/update", (request, response) => {
 });
 
 // delete
-app.delete("/delete/:id", (request, response) => {
+app.delete("/api/deleteContactById/:id", (request, response) => {
   const { id } = request.params;
   const db = database.getDatabaseInstance();
-  const result = db.deleteRowById(id);
+  const result = db.deleteContactById(id);
   result.then((data) => response.json({ success: data })).catch((err) => console.log(err));
 });
 
