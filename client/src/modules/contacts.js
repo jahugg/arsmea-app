@@ -31,12 +31,8 @@ export function render() {
       let row = document.createElement("tr");
       row.dataset.id = contact.id;
       row.innerHTML = `<td>${contact.firstname} ${contact.lastname}</td>
-      <td>${contact.phone}</td>
-      <td>${contact.email}</td>
-      <td>
-        <button class="delete-row-btn" data-action="delete"">Delete</button>
-        <button class="edit-row-btn" data-action="edit"">Edit</button>
-      </td>`;
+      <td><a href="tel:${contact.phone}">${contact.phone ? contact.phone : ""}</a></td>
+      <td><a href="mailto:${contact.email}">${contact.email ? contact.email : ""}</a></td>`;
       tbody.appendChild(row);
     }
 

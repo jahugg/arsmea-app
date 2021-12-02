@@ -79,27 +79,6 @@ class DbService {
     }
   }
 
-  async insertNewName(firstname) {
-    try {
-      const dateAdded = new Date();
-      const insertId = await new Promise((resolve, reject) => {
-        const query = "INSERT INTO contacts (firstname, date_added) VALUES (?, ?);";
-        connection.query(query, [firstname, dateAdded], (err, result) => {
-          if (err) reject(new Error(err.message));
-          resolve(result.insertId);
-        });
-      });
-
-      return {
-        id: insertId,
-        firstname: firstname,
-        dateAdded: dateAdded,
-      };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   async deleteContactById(id) {
     try {
       id = parseInt(id, 10);
@@ -118,18 +97,19 @@ class DbService {
     }
   }
 
-  async updateNameById(id, firstname) {
+  async updateContactById(id, data) {
     try {
       id = parseInt(id, 10);
+      const { firstname, lastname, company, address, email, phone, notes } = data;
       const response = await new Promise((resolve, reject) => {
-        const query = "UPDATE contact SET firstname = ? WHERE id = ?;";
+        const query = "UPDATE contacts SET firstname = ?, lastname = ?, company = ?, address = ?, email = ?, phone = ?, notes = ? WHERE id = ?;";
 
-        connection.query(query, [firstname, id], (err, result) => {
+        connection.query(query, [firstname, lastname, company, address, email, phone, notes, id], (err, result) => {
           if (err) reject(new Error(err.message));
           resolve(result.affectedRows);
         });
       });
-      return response === 1 ? true : false;
+      return response === 1 ? { success: true, id: id } : { success: false, id: id };
     } catch (error) {
       console.log(error);
       return false;

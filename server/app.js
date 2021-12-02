@@ -30,13 +30,6 @@ app.get("/api/searchContactByName/:string", (request, response) => {
   result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
-app.post("/insert", (request, response) => {
-  const { name } = request.body;
-  const db = database.getDatabaseInstance();
-  const result = db.insertNewName(name);
-  result.then((data) => response.json(data)).catch((err) => console.log(err));
-});
-
 // read
 app.get("/api/getAll", (request, response) => {
   const db = database.getDatabaseInstance();
@@ -45,11 +38,14 @@ app.get("/api/getAll", (request, response) => {
 });
 
 // update
-app.patch("/update", (request, response) => {
-  const { id, firstname } = request.body;
+app.post("/api/updateContact", (request, response) => {
+  const data = request.body;
+  const id = request.body.id;
+  delete data.id;
+  console.log(data);
   const db = database.getDatabaseInstance();
-  const result = db.updateNameById(id, firstname);
-  result.then((data) => response.json({ success: data })).catch((err) => console.log(err));
+  const result = db.updateContactById(id, data);
+  result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
 // delete
