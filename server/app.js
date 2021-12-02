@@ -23,10 +23,10 @@ app.get("/api/getContactById/:id", (request, response) => {
   result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
-app.get("/api/searchContactByName/:string", (request, response) => {
+app.get("/api/searchContacts/:string", (request, response) => {
   const { string } = request.params;
   const db = database.getDatabaseInstance();
-  const result = db.searchContactByName(string);
+  const result = db.searchContacts(string);
   result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 

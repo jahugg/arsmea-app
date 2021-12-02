@@ -52,9 +52,7 @@ function displayContactData(data) {
   </div>
   <div>
     <label for="edit-contact__address">Address</label>
-    <textarea name="address" form="edit-contact" name="address" id="edit-contact__address" placeholder="Address">
-    ${address ? address : ""}
-    </textarea>
+    <textarea name="address" form="edit-contact" name="address" id="edit-contact__address" placeholder="Address">${address ? address : ""}</textarea>
   </div>
   <div>
     <label for="edit-contact__email">Email</label>
@@ -66,9 +64,7 @@ function displayContactData(data) {
   </div>
   <div>
     <label for="edit-contact__notes">Notes</label>
-    <textarea form="edit-contact" name="notes" id="edit-contact__notes" placeholder="Notes">
-      ${notes ? notes : ""}
-    </textarea>
+    <textarea form="edit-contact" name="notes" id="edit-contact__notes" placeholder="Notes">${notes ? notes : ""}</textarea>
   </div>
   <input type="submit" value="Save Changes"/>`;
   main.appendChild(form);
