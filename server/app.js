@@ -8,7 +8,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// create
 app.post("/api/insertContact", (request, response) => {
   const data = request.body;
   const db = database.getDatabaseInstance();
@@ -23,21 +22,12 @@ app.get("/api/getContactById/:id", (request, response) => {
   result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
-app.get("/api/searchContacts/:string", (request, response) => {
-  const { string } = request.params;
-  const db = database.getDatabaseInstance();
-  const result = db.searchContacts(string);
-  result.then((data) => response.json(data)).catch((err) => console.log(err));
-});
-
-// read
 app.get("/api/getAll", (request, response) => {
   const db = database.getDatabaseInstance();
   const result = db.getAllContacts();
   result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
-// update
 app.post("/api/updateContact", (request, response) => {
   const data = request.body;
   const id = request.body.id;
@@ -48,7 +38,6 @@ app.post("/api/updateContact", (request, response) => {
   result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
-// delete
 app.delete("/api/deleteContactById/:id", (request, response) => {
   const { id } = request.params;
   const db = database.getDatabaseInstance();
@@ -56,13 +45,11 @@ app.delete("/api/deleteContactById/:id", (request, response) => {
   result.then((data) => response.json({ success: data })).catch((err) => console.log(err));
 });
 
-// search
-app.get("/search/:firstname", (request, response) => {
-  const { firstname } = request.params;
+app.get("/api/searchContacts/:string", (request, response) => {
+  const { string } = request.params;
   const db = database.getDatabaseInstance();
-  const result = db.searchByName(firstname);
-  result.then((data) => response.json({ data: data })).catch((err) => console.log(err));
+  const result = db.searchContacts(string);
+  result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
-// start server
 app.listen(process.env.PORT);
