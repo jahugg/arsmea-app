@@ -1,0 +1,56 @@
+main {
+}
+
+.form {
+  background: powderblue;
+}
+
+#new-contact label {
+  display: none;
+}
+
+input:required {
+  border: solid 1px red;
+}
+
+p {
+  white-space: pre-wrap;
+}
+
+address a {
+  display: block;
+}
+
+#contacts-wrapper {
+  display: flex;
+}
+
+#contacts-wrapper > div {
+  flex: 1;
+}
+
+#contact-list {
+  li[data-selected] {
+    background: powderblue;
+  }
+}
+
+#contact-details {
+  form {
+    display: none;
+  }
+
+  address {
+    display: block;
+  }
+
+  &[data-editing] {
+    form {
+      display: block;
+    }
+
+    address, #edit-btn {
+      display: none;
+    }
+  }
+}

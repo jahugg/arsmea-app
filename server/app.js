@@ -32,7 +32,6 @@ app.post("/api/updateContact", (request, response) => {
   const data = request.body;
   const id = request.body.id;
   delete data.id;
-  console.log(data);
   const db = database.getDatabaseInstance();
   const result = db.updateContactById(id, data);
   result.then((data) => response.json(data)).catch((err) => console.log(err));
