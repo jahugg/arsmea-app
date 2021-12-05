@@ -19,10 +19,10 @@ app.get("/api/getContactById/:id", (request, response) => {
   const { id } = request.params;
   const db = database.getDatabaseInstance();
   const result = db.getContactById(id);
-  result.then((data) => response.json(data)).catch((err) => console.log(err));
+  result.then((data) => response.json(data[0])).catch((err) => console.log(err));
 });
 
-app.get("/api/getAll", (request, response) => {
+app.get("/api/getAllContacts", (request, response) => {
   const db = database.getDatabaseInstance();
   const result = db.getAllContacts();
   result.then((data) => response.json(data)).catch((err) => console.log(err));

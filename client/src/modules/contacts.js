@@ -1,6 +1,5 @@
-export function render() {
+export async function render() {
   const main = document.getElementsByTagName("MAIN")[0];
-  const params = new URLSearchParams(window.location.search);
   main.innerHTML = `
     <h1>Contacts</h1>
     <div id="contacts-wrapper">
@@ -22,53 +21,18 @@ export function render() {
   const addButton = document.getElementById("addButton");
   addButton.addEventListener("click", displayNewUserForm);
 
-  displayAllContacts();
+  let contactList = await buildContactList();
+  const contactListWrapper = document.getElementById("contact-list");
+  contactListWrapper.appendChild(contactList);
 
-  // fetchContactDetails(contacts[0].id);
+  let contactDetails = await buildContactDetails();
+  const contactDetailsWrapper = document.getElementById("contact-details");
+  contactDetailsWrapper.appendChild(contactDetails);
 }
 
-function displayNewUserForm(event) {
-  const contactDetails = document.getElementById("contact-details");
-  const data = { data_added: new Date() };
-
-  fetch(`${process.env.SERVER}/api/insertContact`, {
-    method: "POST",
-    body: data,
-  })
-    .then((response) => response.json())
-    .then((body) => {
-      fetchContactDetails(body.id);
-      displayAllContacts();
-      contactDetails.dataset.editing = "true";
-    })
-    .catch((error) => console.log(error));
-}
-
-function searchContact(event) {
-  const form = document.getElementById("search-contact");
-  const searchString = document.getElementById("search-contact__input").value;
-
-  if (searchString)
-    fetch(`${form.action}/${searchString}`)
-      .then((response) => response.json())
-      .then((contacts) => updateContactList(contacts))
-      .catch((error) => console.log(error));
-  else displayAllContacts();
-}
-
-function displayAllContacts() {
-  fetch(`${process.env.SERVER}/api/getAll`)
-    .then((response) => response.json())
-    .then((contacts) => updateContactList(contacts))
-    .catch((error) => console.log(error));
-}
-
-function updateContactList(contacts) {
-  const contactList = document.getElementById("contact-list");
-  contactList.innerHTML = "";
+async function buildContactList(contacts = false) {
+  if (!contacts) contacts = await fetchAllContacts();
   const list = document.createElement("ul");
-  contactList.appendChild(list);
-
   for (let data of contacts) {
     let el = document.createElement("li");
     el.dataset.contactId = data.id;
@@ -77,31 +41,23 @@ function updateContactList(contacts) {
     list.appendChild(el);
     lastId = data.id;
   }
+
+  return list;
 }
 
-function onContactSelected(event) {
-  const target = event.target;
-  const id = target.dataset.contactId;
-  const siblings = target.parentNode.childNodes;
-  for (let el of siblings) el.removeAttribute("data-selected");
-  target.dataset.selected = "";
+async function buildContactDetails(requestId = false) {
+  let data;
+  if (requestId) data = await fetchContactDetails(requestId);
+  else {
+    let contacts = await fetchAllContacts();
+    data = await fetchContactDetails(contacts[0].id);
+  }
 
-  fetchContactDetails(id);
-}
-
-function fetchContactDetails(contactId) {
-  fetch(`${process.env.SERVER}/api/getContactById/${contactId}`)
-    .then((response) => response.json())
-    .then((data) => displayContactDetails(data[0]))
-    .catch((error) => console.log(error));
-}
-
-function displayContactDetails(data) {
   const { id, firstname, lastname, company, address, email, phone, notes } = data;
-  const contactDetails = document.getElementById("contact-details");
-  contactDetails.innerHTML = "";
-  let addressNode = document.createElement("address");
 
+  const wrapper = document.createElement("div");
+
+  let addressNode = document.createElement("address");
   addressNode.dataset.contactId = id;
   addressNode.innerHTML = `<h1>${firstname} ${lastname}</h1>`;
   if (company) addressNode.innerHTML += `<p>${company}</p>`;
@@ -110,7 +66,7 @@ function displayContactDetails(data) {
   if (email) addressNode.innerHTML += `<a href="mailto:${email}">${email}</a>`;
   if (notes) addressNode.innerHTML += `<p>${notes}</p>`;
 
-  contactDetails.appendChild(addressNode);
+  wrapper.appendChild(addressNode);
 
   const form = document.createElement("form");
   form.action = `${process.env.SERVER}/api/updateContact`;
@@ -154,14 +110,14 @@ function displayContactDetails(data) {
     </div>
     <input type="submit" value="Done"/>`;
 
-  contactDetails.appendChild(form);
+    wrapper.appendChild(form);
 
   const deleteBtn = document.createElement("button");
   deleteBtn.type = "button";
   deleteBtn.innerHTML = "Delete";
   deleteBtn.dataset.contactId = id;
   deleteBtn.addEventListener("click", onDeleteContact);
-  contactDetails.appendChild(deleteBtn);
+  wrapper.appendChild(deleteBtn);
 
   const editBtn = document.createElement("button");
   editBtn.type = "button";
@@ -169,7 +125,58 @@ function displayContactDetails(data) {
   editBtn.innerHTML = "Edit";
   editBtn.dataset.contactId = id;
   editBtn.addEventListener("click", toggleEditMode);
-  contactDetails.appendChild(editBtn);
+  wrapper.appendChild(editBtn);
+
+  return wrapper;
+}
+
+async function fetchAllContacts() {
+  const response = await fetch(`${process.env.SERVER}/api/getAllContacts`);
+  return await response.json();
+}
+
+async function fetchContactDetails(id) {
+  const response = await fetch(`${process.env.SERVER}/api/getContactById/${id}`);
+  return await response.json();
+}
+
+function displayNewUserForm(event) {
+  const contactDetails = document.getElementById("contact-details");
+  const data = { data_added: new Date() };
+
+  fetch(`${process.env.SERVER}/api/insertContact`, {
+    method: "POST",
+    body: data,
+  })
+    .then((response) => response.json())
+    .then((body) => {
+      fetchContactDetails(body.id);
+      displayAllContacts();
+      contactDetails.dataset.editing = "true";
+    })
+    .catch((error) => console.log(error));
+}
+
+function searchContact(event) {
+  const form = document.getElementById("search-contact");
+  const searchString = document.getElementById("search-contact__input").value;
+
+  if (searchString)
+    fetch(`${form.action}/${searchString}`)
+      .then((response) => response.json())
+      .then((contacts) => buildContactList(contacts))
+      .catch((error) => console.log(error));
+  else displayAllContacts();
+}
+
+function onContactSelected(event) {
+  const target = event.target;
+  const id = target.dataset.contactId;
+  const siblings = target.parentNode.childNodes;
+  for (let el of siblings) el.removeAttribute("data-selected");
+  target.dataset.selected = "";
+
+  buildContactDetails(id);
 }
 
 function submitContactUpdate(event) {
@@ -190,6 +197,7 @@ function submitContactUpdate(event) {
 function onDeleteContact(event) {
   const dataset = event.target.dataset;
   const contactId = event.target.dataset.contactId;
+  console.log;
   deleteContactById(contactId);
 }
 
@@ -204,6 +212,6 @@ function deleteContactById(id) {
     method: "DELETE",
   })
     .then((response) => response.json())
-    .then((data) => displayAllContacts())
+    .then((data) => buildContactList())
     .catch((error) => console.log(error));
 }

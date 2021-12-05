@@ -66,7 +66,7 @@ class DbService {
   async getAllContacts() {
     try {
       const response = await new Promise((resolve, reject) => {
-        const query = "SELECT * FROM contacts ORDER BY lastname;";
+        const query = "SELECT id, firstname, lastname FROM contacts ORDER BY lastname;";
         connection.query(query, (err, results) => {
           if (err) reject(new Error(err.message));
           resolve(results);
