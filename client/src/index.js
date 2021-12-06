@@ -54,6 +54,15 @@ function buildPage(stateObj, addToHistory) {
     });
 }
 
+
+// maybe try to render via function...
+async function insertModule(module) {
+  const moduleHTML = await module.render();
+  console.log(moduleHTML);
+  const main = document.getElementsByTagName("MAIN")[0];
+  main.appendChild(moduleHTML);
+}
+
 init();
 
 // ------------------------------------
