@@ -54,7 +54,6 @@ function buildPage(stateObj, addToHistory) {
     });
 }
 
-
 // maybe try to render via function...
 async function insertModule(module) {
   const moduleHTML = await module.render();
@@ -64,27 +63,3 @@ async function insertModule(module) {
 }
 
 init();
-
-// ------------------------------------
-// ------------------------------------
-// TUTORIAL STUFF
-
-// updateBtn.addEventListener("click", () => {
-//   const updateNameInput = document.querySelector("#update-name-input");
-//   fetch(`${process.env.SERVER}/update`, {
-//     method: "PATCH",
-//     headers: {
-//       "Content-type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       id: updateNameInput.dataset.id,
-//       firstname: updateNameInput.value,
-//     }),
-//   })
-//     .then((response) => response.json())
-//     .then((data) => {
-//       if (data.success) {
-//         location.reload();
-//       }
-//     });
-// });
