@@ -8,8 +8,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.post("/api/insertContact", (request, response) => {
+app.post("/api/contact", (request, response) => {
   const data = request.body;
+  console.log(data);
   const db = database.getDatabaseInstance();
   const result = db.insertNewContact(data);
   result.then((id) => response.json({ id: id })).catch((err) => console.log(err));
@@ -37,7 +38,7 @@ app.post("/api/updateContact", (request, response) => {
   result.then((data) => response.json(data)).catch((err) => console.log(err));
 });
 
-app.delete("/api/deleteContactById/:id", (request, response) => {
+app.delete("/api/contact/:id", (request, response) => {
   const { id } = request.params;
   const db = database.getDatabaseInstance();
   const result = db.deleteContactById(id);

@@ -8,36 +8,63 @@ export async function render() {
         <form action="${process.env.SERVER}/api/searchContacts" method="POST" id="search-contact" class="form">
             <input list="search-contact__list" type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Search"/>
         </form>
-        <div id="contact-list">
-        </div>
+        <div id="contact-list"></div>
       </div>
-      <div id="contact-details">
-      </div>
+      <div id="contact-details"></div>
     </div>`;
 
   const searchInput = document.getElementById("search-contact__input");
-  searchInput.addEventListener("input", searchContact);
+  searchInput.addEventListener("input", (event) => insertContactList(event.target.value));
 
   const addButton = document.getElementById("addButton");
-  addButton.addEventListener("click", displayNewUserForm);
+  addButton.addEventListener("click", insertNewContact);
 
-  let contactList = await buildContactList();
-  const contactListWrapper = document.getElementById("contact-list");
-  contactListWrapper.appendChild(contactList);
-
-  let contactDetails = await buildContactDetails();
-  const contactDetailsWrapper = document.getElementById("contact-details");
-  contactDetailsWrapper.appendChild(contactDetails);
+  insertContactList();
 }
 
-async function buildContactList(contacts = false) {
-  if (!contacts) contacts = await fetchAllContacts();
+async function insertContactList(searchString) {
+  const contactList = await getContactListEl(searchString);
+  const contactListWrapper = document.getElementById("contact-list");
+  let firstIteration = false;
+  if (!contactListWrapper.childNodes.length) firstIteration = true;
+
+  contactListWrapper.innerHTML = "";
+  contactListWrapper.appendChild(contactList);
+
+  if (firstIteration || searchString && contactList.childNodes.length) selectFirstContact();
+}
+
+async function insertContactDetails(contactId, mode) {
+  let el;
+  if (mode === "view") el = await getContactAddressEl(contactId);
+  else if (mode === "edit") el = await getContactFormEl(contactId);
+
+  const wrapper = document.getElementById("contact-details");
+  wrapper.innerHTML = "";
+  wrapper.appendChild(el);
+
+  if (mode === "edit") document.getElementById("edit-contact__firstname").select();
+
+  const contactItems = document.querySelectorAll("#contact-list ul li");
+  for (let el of contactItems)
+    if (el.dataset.contactId != contactId) el.removeAttribute("data-selected");
+    else el.dataset.selected = "";
+}
+
+async function insertNewContact() {
+  let response = await requestNewContact();
+  insertContactList();
+  insertContactDetails(response.id, "edit");
+}
+
+async function getContactListEl(searchString) {
+  let contacts = await requestContacts(searchString);
   const list = document.createElement("ul");
   for (let data of contacts) {
     let el = document.createElement("li");
     el.dataset.contactId = data.id;
     el.innerHTML = `${data.firstname} ${data.lastname}`;
-    el.addEventListener("click", onContactSelected);
+    el.addEventListener("click", () => insertContactDetails(data.id, "view"));
     list.appendChild(el);
     lastId = data.id;
   }
@@ -45,18 +72,11 @@ async function buildContactList(contacts = false) {
   return list;
 }
 
-async function buildContactDetails(requestId = false) {
-  let data;
-  if (requestId) data = await fetchContactDetails(requestId);
-  else {
-    let contacts = await fetchAllContacts();
-    data = await fetchContactDetails(contacts[0].id);
-  }
-
-  const { id, firstname, lastname, company, address, email, phone, notes } = data;
+async function getContactAddressEl(id) {
+  let data = await requestContactDetails(id);
+  const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
-
   let addressNode = document.createElement("address");
   addressNode.dataset.contactId = id;
   addressNode.innerHTML = `<h1>${firstname} ${lastname}</h1>`;
@@ -66,25 +86,40 @@ async function buildContactDetails(requestId = false) {
   if (email) addressNode.innerHTML += `<a href="mailto:${email}">${email}</a>`;
   if (notes) addressNode.innerHTML += `<p>${notes}</p>`;
 
-  wrapper.appendChild(addressNode);
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.id = "edit-btn";
+  editBtn.innerHTML = "Edit";
+  editBtn.dataset.contactId = id;
+  editBtn.addEventListener("click", () => insertContactDetails(id, "edit"));
+  wrapper.appendChild(editBtn);
 
+  wrapper.appendChild(addressNode);
+  wrapper.appendChild(editBtn);
+
+  return wrapper;
+}
+
+async function getContactFormEl(id) {
+  let data = await requestContactDetails(id);
+  const { firstname, lastname, company, address, email, phone, notes } = data;
+
+  const wrapper = document.createElement("div");
   const form = document.createElement("form");
   form.action = `${process.env.SERVER}/api/updateContact`;
   form.method = "POST";
   form.id = "edit-contact";
-  form.addEventListener("submit", submitContactUpdate);
+  form.addEventListener("submit", submitUpdateContactForm);
   form.innerHTML = `<input type="hidden" id="edit-contact__id" name="id" value="${id}">
     <div>
       <label for="edit-contact__firstname">First name</label>
       <input type="text" pattern="[^0-9]*" name="firstname" id="edit-contact__firstname" placeholder="First name" value="${
         firstname ? firstname : ""
-      }" required/>
+      }" />
     </div>
     <div>
       <label for="edit-contact__lastname">Last name</label>
-      <input type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${
-        lastname ? lastname : ""
-      }" required/>
+      <input type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${lastname ? lastname : ""}" />
     </div>
     <div>
       <label for="edit-contact__company">Company name</label>
@@ -110,108 +145,76 @@ async function buildContactDetails(requestId = false) {
     </div>
     <input type="submit" value="Done"/>`;
 
-    wrapper.appendChild(form);
-
   const deleteBtn = document.createElement("button");
   deleteBtn.type = "button";
-  deleteBtn.innerHTML = "Delete";
+  deleteBtn.innerHTML = "Delete Contact";
+  deleteBtn.id = "delete-btn";
   deleteBtn.dataset.contactId = id;
-  deleteBtn.addEventListener("click", onDeleteContact);
-  wrapper.appendChild(deleteBtn);
+  deleteBtn.addEventListener("click", () => requestDeleteContact(id));
 
-  const editBtn = document.createElement("button");
-  editBtn.type = "button";
-  editBtn.id = "edit-btn";
-  editBtn.innerHTML = "Edit";
-  editBtn.dataset.contactId = id;
-  editBtn.addEventListener("click", toggleEditMode);
-  wrapper.appendChild(editBtn);
+  wrapper.appendChild(form);
+  wrapper.appendChild(deleteBtn);
 
   return wrapper;
 }
 
-async function fetchAllContacts() {
-  const response = await fetch(`${process.env.SERVER}/api/getAllContacts`);
+async function requestContacts(searchString) {
+  let response;
+  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
+  else response = await fetch(`${process.env.SERVER}/api/getAllContacts`);
   return await response.json();
 }
 
-async function fetchContactDetails(id) {
+async function requestContactDetails(id) {
   const response = await fetch(`${process.env.SERVER}/api/getContactById/${id}`);
   return await response.json();
 }
 
-function displayNewUserForm(event) {
-  const contactDetails = document.getElementById("contact-details");
-  const data = { data_added: new Date() };
+async function requestDeleteContact(id) {
+  try {
+    const response = await fetch(`${process.env.SERVER}/api/contact/${id}`, {
+      method: "DELETE",
+    });
+    insertContactList();
+    selectFirstContact();
+  } catch (err) {
+    console.log(err);
+  }
+}
 
-  fetch(`${process.env.SERVER}/api/insertContact`, {
+async function requestUpdateContact(data) {
+  const response = await fetch(`${process.env.SERVER}/api/updateContact`, {
     method: "POST",
     body: data,
-  })
-    .then((response) => response.json())
-    .then((body) => {
-      fetchContactDetails(body.id);
-      displayAllContacts();
-      contactDetails.dataset.editing = "true";
-    })
-    .catch((error) => console.log(error));
+  });
+  return await response.json();
 }
 
-function searchContact(event) {
-  const form = document.getElementById("search-contact");
-  const searchString = document.getElementById("search-contact__input").value;
-
-  if (searchString)
-    fetch(`${form.action}/${searchString}`)
-      .then((response) => response.json())
-      .then((contacts) => buildContactList(contacts))
-      .catch((error) => console.log(error));
-  else displayAllContacts();
+async function requestNewContact() {
+  let defaultData = { firstname: "New", lastname: "Contact" };
+  let searchParams = new URLSearchParams(defaultData);
+  const response = await fetch(`${process.env.SERVER}/api/contact`, {
+    method: "POST",
+    body: searchParams,
+  });
+  return await response.json();
 }
 
-function onContactSelected(event) {
-  const target = event.target;
-  const id = target.dataset.contactId;
-  const siblings = target.parentNode.childNodes;
-  for (let el of siblings) el.removeAttribute("data-selected");
-  target.dataset.selected = "";
-
-  buildContactDetails(id);
-}
-
-function submitContactUpdate(event) {
+async function submitUpdateContactForm(event) {
   event.preventDefault();
-  fetch(event.target.action, {
-    method: event.target.method,
-    body: new URLSearchParams(new FormData(event.target)),
-  })
-    .then((response) => response.json())
-    .then((body) => {
-      toggleEditMode();
-      fetchContactDetails(body.id);
-      // displayAllContacts();
-    })
-    .catch((error) => console.log(error));
+  const data = new URLSearchParams(new FormData(event.target));
+  // might be passed as FORM DATA directly...
+  // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#body
+  let response = await requestUpdateContact(data);
+  insertContactList();
+  insertContactDetails(response.id, "view");
 }
 
-function onDeleteContact(event) {
-  const dataset = event.target.dataset;
-  const contactId = event.target.dataset.contactId;
-  console.log;
-  deleteContactById(contactId);
-}
-
-function toggleEditMode() {
-  let contactDetails = document.getElementById("contact-details");
-  if (contactDetails.dataset.editing) delete contactDetails.dataset.editing;
-  else contactDetails.dataset.editing = "true";
-}
-
-function deleteContactById(id) {
-  fetch(`${process.env.SERVER}/api/deleteContactById/${id}`, {
-    method: "DELETE",
-  })
-    .then((response) => response.json())
-    .then((data) => buildContactList())
-    .catch((error) => console.log(error));
+function selectFirstContact() {
+  const contactList = document.querySelector("#contact-list ul");
+  const firstContact = contactList.firstChild;
+  if (firstContact) {
+    const firstContactId = Number(firstContact.dataset.contactId);
+    insertContactDetails(firstContactId, "view");
+  }
 }
