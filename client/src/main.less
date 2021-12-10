@@ -1,17 +1,12 @@
-address a {
-  display: block;
-}
-
-#contacts-wrapper {
+#contact {
   display: flex;
-}
 
-#contacts-wrapper > div {
-  flex: 1;
-}
+  #contact-list-section,
+  #contact-detail-section {
+    flex: 1;
+  }
 
-#contact-list {
-  li[data-selected] {
+  #contact-list li[data-selected] {
     background: powderblue;
   }
 }

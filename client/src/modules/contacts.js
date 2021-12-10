@@ -1,8 +1,9 @@
 export async function render() {
   const module = document.createElement("div");
   module.classList.add("module");
+  module.id = "contact";
   module.innerHTML = `
-    <div id="contact-left-column">
+    <div id="contact-list-section">
       <button id="add-contact-btn" type="button">Add Contact</button>
       <form action="${process.env.SERVER}/api/searchContacts" method="POST" id="search-contact">
         <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Search"/>
@@ -10,7 +11,7 @@ export async function render() {
       <div id="contact-list-wrapper">
       </div>
     </div>
-    <div id="contact-right-column">
+    <div id="contact-detail-section">
     </div>`;
 
   const addButton = module.querySelector("#add-contact-btn");
@@ -26,7 +27,7 @@ export async function render() {
   const firstContact = contactList.firstChild;
   firstContact.dataset.selected = "";
 
-  const contactDetailsWrapper = module.querySelector("#contact-right-column");
+  const contactDetailsWrapper = module.querySelector("#contact-detail-section");
   const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
   contactDetailsWrapper.appendChild(contactDetails);
 
@@ -34,7 +35,7 @@ export async function render() {
 }
 
 async function onSelectContact(event) {
-  const contactDetailsWrapper = document.getElementById("contact-right-column");
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
   const id = event.target.dataset.contactId;
   const address = await getContactAddressEl(id);
   contactDetailsWrapper.replaceChildren(address);
@@ -47,7 +48,7 @@ async function onSelectContact(event) {
 
 async function onEditContact(event) {
   const id = event.target.dataset.contactId;
-  const contactDetailsWrapper = document.getElementById("contact-right-column");
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
   const form = await getContactFormEl(id);
   contactDetailsWrapper.replaceChildren(form);
   form.querySelector("#edit-contact__firstname").select();
@@ -64,7 +65,7 @@ async function onAddContact(event) {
   const item = document.querySelector(`#contact-list li[data-contact-id="${id}"`);
   item.dataset.selected = "";
 
-  const contactDetailsWrapper = document.getElementById("contact-right-column");
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
   const form = await getContactFormEl(id);
   contactDetailsWrapper.replaceChildren(form);
   form.querySelector("#edit-contact__firstname").select();
@@ -83,7 +84,7 @@ async function onDeleteContact(event) {
   const firstContact = contactList.firstChild;
   firstContact.dataset.selected = "";
 
-  const contactDetailsWrapper = document.getElementById("contact-right-column");
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
   const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
   contactDetailsWrapper.replaceChildren(contactDetails);
 }
@@ -99,7 +100,7 @@ async function onSearchContact(event) {
   if (firstChild) {
     firstChild.dataset.selected = "";
 
-    const contactDetailsWrapper = document.getElementById("contact-right-column");
+    const contactDetailsWrapper = document.getElementById("contact-detail-section");
     const address = await getContactAddressEl(firstChild.dataset.contactId);
     contactDetailsWrapper.replaceChildren(address);
   }
@@ -120,7 +121,7 @@ async function onUpdateContact(event) {
   const item = document.querySelector(`#contact-list li[data-contact-id="${contactId}"`);
   item.dataset.selected = "";
 
-  const contactDetailsWrapper = document.getElementById("contact-right-column");
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
   const address = await getContactAddressEl(contactId);
   contactDetailsWrapper.replaceChildren(address);
 }
@@ -145,6 +146,7 @@ async function getContactAddressEl(id) {
   const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
+  wrapper.id = "contact-details";
   let addressNode = document.createElement("address");
   addressNode.dataset.contactId = id;
   addressNode.innerHTML = `<h1>${firstname} ${lastname}</h1>`;
@@ -173,6 +175,7 @@ async function getContactFormEl(id) {
   const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
+  wrapper.id = "contact-details";
   const form = document.createElement("form");
   form.action = `${process.env.SERVER}/api/updateContact`;
   form.method = "POST";
