@@ -1,5 +1,6 @@
 export async function render() {
   const main = document.getElementsByTagName("MAIN")[0];
+  // const main = document.createElement("div");
   main.innerHTML = `
     <h1>Contacts</h1>
     <div id="contacts-wrapper">
@@ -14,9 +15,11 @@ export async function render() {
     </div>`;
 
   const searchInput = document.getElementById("search-contact__input");
+  // const searchInput = main.querySelector("#search-contact__input");
   searchInput.addEventListener("input", (event) => insertContactList(event.target.value));
 
   const addButton = document.getElementById("addButton");
+  // const addButton = document.querySelector("#addButton");
   addButton.addEventListener("click", insertNewContact);
 
   insertContactList();
@@ -182,14 +185,6 @@ async function requestDeleteContact(id) {
   }
 }
 
-async function requestUpdateContact(data) {
-  const response = await fetch(`${process.env.SERVER}/api/updateContact`, {
-    method: "POST",
-    body: data,
-  });
-  return await response.json();
-}
-
 async function requestNewContact() {
   let defaultData = { firstname: "New", lastname: "Contact" };
   let searchParams = new URLSearchParams(defaultData);
@@ -200,12 +195,21 @@ async function requestNewContact() {
   return await response.json();
 }
 
+async function requestUpdateContact(id, data) {
+  const response = await fetch(`${process.env.SERVER}/api/updateContact/${id}`, {
+    method: "POST",
+    body: data,
+  });
+  return await response.json();
+}
+
 async function submitUpdateContactForm(event) {
   event.preventDefault();
   const data = new URLSearchParams(new FormData(event.target));
+  const contactId = data.get("id");
   // might be passed as FORM DATA directly...
   // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#body
-  let response = await requestUpdateContact(data);
+  let response = await requestUpdateContact(contactId, data);
   insertContactList();
   insertContactDetails(response.id, "view");
 }
