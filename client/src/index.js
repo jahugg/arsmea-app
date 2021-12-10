@@ -36,7 +36,7 @@ function navigateToCurrentURL() {
   buildPage(stateObj, true);
 }
 
-function buildPage(stateObj, addToHistory) {
+async function buildPage(stateObj, addToHistory) {
   let pageKey = stateObj.pageKey;
   let page = pages[pageKey];
   document.title = "Vlowers | " + page.title;
@@ -45,21 +45,10 @@ function buildPage(stateObj, addToHistory) {
   // if (addToHistory) window.history.pushState(stateObj, page.title, page.slug);
 
   // load page module
-  page.module
-    .then((module) => {
-      module.render();
-    })
-    .catch((err) => {
-      console.log("Cannot load module:" + err.message);
-    });
-}
-
-// maybe try to render via function...
-async function insertModule(module) {
-  const moduleHTML = await module.render();
-  console.log(moduleHTML);
-  const main = document.getElementsByTagName("MAIN")[0];
-  main.appendChild(moduleHTML);
+  const target = document.getElementsByTagName("MAIN")[0];
+  const module = await page.module;
+  const content = await module.render();
+  target.appendChild(content);
 }
 
 init();
