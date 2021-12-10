@@ -24,12 +24,14 @@ export async function render() {
   const contactList = await getContactListEl();
   contactListWrapper.appendChild(contactList);
 
-  const firstContact = contactList.firstChild;
-  firstContact.dataset.selected = "";
+  if (contactList.firstChild) {
+    const firstContact = contactList.firstChild;
+    firstContact.dataset.selected = "";
 
-  const contactDetailsWrapper = module.querySelector("#contact-detail-section");
-  const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
-  contactDetailsWrapper.appendChild(contactDetails);
+    const contactDetailsWrapper = module.querySelector("#contact-detail-section");
+    const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
+    contactDetailsWrapper.appendChild(contactDetails);
+  }
 
   return module;
 }
@@ -72,20 +74,26 @@ async function onAddContact(event) {
 }
 
 async function onDeleteContact(event) {
-  const id = event.target.dataset.contactId;
-  const result = await requestDeleteContact(id);
+  const contactId = event.target.dataset.contactId;
+  const result = await requestDeleteContact(contactId);
 
-  const contactListWrapper = document.getElementById("contact-list-wrapper");
-  const contactList = await getContactListEl();
-  contactListWrapper.replaceChildren(contactList);
+  const contactList = document.getElementById("contact-list");
+  const contactItem = contactList.querySelector(`li[data-contact-id="${contactId}"]`);
+  const previousSibling = contactItem.previousSibling;
+  contactItem.remove();
 
-  // better to select previous sibling instead of first child!
-
-  const firstContact = contactList.firstChild;
-  firstContact.dataset.selected = "";
+  // select previous or first contact
+  let selectContactId;
+  if (previousSibling) {
+    selectContactId = previousSibling.dataset.contactId;
+    previousSibling.dataset.selected = "";
+  } else if (contactList.firstChild) {
+    selectContactId = contactList.firstChild.dataset.contactId;
+    contactList.firstChild.dataset.selected = "";
+  }
 
   const contactDetailsWrapper = document.getElementById("contact-detail-section");
-  const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
+  const contactDetails = await getContactAddressEl(selectContactId);
   contactDetailsWrapper.replaceChildren(contactDetails);
 }
 
