@@ -77,24 +77,30 @@ async function onDeleteContact(event) {
   const contactId = event.target.dataset.contactId;
   const result = await requestDeleteContact(contactId);
 
+  // implement confirm contact deletion
+
   const contactList = document.getElementById("contact-list");
   const contactItem = contactList.querySelector(`li[data-contact-id="${contactId}"]`);
   const previousSibling = contactItem.previousSibling;
   contactItem.remove();
 
-  // select previous or first contact
-  let selectContactId;
-  if (previousSibling) {
-    selectContactId = previousSibling.dataset.contactId;
-    previousSibling.dataset.selected = "";
-  } else if (contactList.firstChild) {
-    selectContactId = contactList.firstChild.dataset.contactId;
-    contactList.firstChild.dataset.selected = "";
+  // select previous, first or no contact
+  if (contactList.childNodes.length) {
+    let selectContactId;
+    if (previousSibling) {
+      selectContactId = previousSibling.dataset.contactId;
+      previousSibling.dataset.selected = "";
+    } else if (contactList.firstChild) {
+      selectContactId = contactList.firstChild.dataset.contactId;
+      contactList.firstChild.dataset.selected = "";
+    }
+    const contactDetailsWrapper = document.getElementById("contact-detail-section");
+    const contactDetails = await getContactAddressEl(selectContactId);
+    contactDetailsWrapper.replaceChildren(contactDetails);
+  } else {
+    const contactDetailsWrapper = document.getElementById("contact-detail-section");
+    contactDetailsWrapper.innerHTML = "";
   }
-
-  const contactDetailsWrapper = document.getElementById("contact-detail-section");
-  const contactDetails = await getContactAddressEl(selectContactId);
-  contactDetailsWrapper.replaceChildren(contactDetails);
 }
 
 async function onSearchContact(event) {
