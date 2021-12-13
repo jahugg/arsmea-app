@@ -124,7 +124,7 @@ async function onUpdateContact(event) {
   event.preventDefault();
   const data = new URLSearchParams(new FormData(event.target));
   const contactId = data.get("id");
-  // might be passed as FORM DATA directly...
+  // pass as FORM DATA directly...?
   // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#body
   let response = await requestUpdateContact(contactId, data);
 
@@ -246,12 +246,12 @@ async function getContactFormEl(id) {
 async function requestContacts(searchString) {
   let response;
   if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
-  else response = await fetch(`${process.env.SERVER}/api/getAllContacts`);
+  else response = await fetch(`${process.env.SERVER}/api/contactList`);
   return await response.json();
 }
 
 async function requestContactDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/getContactById/${id}`);
+  const response = await fetch(`${process.env.SERVER}/api/contact/${id}`);
   return await response.json();
 }
 
