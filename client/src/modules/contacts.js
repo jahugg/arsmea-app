@@ -145,9 +145,10 @@ async function getContactListEl(searchString) {
   const list = document.createElement("ul");
   list.id = "contact-list";
   for (let data of contacts) {
+    const {id, firstname, lastname } = data;
     let el = document.createElement("li");
-    el.dataset.contactId = data.id;
-    el.innerHTML = `${data.firstname} ${data.lastname}`;
+    el.dataset.contactId = id;
+    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
     el.addEventListener("click", onSelectContact);
     list.appendChild(el);
   }
@@ -163,7 +164,7 @@ async function getContactAddressEl(id) {
   wrapper.id = "contact-details";
   let addressNode = document.createElement("address");
   addressNode.dataset.contactId = id;
-  addressNode.innerHTML = `<h1>${firstname} ${lastname}</h1>`;
+  addressNode.innerHTML = `<h1>${firstname ? firstname : ""} ${lastname ? lastname : ""}</h1>`;
   if (company) addressNode.innerHTML += `<p>${company}</p>`;
   if (address) addressNode.innerHTML += `<p>${address}</p>`;
   if (phone) addressNode.innerHTML += `<a href="tel:${phone}">${phone}</a>`;
@@ -185,7 +186,7 @@ async function getContactAddressEl(id) {
 }
 
 async function getContactFormEl(id) {
-  let data = await requestContactDetails(id);
+  const data = await requestContactDetails(id);
   const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
@@ -266,7 +267,7 @@ async function requestDeleteContact(id) {
 }
 
 async function requestNewContact() {
-  let defaultData = { firstname: "New", lastname: "Contact" };
+  let defaultData = { firstname: "New Contact", lastname: "Contact" };
   let searchParams = new URLSearchParams(defaultData);
   const response = await fetch(`${process.env.SERVER}/api/contact`, {
     method: "POST",
