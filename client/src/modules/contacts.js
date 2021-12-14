@@ -164,12 +164,12 @@ async function getContactAddressEl(id) {
   wrapper.id = "contact-details";
   let addressNode = document.createElement("address");
   addressNode.dataset.contactId = id;
-  addressNode.innerHTML = `<h1>${firstname ? firstname : ""} ${lastname ? lastname : ""}</h1>`;
-  if (company) addressNode.innerHTML += `<p>${company}</p>`;
-  if (address) addressNode.innerHTML += `<p>${address}</p>`;
-  if (phone) addressNode.innerHTML += `<a href="tel:${phone}">${phone}</a>`;
-  if (email) addressNode.innerHTML += `<a href="mailto:${email}">${email}</a>`;
-  if (notes) addressNode.innerHTML += `<p>${notes}</p>`;
+  addressNode.innerHTML = `<div class="address__name">${firstname ? firstname : ""} ${lastname ? lastname : ""}</div>`;
+  if (company) addressNode.innerHTML += `<div class="address__company">${company}</div>`;
+  if (address) addressNode.innerHTML += `<div class="address__address">${address}</div>`;
+  if (phone) addressNode.innerHTML += `<div class="address__tel"><a href="tel:${phone}">${phone}</a></div>`;
+  if (email) addressNode.innerHTML += `<div class="address__email"<a href="mailto:${email}">${email}</a></div>`;
+  if (notes) addressNode.innerHTML += `<div class="address__notes">${notes}</div>`;
 
   const editBtn = document.createElement("button");
   editBtn.type = "button";

@@ -5,10 +5,10 @@ const pages = {
     slug: "/",
     module: import("./modules/dashboard.js"),
   },
-  contact: {
-    title: "Contact",
-    slug: "/contact",
-    module: import("./modules/contact.js"),
+  orders: {
+    title: "Orders",
+    slug: "/orders",
+    module: import("./modules/orders.js"),
   },
   contacts: {
     title: "Contacts",
