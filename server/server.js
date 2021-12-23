@@ -56,4 +56,30 @@ app.get("/api/searchContacts/:string", async (request, response) => {
   response.json(contactList);
 });
 
+app.post("/api/order", async (request, response) => {
+  const data = request.body;
+  const { contact_id , datetime_placed, datetime_delivery, price, status} = data;
+  const query = db.prepare(`INSERT INTO orders (contact_id, datetime_placed, datetime_delivery, price, status) VALUES (?, ?, ?, ?, ?)`);
+  const result = query.run(contact_id, datetime_placed, datetime_delivery, price, status);
+
+  response.json({ id: result.lastInsertRowid });
+});
+
+app.get("/api/order/:id", async (request, response) => {
+  const { id } = request.params;
+  const query = db.prepare(`SELECT * FROM orders INNER JOIN contacts ON orders.contact_id=contacts.id WHERE orders.id = ?`);
+  const contact = query.get(id);
+  response.json(contact);
+});
+
+app.get("/api/orderList", async (request, response) => {
+  const query = db.prepare(`SELECT orders.id, orders.datetime_delivery, orders.status, contacts.firstname, contacts.lastname
+  FROM orders 
+  INNER JOIN contacts 
+  ON orders.contact_id=contacts.id 
+  ORDER BY orders.datetime_delivery, orders.status`);
+  const contactList = query.all();
+  response.json(contactList);
+});
+
 app.listen(process.env.PORT);

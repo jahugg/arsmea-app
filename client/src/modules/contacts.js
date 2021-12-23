@@ -6,6 +6,7 @@ export async function render() {
     <div id="contact-list-section">
       <button id="add-contact-btn" type="button">Add Contact</button>
       <form action="${process.env.SERVER}/api/searchContacts" method="POST" id="search-contact">
+        <label for="search-contact__input">Search</label>
         <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Search"/>
       </form>
       <div id="contact-list-wrapper">
@@ -144,8 +145,9 @@ async function getContactListEl(searchString) {
   let contacts = await requestContacts(searchString);
   const list = document.createElement("ul");
   list.id = "contact-list";
+  
   for (let data of contacts) {
-    const {id, firstname, lastname } = data;
+    const { id, firstname, lastname } = data;
     let el = document.createElement("li");
     el.dataset.contactId = id;
     el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
@@ -177,7 +179,6 @@ async function getContactAddressEl(id) {
   editBtn.innerHTML = "Edit";
   editBtn.dataset.contactId = id;
   editBtn.addEventListener("click", onEditContact);
-  wrapper.appendChild(editBtn);
 
   wrapper.appendChild(addressNode);
   wrapper.appendChild(editBtn);
@@ -227,7 +228,7 @@ async function getContactFormEl(id) {
     </div>
     <div>
       <label for="edit-contact__notes">Notes</label>
-      <textarea form="edit-contact" name="notes" id="edit-contact__notes" placeholder="Notes">${notes ? notes : ""}</textarea>
+      <textarea name="notes" id="edit-contact__notes" placeholder="Notes">${notes ? notes : ""}</textarea>
     </div>
     <input type="submit" value="Done"/>`;
 
@@ -267,7 +268,7 @@ async function requestDeleteContact(id) {
 }
 
 async function requestNewContact() {
-  let defaultData = { firstname: "New Contact", lastname: "Contact" };
+  let defaultData = { firstname: "New Contact" };
   let searchParams = new URLSearchParams(defaultData);
   const response = await fetch(`${process.env.SERVER}/api/contact`, {
     method: "POST",
