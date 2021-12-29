@@ -16,7 +16,7 @@ export async function render() {
     </div>`;
 
   const addButton = module.querySelector("#add-order-btn");
-  addButton.addEventListener("click", onAddOrder);
+  addButton.addEventListener("click", onPrepareNewOrder);
 
   const searchInput = module.querySelector("#search-order__input");
   searchInput.addEventListener("input", onSearchOrder);
@@ -39,21 +39,103 @@ export async function render() {
 
 async function onSearchOrder(event) {}
 
-async function onAddOrder(event) {
-  const response = await requestNewOrder();
+async function onPrepareNewOrder(event) {
+
+  const orderDetailsWrapper = document.getElementById("order-detail-section");
+  const wrapper = document.createElement("div");
+  wrapper.id = "order-details";
+  const form = document.createElement("form");
+  form.action = `${process.env.SERVER}/api/order`;
+  form.method = "POST";
+  form.id = "new-order";
+  form.addEventListener("submit", onCreateNewOrder);
+  form.innerHTML = `
+    <div>
+      <label for="new-order__contact">Client</label>
+      <input list="contact-list" name="contact" id="new-order__contact" required />
+      <datalist id="contact-list"></datalist>
+      <input type="hidden" name="contactId" id="contact-id" value="0">
+    </div>
+    <div>
+      <label for="new-order__due">Due Date</label>
+      <input type="datetime-local" name="due" id="new-order__due" required />
+    </div>
+    <div>
+        <label for="new-order__price">Price</label>
+        <input id="new-order__price" name="price" type="number" min="0.00" max="10000.00" step="0.1" required />CHF
+    </div>
+    <div>
+      <label for="new-order__description">Description</label>
+      <textarea name="description" id="new-order__description" placeholder="Notes"></textarea>
+    </div>
+    <input type="submit" value="Create Order"/>`;
+
+  const discardBtn = document.createElement("button");
+  discardBtn.type = "button";
+  discardBtn.innerHTML = "Discard Order";
+  discardBtn.id = "discard-order-btn";
+  discardBtn.addEventListener("click", onDiscardOrder);
+
+  wrapper.appendChild(form);
+  wrapper.appendChild(discardBtn);
+  orderDetailsWrapper.replaceChildren(wrapper);
+
+  const orderListItems = document.querySelectorAll("#order-list li");
+  for (const item of orderListItems) delete item.dataset.selected;
+
+  const datalist = wrapper.querySelector("#contact-list");
+  datalist.addEventListener("input", (e) => console.log("now"));
+  const contacts = await requestContacts();
+  for (const contact of contacts) {
+    const { id, firstname, lastname } = contact;
+    const option = document.createElement("option");
+    option.dataset.contactId = id;
+    option.value = `${firstname} ${lastname}`;
+    datalist.appendChild(option);
+  }
+
+  // check if given contact is new
+  const contactInput = wrapper.querySelector("#new-order__contact");
+  const contactIdInput = wrapper.querySelector("#contact-id");
+  contactInput.addEventListener("input", (event) => {
+    const value = event.target.value;
+    let contactId = 0;
+    for (const item of datalist.children) {
+      if (item.value === value) contactId = item.dataset.contactId;
+    }
+    contactIdInput.value = contactId;
+    if (contactIdInput.value == 0 && contactInput.value !== "") contactInput.dataset.newContact = "";
+    else delete contactInput.dataset.newContact;
+  });
+}
+
+async function onCreateNewOrder(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const response = await requestNewOrder(data);
   const id = response.id;
 
   const orderListWrapper = document.getElementById("order-list-wrapper");
   const orderList = await getOrderListEl();
   orderListWrapper.replaceChildren(orderList);
 
-  const item = document.querySelector(`#contact-list li[data-contact-id="${id}"`);
+  const item = document.querySelector(`#order-list li[data-order-id="${id}"`);
   item.dataset.selected = "";
 
-  //   const contactDetailsWrapper = document.getElementById("contact-detail-section");
-  //   const form = await getContactFormEl(id);
-  //   contactDetailsWrapper.replaceChildren(form);
-  //   form.querySelector("#edit-contact__firstname").select();
+  const contactDetailsWrapper = document.getElementById("order-detail-section");
+  const form = await getOrderDetailsEl(id);
+  contactDetailsWrapper.replaceChildren(form);
+}
+
+async function onDiscardOrder(event) {
+  const orderList = document.querySelectorAll("#order-list li");
+  for (let item of orderList) delete item.dataset.selected;
+
+  const firstOrder = document.querySelector("#order-list li:first-child");
+  firstOrder.dataset.selected = "";
+  const orderDetailsWrapper = document.getElementById("order-detail-section");
+  const orderDetails = await getOrderDetailsEl(firstOrder.dataset.orderId);
+  orderDetailsWrapper.replaceChildren(orderDetails);
 }
 
 async function onSelectOrder(event) {
@@ -76,7 +158,20 @@ async function onEditOrder(event) {
 
 async function onUpdateOrder(event) {
   event.preventDefault();
-  console.log("on update order...");
+  const data = new URLSearchParams(new FormData(event.target));
+  const orderId = data.get("id");
+  let response = await requestUpdateOrder(orderId, data);
+
+  const orderListWrapper = document.getElementById("order-list-wrapper");
+  const orderList = await getOrderListEl();
+  orderListWrapper.replaceChildren(orderList);
+
+  const item = document.querySelector(`#order-list li[data-order-id="${orderId}"`);
+  item.dataset.selected = "";
+
+  const orderDetailsWrapper = document.getElementById("order-detail-section");
+  const orderDetails = await getOrderDetailsEl(orderId);
+  orderDetailsWrapper.replaceChildren(orderDetails);
 }
 
 async function onDeleteOrder(event) {
@@ -125,7 +220,7 @@ async function getOrderDetailsEl(id) {
 
 async function getOrderFormEl(id) {
   const data = await requestOrderDetails(id);
-  const { datetime_delivery, datetime_placed, status, price, description } = data;
+  const { datetime_delivery, status, price, description } = data;
 
   const wrapper = document.createElement("div");
   wrapper.id = "order-details";
@@ -136,16 +231,12 @@ async function getOrderFormEl(id) {
   form.addEventListener("submit", onUpdateOrder);
   form.innerHTML = `<input type="hidden" id="edit-order__id" name="id" value="${id}">
     <div>
-      <label for="edit-order__delivery-date">Delivery Date</label>
-      <input type="date" name="delivery-date" id="edit-order__delivery-date" value="${datetime_delivery ? datetime_delivery : ""}" />
-    </div>
-    <div>
-      <label for="edit-order__placed-date">Placed Date</label>
-      <input type="date" name="placed-date" id="edit-order__placed-date" value="${datetime_placed ? datetime_placed : ""}" />
+      <label for="edit-order__delivery">Delivery Date</label>
+      <input type="datetime-local" name="delivery" id="edit-order__delivery" value="${datetime_delivery ? datetime_delivery : ""}" />
     </div>
     <div>
         <label for="edit-order__status">Status</label>
-        <select id="edit-order__status">
+        <select id="edit-order__status" name="status">
             <option value="open">Open</option>
             <option value="closed">Ready for Pickup</option>
             <option value="delivered">Delivered</option>
@@ -153,7 +244,7 @@ async function getOrderFormEl(id) {
     </div>
     <div>
         <label for="edit-order__price">Price</label>
-        <input id="edit-order__price" type="number" min="0.00" max="10000.00" step="0.1" value="${price}"/>CHF
+        <input id="edit-order__price" name="price" type="number" min="0.00" max="10000.00" step="0.1" value="${price}"/>CHF
     </div>
     <div>
       <label for="edit-order__description">Description</label>
@@ -180,9 +271,8 @@ async function getOrderFormEl(id) {
   return wrapper;
 }
 
-async function requestNewOrder() {
-  let defaultData = { contact_id: "1", datetime_placed: "some date", datetime_delivery: "some date", price: 30.2, status: "open" };
-  let searchParams = new URLSearchParams(defaultData);
+async function requestNewOrder(data) {
+  let searchParams = new URLSearchParams(data);
   const response = await fetch(`${process.env.SERVER}/api/order`, {
     method: "POST",
     body: searchParams,
@@ -199,5 +289,20 @@ async function requestOrders(searchString) {
 
 async function requestOrderDetails(id) {
   const response = await fetch(`${process.env.SERVER}/api/order/${id}`);
+  return await response.json();
+}
+
+async function requestUpdateOrder(id, data) {
+  const response = await fetch(`${process.env.SERVER}/api/updateOrder/${id}`, {
+    method: "POST",
+    body: data,
+  });
+  return await response.json();
+}
+// DUPLICATE FROM CONTACTS.JS > MERGE INTO ONE FILE
+async function requestContacts(searchString) {
+  let response;
+  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
+  else response = await fetch(`${process.env.SERVER}/api/contactList`);
   return await response.json();
 }

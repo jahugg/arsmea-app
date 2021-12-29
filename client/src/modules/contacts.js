@@ -200,13 +200,13 @@ async function getContactFormEl(id) {
   form.innerHTML = `<input type="hidden" id="edit-contact__id" name="id" value="${id}">
     <div>
       <label for="edit-contact__firstname">First name</label>
-      <input type="text" pattern="[^0-9]*" name="firstname" id="edit-contact__firstname" placeholder="First name" value="${
+      <input required type="text" pattern="[^0-9]*" name="firstname" id="edit-contact__firstname" placeholder="First name" value="${
         firstname ? firstname : ""
       }" />
     </div>
     <div>
       <label for="edit-contact__lastname">Last name</label>
-      <input type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${lastname ? lastname : ""}" />
+      <input required type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${lastname ? lastname : ""}" />
     </div>
     <div>
       <label for="edit-contact__company">Company name</label>
