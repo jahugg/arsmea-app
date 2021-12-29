@@ -60,7 +60,7 @@ app.post("/api/order", async (request, response) => {
   const data = request.body;
   const { contact, contactId, due, price, description } = data;
   if (contactId == 0) {
-    console.log("create a new contact");
+    console.log("create a new contact before proceeding");
   }
   const query = db.prepare(
     `INSERT INTO orders (contact_id, datetime_placed, datetime_delivery, price, description, status)
@@ -97,6 +97,13 @@ app.post("/api/updateOrder/:id", async (request, response) => {
   );
   const result = query.run(delivery, status, price, description, id);
   response.json(result);
+});
+
+app.delete("/api/order/:id", async (request, response) => {
+  const { id } = request.params;
+  const query = db.prepare("DELETE FROM orders WHERE id = ?");
+  const result = query.run(id);
+  response.json({ success: result });
 });
 
 app.listen(process.env.PORT);

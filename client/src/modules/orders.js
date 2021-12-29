@@ -40,7 +40,6 @@ export async function render() {
 async function onSearchOrder(event) {}
 
 async function onPrepareNewOrder(event) {
-
   const orderDetailsWrapper = document.getElementById("order-detail-section");
   const wrapper = document.createElement("div");
   wrapper.id = "order-details";
@@ -175,7 +174,33 @@ async function onUpdateOrder(event) {
 }
 
 async function onDeleteOrder(event) {
-  console.log("on delete order...");
+  const orderId = event.target.dataset.orderId;
+  const result = await requestDeleteOrder(orderId);
+
+  // implement confirm contact deletion
+
+  const orderList = document.getElementById("order-list");
+  const orderItem = orderList.querySelector(`li[data-order-id="${orderId}"]`);
+  const previousSibling = orderItem.previousSibling;
+  orderItem.remove();
+
+  // select previous, first or no order
+  if (orderList.childNodes.length) {
+    let selectOrderId;
+    if (previousSibling) {
+      selectOrderId = previousSibling.dataset.orderId;
+      previousSibling.dataset.selected = "";
+    } else if (orderList.firstChild) {
+      selectOrderId = orderList.firstChild.dataset.orderId;
+      orderList.firstChild.dataset.selected = "";
+    }
+    const orderDetailsWrapper = document.getElementById("order-detail-section");
+    const orderDetails = await getOrderDetailsEl(selectOrderId);
+    orderDetailsWrapper.replaceChildren(orderDetails);
+  } else {
+    const orderDetailsWrapper = document.getElementById("order-detail-section");
+    orderDetailsWrapper.innerHTML = "";
+  }
 }
 
 async function getOrderListEl(searchString) {
@@ -299,6 +324,17 @@ async function requestUpdateOrder(id, data) {
   });
   return await response.json();
 }
+
+async function requestDeleteOrder(id) {
+  try {
+    const response = await fetch(`${process.env.SERVER}/api/order/${id}`, {
+      method: "DELETE",
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 // DUPLICATE FROM CONTACTS.JS > MERGE INTO ONE FILE
 async function requestContacts(searchString) {
   let response;
