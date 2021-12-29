@@ -58,10 +58,15 @@ app.get("/api/searchContacts/:string", async (request, response) => {
 
 app.post("/api/order", async (request, response) => {
   const data = request.body;
-  const { contact_id , datetime_placed, datetime_delivery, price, status} = data;
-  const query = db.prepare(`INSERT INTO orders (contact_id, datetime_placed, datetime_delivery, price, status) VALUES (?, ?, ?, ?, ?)`);
-  const result = query.run(contact_id, datetime_placed, datetime_delivery, price, status);
-
+  const { contact, contactId, due, price, description } = data;
+  if (contactId == 0) {
+    console.log("create a new contact");
+  }
+  const query = db.prepare(
+    `INSERT INTO orders (contact_id, datetime_placed, datetime_delivery, price, description, status)
+    VALUES (?, datetime('now'), ?, ?, ?, 'open')`
+  );
+  const result = query.run(contactId, due, price, description);
   response.json({ id: result.lastInsertRowid });
 });
 
@@ -80,6 +85,18 @@ app.get("/api/orderList", async (request, response) => {
   ORDER BY orders.datetime_delivery, orders.status`);
   const contactList = query.all();
   response.json(contactList);
+});
+
+app.post("/api/updateOrder/:id", async (request, response) => {
+  const { id } = request.params;
+  const data = request.body;
+  delete data.id;
+  const { delivery, status, price, description } = data;
+  const query = db.prepare(
+    "UPDATE orders SET datetime_placed = datetime('now'), datetime_delivery = ?, status = ?, price = ?, description = ? WHERE id = ?"
+  );
+  const result = query.run(delivery, status, price, description, id);
+  response.json(result);
 });
 
 app.listen(process.env.PORT);
