@@ -1,4 +1,4 @@
-export function render() {
+export default function() {
   const module = document.createElement("div");
   module.classList.add("module");
   module.id = "contact";
@@ -10,4 +10,4 @@ export function render() {
   </ul>`;
 
   return module;
-}
+};

@@ -47,7 +47,7 @@ async function buildPage(stateObj, addToHistory) {
   // load page module
   const target = document.getElementsByTagName("MAIN")[0];
   const module = await page.module;
-  const content = await module.render();
+  const content = await module.default();
   target.appendChild(content);
 }
 

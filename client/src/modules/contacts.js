@@ -1,6 +1,6 @@
 import * as request from "./serverRequests";
 
-export async function render() {
+export default async function() {
   const module = document.createElement("div");
   module.classList.add("module");
   module.id = "contact";
