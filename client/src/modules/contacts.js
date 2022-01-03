@@ -1,3 +1,5 @@
+import * as request from "./serverRequests";
+
 export async function render() {
   const module = document.createElement("div");
   module.classList.add("module");
@@ -58,7 +60,7 @@ async function onEditContact(event) {
 }
 
 async function onAddContact(event) {
-  const response = await requestNewContact();
+  const response = await request.newContact();
   const id = response.id;
 
   const contactListWrapper = document.getElementById("contact-list-wrapper");
@@ -76,7 +78,7 @@ async function onAddContact(event) {
 
 async function onDeleteContact(event) {
   const contactId = event.target.dataset.contactId;
-  const result = await requestDeleteContact(contactId);
+  const result = await request.deleteContact(contactId);
 
   // implement confirm contact deletion
 
@@ -127,7 +129,7 @@ async function onUpdateContact(event) {
   const contactId = data.get("id");
   // pass as FORM DATA directly...?
   // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#body
-  let response = await requestUpdateContact(contactId, data);
+  let response = await request.updateContact(contactId, data);
 
   const contactListWrapper = document.getElementById("contact-list-wrapper");
   const contactList = await getContactListEl();
@@ -142,7 +144,7 @@ async function onUpdateContact(event) {
 }
 
 async function getContactListEl(searchString) {
-  let contacts = await requestContacts(searchString);
+  let contacts = await request.contacts(searchString);
   const list = document.createElement("ul");
   list.id = "contact-list";
   
@@ -159,7 +161,7 @@ async function getContactListEl(searchString) {
 }
 
 async function getContactAddressEl(id) {
-  let data = await requestContactDetails(id);
+  let data = await request.contactDetails(id);
   const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
@@ -187,7 +189,7 @@ async function getContactAddressEl(id) {
 }
 
 async function getContactFormEl(id) {
-  const data = await requestContactDetails(id);
+  const data = await request.contactDetails(id);
   const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
@@ -243,44 +245,4 @@ async function getContactFormEl(id) {
   wrapper.appendChild(deleteBtn);
 
   return wrapper;
-}
-
-async function requestContacts(searchString) {
-  let response;
-  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
-  else response = await fetch(`${process.env.SERVER}/api/contactList`);
-  return await response.json();
-}
-
-async function requestContactDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/contact/${id}`);
-  return await response.json();
-}
-
-async function requestDeleteContact(id) {
-  try {
-    const response = await fetch(`${process.env.SERVER}/api/contact/${id}`, {
-      method: "DELETE",
-    });
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-async function requestNewContact() {
-  let defaultData = { firstname: "New Contact" };
-  let searchParams = new URLSearchParams(defaultData);
-  const response = await fetch(`${process.env.SERVER}/api/contact`, {
-    method: "POST",
-    body: searchParams,
-  });
-  return await response.json();
-}
-
-async function requestUpdateContact(id, data) {
-  const response = await fetch(`${process.env.SERVER}/api/updateContact/${id}`, {
-    method: "POST",
-    body: data,
-  });
-  return await response.json();
 }

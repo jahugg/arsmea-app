@@ -1,3 +1,5 @@
+import * as request from "./serverRequests";
+
 export async function render() {
   const module = document.createElement("div");
   module.classList.add("module");
@@ -84,7 +86,7 @@ async function onPrepareNewOrder(event) {
 
   const datalist = wrapper.querySelector("#contact-list");
   datalist.addEventListener("input", (e) => console.log("now"));
-  const contacts = await requestContacts();
+  const contacts = await request.contacts();
   for (const contact of contacts) {
     const { id, firstname, lastname } = contact;
     const option = document.createElement("option");
@@ -111,7 +113,7 @@ async function onPrepareNewOrder(event) {
 async function onCreateNewOrder(event) {
   event.preventDefault();
   const data = new FormData(event.target);
-  const response = await requestNewOrder(data);
+  const response = await request.newOrder(data);
   const id = response.id;
 
   const orderListWrapper = document.getElementById("order-list-wrapper");
@@ -159,7 +161,7 @@ async function onUpdateOrder(event) {
   event.preventDefault();
   const data = new URLSearchParams(new FormData(event.target));
   const orderId = data.get("id");
-  let response = await requestUpdateOrder(orderId, data);
+  let response = await request.updateOrder(orderId, data);
 
   const orderListWrapper = document.getElementById("order-list-wrapper");
   const orderList = await getOrderListEl();
@@ -175,7 +177,7 @@ async function onUpdateOrder(event) {
 
 async function onDeleteOrder(event) {
   const orderId = event.target.dataset.orderId;
-  const result = await requestDeleteOrder(orderId);
+  const result = await request.deleteOrder(orderId);
 
   // implement confirm contact deletion
 
@@ -204,15 +206,15 @@ async function onDeleteOrder(event) {
 }
 
 async function getOrderListEl(searchString) {
-  let orders = await requestOrders(searchString);
+  let orders = await request.orders(searchString);
   const list = document.createElement("ul");
   list.id = "order-list";
 
   for (let item of orders) {
-    const { id, datetime_delivery, status, firstname, lastname } = item;
+    const { id, datetime_due, status, firstname, lastname } = item;
     let el = document.createElement("li");
     el.dataset.orderId = id;
-    el.innerHTML = `${datetime_delivery} ${firstname} ${lastname} ${status}`;
+    el.innerHTML = `${datetime_due} ${firstname} ${lastname} ${status}`;
     el.addEventListener("click", onSelectOrder);
     list.appendChild(el);
   }
@@ -221,12 +223,12 @@ async function getOrderListEl(searchString) {
 }
 
 async function getOrderDetailsEl(id) {
-  let { datetime_placed, datetime_delivery, price, description, status, firstname, lastname } = await requestOrderDetails(id);
+  let { datetime_placed, datetime_due, price, description, status, firstname, lastname } = await request.orderDetails(id);
   const wrapper = document.createElement("div");
   wrapper.id = "order-details";
-  wrapper.innerHTML = `${firstname} ${lastname}<br>
+  wrapper.innerHTML = `<a href="/contacts">${firstname} ${lastname}</a><br>
   Placed: ${datetime_placed}<br>
-  Delivery: ${datetime_delivery}<br>
+  Due: ${datetime_due}<br>
   ${price ? price + " CHF<br>" : ""}
   ${description ? description + "<br>" : ""}
   Status: ${status}`;
@@ -244,8 +246,8 @@ async function getOrderDetailsEl(id) {
 }
 
 async function getOrderFormEl(id) {
-  const data = await requestOrderDetails(id);
-  const { datetime_delivery, status, price, description } = data;
+  const data = await request.orderDetails(id);
+  const { datetime_due, status, price, description } = data;
 
   const wrapper = document.createElement("div");
   wrapper.id = "order-details";
@@ -256,8 +258,8 @@ async function getOrderFormEl(id) {
   form.addEventListener("submit", onUpdateOrder);
   form.innerHTML = `<input type="hidden" id="edit-order__id" name="id" value="${id}">
     <div>
-      <label for="edit-order__delivery">Delivery Date</label>
-      <input type="datetime-local" name="delivery" id="edit-order__delivery" value="${datetime_delivery ? datetime_delivery : ""}" />
+      <label for="edit-order__due">Due Date</label>
+      <input type="datetime-local" name="duedate" id="edit-order__due" value="${datetime_due ? datetime_due : ""}" />
     </div>
     <div>
         <label for="edit-order__status">Status</label>
@@ -294,51 +296,4 @@ async function getOrderFormEl(id) {
   wrapper.appendChild(deleteBtn);
 
   return wrapper;
-}
-
-async function requestNewOrder(data) {
-  let searchParams = new URLSearchParams(data);
-  const response = await fetch(`${process.env.SERVER}/api/order`, {
-    method: "POST",
-    body: searchParams,
-  });
-  return await response.json();
-}
-
-async function requestOrders(searchString) {
-  let response;
-  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchOrders/${searchString}`);
-  else response = await fetch(`${process.env.SERVER}/api/orderList`);
-  return await response.json();
-}
-
-async function requestOrderDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/order/${id}`);
-  return await response.json();
-}
-
-async function requestUpdateOrder(id, data) {
-  const response = await fetch(`${process.env.SERVER}/api/updateOrder/${id}`, {
-    method: "POST",
-    body: data,
-  });
-  return await response.json();
-}
-
-async function requestDeleteOrder(id) {
-  try {
-    const response = await fetch(`${process.env.SERVER}/api/order/${id}`, {
-      method: "DELETE",
-    });
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-// DUPLICATE FROM CONTACTS.JS > MERGE INTO ONE FILE
-async function requestContacts(searchString) {
-  let response;
-  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
-  else response = await fetch(`${process.env.SERVER}/api/contactList`);
-  return await response.json();
 }

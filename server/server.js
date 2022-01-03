@@ -63,7 +63,7 @@ app.post("/api/order", async (request, response) => {
     console.log("create a new contact before proceeding");
   }
   const query = db.prepare(
-    `INSERT INTO orders (contact_id, datetime_placed, datetime_delivery, price, description, status)
+    `INSERT INTO orders (contact_id, datetime_placed, datetime_due, price, description, status)
     VALUES (?, datetime('now'), ?, ?, ?, 'open')`
   );
   const result = query.run(contactId, due, price, description);
@@ -78,11 +78,11 @@ app.get("/api/order/:id", async (request, response) => {
 });
 
 app.get("/api/orderList", async (request, response) => {
-  const query = db.prepare(`SELECT orders.id, orders.datetime_delivery, orders.status, contacts.firstname, contacts.lastname
+  const query = db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, contacts.firstname, contacts.lastname
   FROM orders 
   INNER JOIN contacts 
   ON orders.contact_id=contacts.id 
-  ORDER BY orders.datetime_delivery, orders.status`);
+  ORDER BY orders.datetime_due, orders.status`);
   const contactList = query.all();
   response.json(contactList);
 });
@@ -91,11 +91,11 @@ app.post("/api/updateOrder/:id", async (request, response) => {
   const { id } = request.params;
   const data = request.body;
   delete data.id;
-  const { delivery, status, price, description } = data;
+  const { duedate, status, price, description } = data;
   const query = db.prepare(
-    "UPDATE orders SET datetime_placed = datetime('now'), datetime_delivery = ?, status = ?, price = ?, description = ? WHERE id = ?"
+    "UPDATE orders SET datetime_placed = datetime('now'), datetime_due = ?, status = ?, price = ?, description = ? WHERE id = ?"
   );
-  const result = query.run(delivery, status, price, description, id);
+  const result = query.run(duedate, status, price, description, id);
   response.json(result);
 });
 
