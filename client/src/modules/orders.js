@@ -1,6 +1,6 @@
 import * as request from "./serverRequests";
 
-export default async function() {
+export default async function () {
   const module = document.createElement("div");
   module.classList.add("module");
   module.id = "order";
@@ -27,20 +27,47 @@ export default async function() {
   const orderList = await getOrderListEl();
   orderListWrapper.appendChild(orderList);
 
-  if (orderList.firstChild) {
-    const firstOrder = orderList.firstChild;
-    firstOrder.dataset.selected = "";
-
-    const orderDetailsWrapper = module.querySelector("#order-detail-section");
-    const orderDetails = await getOrderDetailsEl(firstOrder.dataset.orderId);
-    orderDetailsWrapper.appendChild(orderDetails);
-  }
+  const url = new URL(window.location);
+  let orderId = url.searchParams.get("id");
+  selectOrder(orderId, module);
 
   return module;
 }
 
+async function selectOrder(id, node) {
+  const list = node.querySelector("#order-list");
+  let orderDetails = "";
+
+  try {
+    // get order details
+    orderDetails = await getOrderDetailsEl(id);
+  } catch (error) {
+    // select first list item if any
+    if (list.firstChild) {
+      const firstOrder = list.firstChild;
+      id = firstOrder.dataset.orderId;
+      orderDetails = await getOrderDetailsEl(id);
+    }
+  }
+
+  if (orderDetails) {
+    const detailsWrapper = node.querySelector("#order-detail-section");
+    detailsWrapper.replaceChildren(orderDetails);
+
+    for (let item of list.children)
+      if (item.dataset.orderId == id) item.dataset.selected = "";
+      else delete item.dataset.selected;
+
+    // add order id to url
+    const url = new URL(window.location);
+    url.searchParams.set("id", id);
+    const state = { order_id: id };
+    window.history.replaceState(state, "", url);
+  }
+}
+
 async function onSearchOrder(event) {
-    console.log("search orders...");
+  console.log("search orders...");
 }
 
 async function onPrepareNewOrder(event) {
@@ -141,17 +168,6 @@ async function onDiscardOrder(event) {
   orderDetailsWrapper.replaceChildren(orderDetails);
 }
 
-async function onSelectOrder(event) {
-  const orderDetailsWrapper = document.getElementById("order-detail-section");
-  const id = event.target.dataset.orderId;
-  const orderDetails = await getOrderDetailsEl(id);
-  orderDetailsWrapper.replaceChildren(orderDetails);
-
-  const orderList = document.querySelectorAll("#order-list li");
-  for (let item of orderList) delete item.dataset.selected;
-  event.target.dataset.selected = "";
-}
-
 async function onEditOrder(event) {
   const id = event.target.dataset.orderId;
   const contactDetailsWrapper = document.getElementById("order-detail-section");
@@ -217,7 +233,7 @@ async function getOrderListEl(searchString) {
     let el = document.createElement("li");
     el.dataset.orderId = id;
     el.innerHTML = `${datetime_due} ${firstname} ${lastname} ${status}`;
-    el.addEventListener("click", onSelectOrder);
+    el.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId, document));
     list.appendChild(el);
   }
 

@@ -31,7 +31,7 @@ export default async function () {
   const url = new URL(window.location);
   let contactId = url.searchParams.get("id");
   if (contactId) {
-    // select requested contact
+    // display requested contact
     for (let item of contactList.children) {
       if (item.dataset.contactId == contactId) item.dataset.selected = "";
     }
@@ -39,16 +39,14 @@ export default async function () {
     const contactDetailsWrapper = module.querySelector("#contact-detail-section");
     const contactDetails = await getContactAddressEl(contactId);
     contactDetailsWrapper.appendChild(contactDetails);
-  } else {
-    // select first contact
-    if (contactList.firstChild) {
-      const firstContact = contactList.firstChild;
-      firstContact.dataset.selected = "";
+  } else if (contactList.firstChild) {
+    // display first contact
+    const firstContact = contactList.firstChild;
+    firstContact.dataset.selected = "";
 
-      const contactDetailsWrapper = module.querySelector("#contact-detail-section");
-      const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
-      contactDetailsWrapper.appendChild(contactDetails);
-    }
+    const contactDetailsWrapper = module.querySelector("#contact-detail-section");
+    const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
+    contactDetailsWrapper.appendChild(contactDetails);
   }
 
   return module;
