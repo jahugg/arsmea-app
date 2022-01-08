@@ -74,6 +74,7 @@ app.get("/api/order/:id", async (request, response) => {
   const { id } = request.params;
   const query = db.prepare(`SELECT * FROM orders INNER JOIN contacts ON orders.contact_id=contacts.id WHERE orders.id = ?`);
   const contact = query.get(id);
+  console.log(contact);
   response.json(contact);
 });
 

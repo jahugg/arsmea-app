@@ -39,7 +39,9 @@ export default async function() {
   return module;
 }
 
-async function onSearchOrder(event) {}
+async function onSearchOrder(event) {
+    console.log("search orders...");
+}
 
 async function onPrepareNewOrder(event) {
   const orderDetailsWrapper = document.getElementById("order-detail-section");
@@ -53,7 +55,7 @@ async function onPrepareNewOrder(event) {
   form.innerHTML = `
     <div>
       <label for="new-order__contact">Client</label>
-      <input list="contact-list" name="contact" id="new-order__contact" required />
+      <input list="contact-list" name="contact" id="new-order__contact" autocomplete="off" required />
       <datalist id="contact-list"></datalist>
       <input type="hidden" name="contactId" id="contact-id" value="0">
     </div>
@@ -223,10 +225,10 @@ async function getOrderListEl(searchString) {
 }
 
 async function getOrderDetailsEl(id) {
-  let { datetime_placed, datetime_due, price, description, status, firstname, lastname } = await request.orderDetails(id);
+  let { datetime_placed, datetime_due, price, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
   const wrapper = document.createElement("div");
   wrapper.id = "order-details";
-  wrapper.innerHTML = `<a href="/contacts">${firstname} ${lastname}</a><br>
+  wrapper.innerHTML = `<a href="/contacts?id=${contact_id}">${firstname} ${lastname}</a><br>
   Placed: ${datetime_placed}<br>
   Due: ${datetime_due}<br>
   ${price ? price + " CHF<br>" : ""}

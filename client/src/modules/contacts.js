@@ -1,6 +1,6 @@
 import * as request from "./serverRequests";
 
-export default async function() {
+export default async function () {
   const module = document.createElement("div");
   module.classList.add("module");
   module.id = "contact";
@@ -27,13 +27,28 @@ export default async function() {
   const contactList = await getContactListEl();
   contactListWrapper.appendChild(contactList);
 
-  if (contactList.firstChild) {
-    const firstContact = contactList.firstChild;
-    firstContact.dataset.selected = "";
+  // display requested or first contact
+  const url = new URL(window.location);
+  let contactId = url.searchParams.get("id");
+  if (contactId) {
+    // select requested contact
+    for (let item of contactList.children) {
+      if (item.dataset.contactId == contactId) item.dataset.selected = "";
+    }
 
     const contactDetailsWrapper = module.querySelector("#contact-detail-section");
-    const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
+    const contactDetails = await getContactAddressEl(contactId);
     contactDetailsWrapper.appendChild(contactDetails);
+  } else {
+    // select first contact
+    if (contactList.firstChild) {
+      const firstContact = contactList.firstChild;
+      firstContact.dataset.selected = "";
+
+      const contactDetailsWrapper = module.querySelector("#contact-detail-section");
+      const contactDetails = await getContactAddressEl(firstContact.dataset.contactId);
+      contactDetailsWrapper.appendChild(contactDetails);
+    }
   }
 
   return module;
@@ -44,11 +59,16 @@ async function onSelectContact(event) {
   const id = event.target.dataset.contactId;
   const address = await getContactAddressEl(id);
   contactDetailsWrapper.replaceChildren(address);
-
   const contactList = document.querySelectorAll("#contact-list li");
   for (let contact of contactList)
     if (contact.dataset.contactId != id) delete contact.dataset.selected;
     else contact.dataset.selected = "";
+
+  // add contact id to url
+  const url = new URL(window.location);
+  url.searchParams.set("id", id);
+  const state = { user_id: id };
+  window.history.replaceState(state, "", url);
 }
 
 async function onEditContact(event) {
@@ -147,7 +167,7 @@ async function getContactListEl(searchString) {
   let contacts = await request.contacts(searchString);
   const list = document.createElement("ul");
   list.id = "contact-list";
-  
+
   for (let data of contacts) {
     const { id, firstname, lastname } = data;
     let el = document.createElement("li");
@@ -208,7 +228,9 @@ async function getContactFormEl(id) {
     </div>
     <div>
       <label for="edit-contact__lastname">Last name</label>
-      <input required type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${lastname ? lastname : ""}" />
+      <input required type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${
+        lastname ? lastname : ""
+      }" />
     </div>
     <div>
       <label for="edit-contact__company">Company name</label>
