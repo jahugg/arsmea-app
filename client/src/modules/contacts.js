@@ -181,7 +181,8 @@ async function getContactAddressEl(id) {
   const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
-  wrapper.id = "contact-details";
+  const contactDetails = document.createElement("div");
+  contactDetails.id = "contact-details";
   let addressNode = document.createElement("address");
   addressNode.dataset.contactId = id;
   addressNode.innerHTML = `<div class="address__name">${firstname ? firstname : ""} ${lastname ? lastname : ""}</div>`;
@@ -198,8 +199,28 @@ async function getContactAddressEl(id) {
   editBtn.dataset.contactId = id;
   editBtn.addEventListener("click", onEditContact);
 
-  wrapper.appendChild(addressNode);
-  wrapper.appendChild(editBtn);
+  contactDetails.appendChild(addressNode);
+  contactDetails.appendChild(editBtn);
+  wrapper.appendChild(contactDetails);
+
+  // display orders of contact
+  const orders = await request.ordersByContact(id);
+  if (orders) {
+    const orderTitle = document.createElement("h2");
+    orderTitle.innerHTML = "Orders";
+    wrapper.appendChild(orderTitle);
+
+    const orderList = document.createElement("ul");
+    orderList.id = "contact-orders";
+    for (let order of orders) {
+      const { id, datetime_due, price, status } = order;
+      let item = document.createElement("li");
+      item.dataset.orderId = id;
+      item.innerHTML = `<a href="/orders?id=${id}">${datetime_due} ${price}CHF ${status}</a>`;
+      orderList.appendChild(item);
+    }
+    wrapper.appendChild(orderList);
+  }
 
   return wrapper;
 }

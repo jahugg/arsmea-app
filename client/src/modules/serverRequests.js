@@ -49,8 +49,14 @@ export async function newOrder(data) {
 
 export async function orders(searchString) {
   let response;
-  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchOrders/${searchString}`);
+  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchOrdersByContactId/${searchString}`);
   else response = await fetch(`${process.env.SERVER}/api/orderList`);
+  return await response.json();
+}
+
+export async function ordersByContact(contactId) {
+  let response;
+  response = await fetch(`${process.env.SERVER}/api/ordersByContact/${contactId}`);
   return await response.json();
 }
 

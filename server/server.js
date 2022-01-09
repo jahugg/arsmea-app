@@ -106,4 +106,16 @@ app.delete("/api/order/:id", async (request, response) => {
   response.json({ success: result });
 });
 
+app.get("/api/ordersByContact/:id", async (request, response) => {
+  const { id } = request.params;
+  const query = db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, orders.price
+  FROM orders 
+  INNER JOIN contacts 
+  ON orders.contact_id=contacts.id 
+  WHERE contacts.id = ?
+  ORDER BY orders.datetime_due, orders.status`);
+  const contactList = query.all(id);
+  response.json(contactList);
+});
+
 app.listen(process.env.PORT);
