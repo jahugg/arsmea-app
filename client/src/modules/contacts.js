@@ -18,7 +18,7 @@ export default async function () {
     </div>`;
 
   const addButton = module.querySelector("#add-contact-btn");
-  addButton.addEventListener("click", onAddContact);
+  addButton.addEventListener("click", onPrepareNewContact);
 
   const searchInput = module.querySelector("#search-contact__input");
   searchInput.addEventListener("input", onSearchContact);
@@ -74,50 +74,102 @@ async function onEditContact(event) {
   form.querySelector("#edit-contact__firstname").select();
 }
 
-async function onAddContact(event) {
-  const response = await request.newContact();
+async function onPrepareNewContact(event) {
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
+  const wrapper = document.createElement("div");
+  wrapper.id = "contact-details";
+  const form = document.createElement("form");
+  form.action = `${process.env.SERVER}/api/contact`;
+  form.method = "POST";
+  form.id = "new-contact";
+  form.addEventListener("submit", onCreateNewContact);
+  form.innerHTML = `
+  <div>
+    <label for="new-contact__firstname">First name</label>
+    <input required type="text" pattern="[^0-9]*" name="firstname" id="new-contact__firstname" placeholder="Mustafa" />
+  </div>
+  <div>
+    <label for="new-contact__lastname">Last name</label>
+    <input type="text" pattern="[^0-9]*" name="lastname" id="new-contact__lastname" placeholder="Smith" />
+  </div>
+  <div>
+    <label for="new-contact__company">Company</label>
+    <input type="text" name="company" id="new-contact__company" placeholder="Märchen AG"/>
+  </div>
+  <div>
+    <label for="new-contact__address">Address</label>
+    <textarea name="address" form="new-contact" name="address" id="new-contact__address" placeholder="Musterweg 34"></textarea>
+  </div>
+  <div>
+    <label for="new-contact__email">Email</label>
+    <input type="email" name="email" id="new-contact__email" placeholder="my@email.com" />
+  </div>
+  <div>
+    <label for="new-contact__phone">Phone</label>
+    <input type="tel" name="phone" id="new-contact__phone" placeholder="+41 078 24 29" />
+  </div>
+  <div>
+    <label for="new-contact__notes">Notes</label>
+    <textarea name="notes" id="new-contact__notes" placeholder="Lives abroad"></textarea>
+  </div>
+  <input type="submit" value="Create Contact"/>`;
+
+  const discardBtn = document.createElement("button");
+  discardBtn.type = "button";
+  discardBtn.innerHTML = "Discard Contact";
+  discardBtn.id = "discard-contact-btn";
+  discardBtn.addEventListener("click", () => selectContact(0, document));
+
+  wrapper.appendChild(form);
+  wrapper.appendChild(discardBtn);
+  contactDetailsWrapper.replaceChildren(wrapper);
+
+  form.querySelector("#new-contact__firstname").focus();
+
+  const contactListItems = document.querySelectorAll("#contact-list li");
+  for (const item of contactListItems) delete item.dataset.selected;
+}
+
+async function onCreateNewContact(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const response = await request.newContact(data);
   const id = response.id;
 
   const contactListWrapper = document.getElementById("contact-list-wrapper");
   const contactList = await getContactListEl();
   contactListWrapper.replaceChildren(contactList);
-
-  const item = document.querySelector(`#contact-list li[data-contact-id="${id}"`);
-  item.dataset.selected = "";
-
-  const contactDetailsWrapper = document.getElementById("contact-detail-section");
-  const form = await getContactFormEl(id);
-  contactDetailsWrapper.replaceChildren(form);
-  form.querySelector("#edit-contact__firstname").select();
+  selectContact(id, document);
 }
 
 async function onDeleteContact(event) {
   const contactId = event.target.dataset.contactId;
-  const result = await request.deleteContact(contactId);
 
-  // implement confirm contact deletion
+  if (window.confirm("Delete Contact?")) {
+    const result = await request.deleteContact(contactId);
 
-  const contactList = document.getElementById("contact-list");
-  const contactItem = contactList.querySelector(`li[data-contact-id="${contactId}"]`);
-  const previousSibling = contactItem.previousSibling;
-  contactItem.remove();
+    const contactList = document.getElementById("contact-list");
+    const contactItem = contactList.querySelector(`li[data-contact-id="${contactId}"]`);
+    const previousSibling = contactItem.previousSibling;
+    contactItem.remove();
 
-  // select previous, first or no contact
-  if (contactList.childNodes.length) {
-    let selectContactId;
-    if (previousSibling) {
-      selectContactId = previousSibling.dataset.contactId;
-      previousSibling.dataset.selected = "";
-    } else if (contactList.firstChild) {
-      selectContactId = contactList.firstChild.dataset.contactId;
-      contactList.firstChild.dataset.selected = "";
+    // select previous, first or no contact
+    if (contactList.childNodes.length) {
+      let selectContactId;
+      if (previousSibling) {
+        selectContactId = previousSibling.dataset.contactId;
+        previousSibling.dataset.selected = "";
+      } else if (contactList.firstChild) {
+        selectContactId = contactList.firstChild.dataset.contactId;
+        contactList.firstChild.dataset.selected = "";
+      }
+      const contactDetailsWrapper = document.getElementById("contact-detail-section");
+      const contactDetails = await getContactAddressEl(selectContactId);
+      contactDetailsWrapper.replaceChildren(contactDetails);
+    } else {
+      const contactDetailsWrapper = document.getElementById("contact-detail-section");
+      contactDetailsWrapper.innerHTML = "";
     }
-    const contactDetailsWrapper = document.getElementById("contact-detail-section");
-    const contactDetails = await getContactAddressEl(selectContactId);
-    contactDetailsWrapper.replaceChildren(contactDetails);
-  } else {
-    const contactDetailsWrapper = document.getElementById("contact-detail-section");
-    contactDetailsWrapper.innerHTML = "";
   }
 }
 
@@ -205,7 +257,7 @@ async function getContactAddressEl(id) {
 
   // display orders of contact
   const orders = await request.ordersByContact(id);
-  if (orders) {
+  if (orders.length) {
     const orderTitle = document.createElement("h2");
     orderTitle.innerHTML = "Orders";
     wrapper.appendChild(orderTitle);
@@ -239,18 +291,16 @@ async function getContactFormEl(id) {
   form.innerHTML = `<input type="hidden" id="edit-contact__id" name="id" value="${id}">
     <div>
       <label for="edit-contact__firstname">First name</label>
-      <input required type="text" pattern="[^0-9]*" name="firstname" id="edit-contact__firstname" placeholder="First name" value="${
+      <input required type="text" pattern="[^0-9]*" name="firstname" autocapitalize="words" id="edit-contact__firstname" placeholder="First name" value="${
         firstname ? firstname : ""
       }" />
     </div>
     <div>
       <label for="edit-contact__lastname">Last name</label>
-      <input required type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${
-        lastname ? lastname : ""
-      }" />
+      <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Last name" value="${lastname ? lastname : ""}" />
     </div>
     <div>
-      <label for="edit-contact__company">Company name</label>
+      <label for="edit-contact__company">Company</label>
       <input type="text" name="company" id="edit-contact__company" placeholder="Company" value="${company ? company : ""}" />
     </div>
     <div>

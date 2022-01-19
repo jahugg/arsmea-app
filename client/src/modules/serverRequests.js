@@ -20,9 +20,8 @@ export async function deleteContact(id) {
   }
 }
 
-export async function newContact() {
-  let defaultData = { firstname: "New Contact" };
-  let searchParams = new URLSearchParams(defaultData);
+export async function newContact(data) {
+  let searchParams = new URLSearchParams(data);
   const response = await fetch(`${process.env.SERVER}/api/contact`, {
     method: "POST",
     body: searchParams,

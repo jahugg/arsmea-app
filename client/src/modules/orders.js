@@ -7,10 +7,6 @@ export default async function () {
   module.innerHTML = `
     <div id="order-list-section">
         <button id="add-order-btn" type="button">Add Order</button>
-        <form action="${process.env.SERVER}/api/searchOrders" method="POST" id="search-order">
-            <label for="search-order__input">Search</label>
-            <input type="text" pattern="[^0-9]*" name="input" id="search-order__input" placeholder="Search"/>
-        </form>
         <div id="order-list-wrapper">
         </div>
     </div>
@@ -19,9 +15,6 @@ export default async function () {
 
   const addButton = module.querySelector("#add-order-btn");
   addButton.addEventListener("click", onPrepareNewOrder);
-
-  const searchInput = module.querySelector("#search-order__input");
-  searchInput.addEventListener("input", onSearchOrder);
 
   const orderListWrapper = module.querySelector("#order-list-wrapper");
   const orderList = await getOrderListEl();
@@ -66,10 +59,6 @@ async function selectOrder(id, node) {
   }
 }
 
-async function onSearchOrder(event) {
-  console.log("search orders...");
-}
-
 async function onPrepareNewOrder(event) {
   const orderDetailsWrapper = document.getElementById("order-detail-section");
   const wrapper = document.createElement("div");
@@ -104,7 +93,7 @@ async function onPrepareNewOrder(event) {
   discardBtn.type = "button";
   discardBtn.innerHTML = "Discard Order";
   discardBtn.id = "discard-order-btn";
-  discardBtn.addEventListener("click", onDiscardOrder);
+  discardBtn.addEventListener("click", () => selectOrder(0, document));
 
   wrapper.appendChild(form);
   wrapper.appendChild(discardBtn);
@@ -134,8 +123,11 @@ async function onPrepareNewOrder(event) {
       if (item.value === value) contactId = item.dataset.contactId;
     }
     contactIdInput.value = contactId;
-    if (contactIdInput.value == 0 && contactInput.value !== "") contactInput.dataset.newContact = "";
-    else delete contactInput.dataset.newContact;
+    if (contactIdInput.value == 0 && contactInput.value !== "") {
+      contactInput.parentNode.dataset.newContact = "";
+    } else {
+      delete contactInput.parentNode.dataset.newContact;
+    }
   });
 }
 
@@ -149,23 +141,7 @@ async function onCreateNewOrder(event) {
   const orderList = await getOrderListEl();
   orderListWrapper.replaceChildren(orderList);
 
-  const item = document.querySelector(`#order-list li[data-order-id="${id}"`);
-  item.dataset.selected = "";
-
-  const contactDetailsWrapper = document.getElementById("order-detail-section");
-  const form = await getOrderDetailsEl(id);
-  contactDetailsWrapper.replaceChildren(form);
-}
-
-async function onDiscardOrder(event) {
-  const orderList = document.querySelectorAll("#order-list li");
-  for (let item of orderList) delete item.dataset.selected;
-
-  const firstOrder = document.querySelector("#order-list li:first-child");
-  firstOrder.dataset.selected = "";
-  const orderDetailsWrapper = document.getElementById("order-detail-section");
-  const orderDetails = await getOrderDetailsEl(firstOrder.dataset.orderId);
-  orderDetailsWrapper.replaceChildren(orderDetails);
+  selectOrder(id, document);
 }
 
 async function onEditOrder(event) {
@@ -195,31 +171,32 @@ async function onUpdateOrder(event) {
 
 async function onDeleteOrder(event) {
   const orderId = event.target.dataset.orderId;
-  const result = await request.deleteOrder(orderId);
 
-  // implement confirm contact deletion
+  if (window.confirm("Delete Order?")) {
+    const result = await request.deleteOrder(orderId);
 
-  const orderList = document.getElementById("order-list");
-  const orderItem = orderList.querySelector(`li[data-order-id="${orderId}"]`);
-  const previousSibling = orderItem.previousSibling;
-  orderItem.remove();
+    const orderList = document.getElementById("order-list");
+    const orderItem = orderList.querySelector(`li[data-order-id="${orderId}"]`);
+    const previousSibling = orderItem.previousSibling;
+    orderItem.remove();
 
-  // select previous, first or no order
-  if (orderList.childNodes.length) {
-    let selectOrderId;
-    if (previousSibling) {
-      selectOrderId = previousSibling.dataset.orderId;
-      previousSibling.dataset.selected = "";
-    } else if (orderList.firstChild) {
-      selectOrderId = orderList.firstChild.dataset.orderId;
-      orderList.firstChild.dataset.selected = "";
+    // select previous, first or no order
+    if (orderList.childNodes.length) {
+      let selectOrderId;
+      if (previousSibling) {
+        selectOrderId = previousSibling.dataset.orderId;
+        previousSibling.dataset.selected = "";
+      } else if (orderList.firstChild) {
+        selectOrderId = orderList.firstChild.dataset.orderId;
+        orderList.firstChild.dataset.selected = "";
+      }
+      const orderDetailsWrapper = document.getElementById("order-detail-section");
+      const orderDetails = await getOrderDetailsEl(selectOrderId);
+      orderDetailsWrapper.replaceChildren(orderDetails);
+    } else {
+      const orderDetailsWrapper = document.getElementById("order-detail-section");
+      orderDetailsWrapper.innerHTML = "";
     }
-    const orderDetailsWrapper = document.getElementById("order-detail-section");
-    const orderDetails = await getOrderDetailsEl(selectOrderId);
-    orderDetailsWrapper.replaceChildren(orderDetails);
-  } else {
-    const orderDetailsWrapper = document.getElementById("order-detail-section");
-    orderDetailsWrapper.innerHTML = "";
   }
 }
 
@@ -283,7 +260,7 @@ async function getOrderFormEl(id) {
         <label for="edit-order__status">Status</label>
         <select id="edit-order__status" name="status">
             <option value="open">Open</option>
-            <option value="closed">Ready for Pickup</option>
+            <option value="ready">Ready</option>
             <option value="delivered">Delivered</option>
         </select>
     </div>
