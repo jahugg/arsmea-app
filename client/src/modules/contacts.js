@@ -145,7 +145,10 @@ async function onCreateNewContact(event) {
 async function onDeleteContact(event) {
   const contactId = event.target.dataset.contactId;
 
-  if (window.confirm("Delete Contact?")) {
+  const orders = await request.ordersByContact(contactId);
+  if (orders.length) {
+    alert(`Can't delete contact with orders.`);
+  } else if (window.confirm("Delete Contact?")) {
     const result = await request.deleteContact(contactId);
 
     const contactList = document.getElementById("contact-list");
@@ -297,7 +300,9 @@ async function getContactFormEl(id) {
     </div>
     <div>
       <label for="edit-contact__lastname">Last name</label>
-      <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Last name" value="${lastname ? lastname : ""}" />
+      <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Last name" value="${
+        lastname ? lastname : ""
+      }" />
     </div>
     <div>
       <label for="edit-contact__company">Company</label>

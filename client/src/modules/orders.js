@@ -71,7 +71,7 @@ async function onPrepareNewOrder(event) {
   form.innerHTML = `
     <div>
       <label for="new-order__contact">Client</label>
-      <input list="contact-list" name="contact" id="new-order__contact" autocomplete="off" required />
+      <input list="contact-list" name="contactName" id="new-order__contact" autocomplete="off" required />
       <datalist id="contact-list"></datalist>
       <input type="hidden" name="contactId" id="contact-id" value="0">
     </div>
@@ -209,7 +209,7 @@ async function getOrderListEl(searchString) {
     const { id, datetime_due, status, firstname, lastname } = item;
     let el = document.createElement("li");
     el.dataset.orderId = id;
-    el.innerHTML = `${datetime_due} ${firstname} ${lastname} ${status}`;
+    el.innerHTML = `${datetime_due} ${firstname} ${lastname ? lastname : ""} ${status}`;
     el.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId, document));
     list.appendChild(el);
   }
@@ -221,7 +221,7 @@ async function getOrderDetailsEl(id) {
   let { datetime_placed, datetime_due, price, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
   const wrapper = document.createElement("div");
   wrapper.id = "order-details";
-  wrapper.innerHTML = `<a href="/contacts?id=${contact_id}">${firstname} ${lastname}</a><br>
+  wrapper.innerHTML = `<a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ""}</a><br>
   Placed: ${datetime_placed}<br>
   Due: ${datetime_due}<br>
   ${price ? price + " CHF<br>" : ""}

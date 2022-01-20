@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import DbService from "./sqliteService.js";
+import dbService from "./sqliteService.js";
 dotenv.config();
 const app = express();
-const db = new DbService();
+const db = new dbService();
 
 app.use(cors());
 app.use(express.json());
@@ -35,8 +35,15 @@ app.post("/api/updateContact/:id", async (request, response) => {
 
 app.delete("/api/contact/:id", async (request, response) => {
   const { id } = request.params;
-  const result = await db.deleteContact(id);
-  response.json({ success: result });
+  // check if contact has open orders
+  const orderList = await db.selectOrdersByContactId(id);
+  if (orderList.length) {
+    console.log("Deletion aborted. Contact with orders.");
+    response.json({ success: "failed" });
+  } else {
+    const result = await db.deleteContact(id);
+    response.json({ success: result });
+  }
 });
 
 app.get("/api/searchContacts/:string", async (request, response) => {
@@ -47,9 +54,16 @@ app.get("/api/searchContacts/:string", async (request, response) => {
 
 app.post("/api/order", async (request, response) => {
   const data = request.body;
-  const { contactId } = data;
+  const { contactName, contactId } = data;
+  // optionally create new contact
   if (contactId == 0) {
-    console.log("create a new contact before proceeding");
+    let nameParts = contactName.split(" ");
+    let userData = { firstname: nameParts[0] };
+    if (nameParts.length > 1) {
+      userData.lastname = nameParts[1];
+    }
+    const newContactId = await db.insertContact(userData);
+    data.contactId = newContactId;
   }
   const orderId = await db.insertOrder(data);
   response.json({ id: orderId });
