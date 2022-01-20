@@ -7,10 +7,10 @@ export default async function () {
   module.innerHTML = `
     <div id="contact-list-section">
       <button id="add-contact-btn" type="button">Add Contact</button>
-      <form action="${process.env.SERVER}/api/searchContacts" method="POST" id="search-contact">
+      <div>
         <label for="search-contact__input">Search</label>
-        <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Search"/>
-      </form>
+        <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Mustafa"/>
+      </div>
       <div id="contact-list-wrapper">
       </div>
     </div>
@@ -94,11 +94,11 @@ async function onPrepareNewContact(event) {
   </div>
   <div>
     <label for="new-contact__company">Company</label>
-    <input type="text" name="company" id="new-contact__company" placeholder="Märchen AG"/>
+    <input type="text" name="company" id="new-contact__company" placeholder="Märchen Inc."/>
   </div>
   <div>
     <label for="new-contact__address">Address</label>
-    <textarea name="address" form="new-contact" name="address" id="new-contact__address" placeholder="Musterweg 34"></textarea>
+    <textarea name="address" form="new-contact" name="address" id="new-contact__address" placeholder="Musterweg 34&#10;1234 Moon"></textarea>
   </div>
   <div>
     <label for="new-contact__email">Email</label>
@@ -106,7 +106,7 @@ async function onPrepareNewContact(event) {
   </div>
   <div>
     <label for="new-contact__phone">Phone</label>
-    <input type="tel" name="phone" id="new-contact__phone" placeholder="+41 078 24 29" />
+    <input type="tel" name="phone" id="new-contact__phone" placeholder="+41 XXX XX XX" />
   </div>
   <div>
     <label for="new-contact__notes">Notes</label>
@@ -145,10 +145,7 @@ async function onCreateNewContact(event) {
 async function onDeleteContact(event) {
   const contactId = event.target.dataset.contactId;
 
-  const orders = await request.ordersByContact(contactId);
-  if (orders.length) {
-    alert(`Can't delete contact with orders.`);
-  } else if (window.confirm("Delete Contact?")) {
+  if (window.confirm("Delete Contact?")) {
     const result = await request.deleteContact(contactId);
 
     const contactList = document.getElementById("contact-list");
@@ -174,6 +171,10 @@ async function onDeleteContact(event) {
       contactDetailsWrapper.innerHTML = "";
     }
   }
+}
+
+async function onArchiveContact(event) {
+  console.log("archive contact");
 }
 
 async function onSearchContact(event) {
@@ -294,13 +295,13 @@ async function getContactFormEl(id) {
   form.innerHTML = `<input type="hidden" id="edit-contact__id" name="id" value="${id}">
     <div>
       <label for="edit-contact__firstname">First name</label>
-      <input required type="text" pattern="[^0-9]*" name="firstname" autocapitalize="words" id="edit-contact__firstname" placeholder="First name" value="${
+      <input required type="text" pattern="[^0-9]*" name="firstname" autocapitalize="words" id="edit-contact__firstname" placeholder="Mustafa" value="${
         firstname ? firstname : ""
       }" />
     </div>
     <div>
       <label for="edit-contact__lastname">Last name</label>
-      <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Last name" value="${
+      <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Schmied" value="${
         lastname ? lastname : ""
       }" />
     </div>
@@ -328,15 +329,26 @@ async function getContactFormEl(id) {
     </div>
     <input type="submit" value="Done"/>`;
 
-  const deleteBtn = document.createElement("button");
-  deleteBtn.type = "button";
-  deleteBtn.innerHTML = "Delete Contact";
-  deleteBtn.id = "delete-contact-btn";
-  deleteBtn.dataset.contactId = id;
-  deleteBtn.addEventListener("click", onDeleteContact);
+  const archiveBtn = document.createElement("button");
+  archiveBtn.type = "button";
+  archiveBtn.innerHTML = "Archive Contact";
+  archiveBtn.id = "archive-contact-btn";
+  archiveBtn.dataset.contactId = id;
+  archiveBtn.addEventListener("click", onArchiveContact);
 
   wrapper.appendChild(form);
-  wrapper.appendChild(deleteBtn);
+  wrapper.appendChild(archiveBtn);
+
+  const orders = await request.ordersByContact(id);
+  if (!orders.length) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.innerHTML = "Delete Contact";
+    deleteBtn.id = "delete-contact-btn";
+    deleteBtn.dataset.contactId = id;
+    deleteBtn.addEventListener("click", onDeleteContact);
+    wrapper.appendChild(deleteBtn);
+  }
 
   return wrapper;
 }
