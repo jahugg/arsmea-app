@@ -32,6 +32,11 @@ form {
   #contact-list li[data-selected] {
     background: powderblue;
   }
+
+  #delete-contact-btn[disabled="true"]::after {
+    color: red;
+    content: " (orders)";
+  }
 }
 
 #order {

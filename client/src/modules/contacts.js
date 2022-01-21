@@ -50,8 +50,9 @@ async function selectContact(id, node) {
     }
   }
 
+  const detailsWrapper = node.querySelector("#contact-detail-section");
+
   if (contactDetails) {
-    const detailsWrapper = node.querySelector("#contact-detail-section");
     detailsWrapper.replaceChildren(contactDetails);
 
     for (let item of list.children)
@@ -63,7 +64,24 @@ async function selectContact(id, node) {
     url.searchParams.set("id", id);
     const state = { contact_id: id };
     window.history.replaceState(state, "", url);
+  } else {
+    detailsWrapper.innerHTML = "";
   }
+}
+
+async function removeContact(id) {
+  const contactList = document.getElementById("contact-list");
+  const contactItem = contactList.querySelector(`li[data-contact-id="${id}"]`);
+  const previousSibling = contactItem.previousSibling;
+  contactItem.remove();
+
+  // select previous, first or no contact
+  let selectContactId;
+  if (contactList.childNodes.length) {
+    if (previousSibling) selectContactId = previousSibling.dataset.contactId;
+    else if (contactList.firstChild) selectContactId = contactList.firstChild.dataset.contactId;
+  }
+  selectContact(selectContactId, document);
 }
 
 async function onEditContact(event) {
@@ -147,34 +165,27 @@ async function onDeleteContact(event) {
 
   if (window.confirm("Delete Contact?")) {
     const result = await request.deleteContact(contactId);
-
-    const contactList = document.getElementById("contact-list");
-    const contactItem = contactList.querySelector(`li[data-contact-id="${contactId}"]`);
-    const previousSibling = contactItem.previousSibling;
-    contactItem.remove();
-
-    // select previous, first or no contact
-    if (contactList.childNodes.length) {
-      let selectContactId;
-      if (previousSibling) {
-        selectContactId = previousSibling.dataset.contactId;
-        previousSibling.dataset.selected = "";
-      } else if (contactList.firstChild) {
-        selectContactId = contactList.firstChild.dataset.contactId;
-        contactList.firstChild.dataset.selected = "";
-      }
-      const contactDetailsWrapper = document.getElementById("contact-detail-section");
-      const contactDetails = await getContactAddressEl(selectContactId);
-      contactDetailsWrapper.replaceChildren(contactDetails);
-    } else {
-      const contactDetailsWrapper = document.getElementById("contact-detail-section");
-      contactDetailsWrapper.innerHTML = "";
-    }
+    removeContact(contactId);
   }
 }
 
 async function onArchiveContact(event) {
-  console.log("archive contact");
+  const id = event.target.dataset.contactId;
+  const data = new URLSearchParams({ id: id, archived: 1 });
+  let response = await request.updateContact(id, data);
+  removeContact(id);
+}
+
+async function onRestoreContact(event) {
+  const id = event.target.dataset.contactId;
+  const data = new URLSearchParams({ id: id, archived: 0 });
+  let response = await request.updateContact(id, data);
+
+  const contactListWrapper = document.getElementById("contact-list-wrapper");
+  const contactList = await getContactListEl();
+  contactListWrapper.replaceChildren(contactList);
+
+  selectContact(id, document);
 }
 
 async function onSearchContact(event) {
@@ -198,8 +209,6 @@ async function onUpdateContact(event) {
   event.preventDefault();
   const data = new URLSearchParams(new FormData(event.target));
   const contactId = data.get("id");
-  // pass as FORM DATA directly...?
-  // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#body
   let response = await request.updateContact(contactId, data);
 
   const contactListWrapper = document.getElementById("contact-list-wrapper");
@@ -234,7 +243,7 @@ async function getContactListEl(searchString) {
 
 async function getContactAddressEl(id) {
   let data = await request.contactDetails(id);
-  const { firstname, lastname, company, address, email, phone, notes } = data;
+  const { firstname, lastname, company, address, email, phone, notes, archived } = data;
 
   const wrapper = document.createElement("div");
   const contactDetails = document.createElement("div");
@@ -248,16 +257,29 @@ async function getContactAddressEl(id) {
   if (email) addressNode.innerHTML += `<div class="address__email"<a href="mailto:${email}">${email}</a></div>`;
   if (notes) addressNode.innerHTML += `<div class="address__notes">${notes}</div>`;
 
-  const editBtn = document.createElement("button");
-  editBtn.type = "button";
-  editBtn.id = "edit-btn";
-  editBtn.innerHTML = "Edit";
-  editBtn.dataset.contactId = id;
-  editBtn.addEventListener("click", onEditContact);
-
   contactDetails.appendChild(addressNode);
-  contactDetails.appendChild(editBtn);
   wrapper.appendChild(contactDetails);
+
+  if (archived) {
+    contactDetails.dataset.archived = "true"
+
+    const restoreBtn = document.createElement("button");
+    restoreBtn.type = "button";
+    restoreBtn.innerHTML = "Restore Contact";
+    restoreBtn.id = "restore-contact-btn";
+    restoreBtn.dataset.contactId = id;
+    restoreBtn.addEventListener("click", onRestoreContact);
+    contactDetails.appendChild(restoreBtn);
+
+  } else {
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.id = "edit-btn";
+    editBtn.innerHTML = "Edit";
+    editBtn.dataset.contactId = id;
+    editBtn.addEventListener("click", onEditContact);
+    contactDetails.appendChild(editBtn);
+  }
 
   // display orders of contact
   const orders = await request.ordersByContact(id);
@@ -327,7 +349,17 @@ async function getContactFormEl(id) {
       <label for="edit-contact__notes">Notes</label>
       <textarea name="notes" id="edit-contact__notes" placeholder="Notes">${notes ? notes : ""}</textarea>
     </div>
-    <input type="submit" value="Done"/>`;
+    <input type="submit" value="Save Changes"/>`;
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
+  deleteBtn.innerHTML = "Delete Contact";
+  deleteBtn.id = "delete-contact-btn";
+  deleteBtn.dataset.contactId = id;
+  deleteBtn.addEventListener("click", onDeleteContact);
+
+  const orders = await request.ordersByContact(id);
+  if (orders.length) deleteBtn.setAttribute("disabled", "true");
 
   const archiveBtn = document.createElement("button");
   archiveBtn.type = "button";
@@ -337,18 +369,8 @@ async function getContactFormEl(id) {
   archiveBtn.addEventListener("click", onArchiveContact);
 
   wrapper.appendChild(form);
+  wrapper.appendChild(deleteBtn);
   wrapper.appendChild(archiveBtn);
-
-  const orders = await request.ordersByContact(id);
-  if (!orders.length) {
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.innerHTML = "Delete Contact";
-    deleteBtn.id = "delete-contact-btn";
-    deleteBtn.dataset.contactId = id;
-    deleteBtn.addEventListener("click", onDeleteContact);
-    wrapper.appendChild(deleteBtn);
-  }
 
   return wrapper;
 }

@@ -30,7 +30,7 @@ export default class {
 
   async selectAllContacts() {
     try {
-      const query = this.db.prepare("SELECT id, firstname, lastname FROM contacts ORDER BY lastname");
+      const query = this.db.prepare("SELECT id, firstname, lastname FROM contacts WHERE archived = 0 ORDER BY lastname");
       const contactList = query.all();
       return contactList;
     } catch (error) {
@@ -39,12 +39,25 @@ export default class {
   }
 
   async updateContact(data) {
+    const id = data.id;
+    delete data.id;
+
+    // delete empty entries
+    Object.keys(data).forEach((key) => !data[key] && data[key] !== undefined && delete data[key]);
+    const dataKeys = Object.keys(data);
+    const dataValues = Object.values(data);
+
+    // cunstruct query string
+    let queryString = "UPDATE contacts SET ";
+    dataKeys.forEach((key, i) => {
+      if (i !== 0) queryString += `, `;
+      queryString += `${key} = ?`;
+    });
+    queryString += ` WHERE id = ${id}`;
+
     try {
-      const { id, firstname, lastname, company, address, email, phone, notes } = data;
-      const query = this.db.prepare(
-        "UPDATE contacts SET firstname = ?, lastname = ?, company = ?, address = ?, email = ?, phone = ?, notes = ? WHERE id = ?"
-      );
-      const result = query.run(firstname, lastname, company, address, email, phone, notes, id);
+      const query = this.db.prepare(queryString);
+      const result = query.run(dataValues);
       return result;
     } catch (error) {
       console.log(error);
