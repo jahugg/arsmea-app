@@ -27,6 +27,11 @@ app.get("/api/contactList", async (request, response) => {
   response.json(contactList);
 });
 
+app.get("/api/contactListArchived", async (request, response) => {
+  const contactList = await db.selectArchivedContacts();
+  response.json(contactList);
+});
+
 app.post("/api/updateContact/:id", async (request, response) => {
   const data = request.body;
   const result = await db.updateContact(data);

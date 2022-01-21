@@ -1,7 +1,11 @@
-export async function contacts(searchString) {
+export async function contacts(searchString, archived = false) {
   let response;
-  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
-  else response = await fetch(`${process.env.SERVER}/api/contactList`);
+  if (archived) {
+    response = await fetch(`${process.env.SERVER}/api/contactListArchived`);
+  } else {
+    if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
+    else response = await fetch(`${process.env.SERVER}/api/contactList`);
+  }
   return await response.json();
 }
 
@@ -46,9 +50,9 @@ export async function newOrder(data) {
   return await response.json();
 }
 
-export async function orders(searchString) {
+export async function orders(contactId) {
   let response;
-  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchOrdersByContactId/${searchString}`);
+  if (contactId) response = await fetch(`${process.env.SERVER}/api/searchOrdersByContactId/${contactId}`);
   else response = await fetch(`${process.env.SERVER}/api/orderList`);
   return await response.json();
 }

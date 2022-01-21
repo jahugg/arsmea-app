@@ -31,6 +31,16 @@ export default async function () {
   let contactId = url.searchParams.get("id");
   selectContact(contactId, module);
 
+  const archivedContacts = await request.contacts(undefined, true);
+  if (archivedContacts.length) {
+    const archivedBtn = document.createElement("button");
+    archivedBtn.type = "button";
+    archivedBtn.innerHTML = "Show Archived";
+    archivedBtn.id = "show-archived-btn";
+    archivedBtn.addEventListener("click", onShowArchived);
+    module.appendChild(archivedBtn);
+  }
+
   return module;
 }
 
@@ -82,6 +92,14 @@ async function removeContact(id) {
     else if (contactList.firstChild) selectContactId = contactList.firstChild.dataset.contactId;
   }
   selectContact(selectContactId, document);
+}
+
+async function onShowArchived(event) {
+  const contactListWrapper = document.getElementById("contact-list-wrapper");
+  const contactList = await getContactListEl(undefined, true);
+  contactListWrapper.replaceChildren(contactList);
+
+  selectContact(0, document);
 }
 
 async function onEditContact(event) {
@@ -223,8 +241,8 @@ async function onUpdateContact(event) {
   contactDetailsWrapper.replaceChildren(address);
 }
 
-async function getContactListEl(searchString) {
-  let contacts = await request.contacts(searchString);
+async function getContactListEl(searchString, archived = false) {
+  let contacts = await request.contacts(searchString, archived);
   const list = document.createElement("ul");
   list.id = "contact-list";
 
@@ -234,7 +252,6 @@ async function getContactListEl(searchString) {
     el.dataset.contactId = id;
     el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
     el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId, document));
-    // el.addEventListener("click", onSelectContact);
     list.appendChild(el);
   }
 
@@ -261,7 +278,7 @@ async function getContactAddressEl(id) {
   wrapper.appendChild(contactDetails);
 
   if (archived) {
-    contactDetails.dataset.archived = "true"
+    contactDetails.dataset.archived = "true";
 
     const restoreBtn = document.createElement("button");
     restoreBtn.type = "button";
@@ -270,7 +287,6 @@ async function getContactAddressEl(id) {
     restoreBtn.dataset.contactId = id;
     restoreBtn.addEventListener("click", onRestoreContact);
     contactDetails.appendChild(restoreBtn);
-
   } else {
     const editBtn = document.createElement("button");
     editBtn.type = "button";

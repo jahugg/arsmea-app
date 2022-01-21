@@ -38,6 +38,16 @@ export default class {
     }
   }
 
+  async selectArchivedContacts() {
+    try {
+      const query = this.db.prepare("SELECT id, firstname, lastname FROM contacts WHERE archived = 1 ORDER BY lastname");
+      const contactList = query.all();
+      return contactList;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async updateContact(data) {
     const id = data.id;
     delete data.id;
