@@ -1,5 +1,7 @@
 import * as request from "./serverRequests";
 
+let contacts;
+
 export default async function render() {
   const module = document.createElement("div");
   module.classList.add("module");
@@ -28,14 +30,6 @@ export default async function render() {
   const contactList = await getContactListEl();
   contactListWrapper.appendChild(contactList);
 
-  const archivedContacts = await request.contacts(undefined, true);
-  if (archivedContacts.length) {
-    const archivedBtn = module.querySelector("#show-archived-btn");
-    archivedBtn.removeAttribute("hidden");
-    archivedBtn.innerHTML = `Show Archived (${archivedContacts.length})`;
-    archivedBtn.addEventListener("click", onShowArchived);
-  }
-
   return module;
 }
 
@@ -43,6 +37,25 @@ export function init() {
   const url = new URL(window.location);
   let contactId = url.searchParams.get("id");
   selectContact(contactId);
+}
+
+async function getContactListEl() {
+  contacts = await request.contacts();
+
+  const list = document.createElement("ul");
+  list.id = "contact-list";
+
+  for (let data of contacts) {
+    const { id, firstname, lastname, archived } = data;
+    let el = document.createElement("li");
+    el.dataset.contactId = id;
+    archived ? (el.dataset.archived = true) : "";
+    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
+    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
+    list.appendChild(el);
+  }
+
+  return list;
 }
 
 async function selectContact(id) {
@@ -53,9 +66,9 @@ async function selectContact(id) {
     // get contact details
     contactDetails = await getContactAddressEl(id);
   } catch (error) {
-    // select first list item if any
-    if (list.firstChild) {
-      const firstItem = list.firstChild;
+    // select first visible list item if any
+    const firstItem = list.querySelector('li:not([data-archived]):not([data-filtered])');
+    if (firstItem) {
       id = firstItem.dataset.contactId;
       contactDetails = await getContactAddressEl(id);
     }
@@ -210,18 +223,16 @@ async function onRestoreContact(event) {
 async function onSearchContact(event) {
   const searchString = event.target.value;
 
-  const contactListWrapper = document.getElementById("contact-list-wrapper");
-  const contactList = await getContactListEl(searchString);
-  contactListWrapper.replaceChildren(contactList);
+  const contactListItems = document.querySelectorAll("#contact-list li");
+  for (const item of contactListItems) item.dataset.filtered = '';
 
-  const firstChild = contactList.firstChild;
-  if (firstChild) {
-    firstChild.dataset.selected = "";
-
-    const contactDetailsWrapper = document.getElementById("contact-detail-section");
-    const address = await getContactAddressEl(firstChild.dataset.contactId);
-    contactDetailsWrapper.replaceChildren(address);
+  const searchResults = contacts.filter((item) => `${item.firstname.toLowerCase()} ${item.lastname.toLowerCase()}`.includes(searchString.toLowerCase()));
+  for (const item of searchResults) {
+    const contactListItem = document.querySelector(`#contact-list li[data-contact-id="${item.id}"]`);
+    if(contactListItem) delete contactListItem.dataset.filtered;
   }
+
+  selectContact(0);
 }
 
 async function onUpdateContact(event) {
@@ -240,23 +251,6 @@ async function onUpdateContact(event) {
   const contactDetailsWrapper = document.getElementById("contact-detail-section");
   const address = await getContactAddressEl(contactId);
   contactDetailsWrapper.replaceChildren(address);
-}
-
-async function getContactListEl(searchString, archived = false) {
-  let contacts = await request.contacts(searchString, archived);
-  const list = document.createElement("ul");
-  list.id = "contact-list";
-
-  for (let data of contacts) {
-    const { id, firstname, lastname } = data;
-    let el = document.createElement("li");
-    el.dataset.contactId = id;
-    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
-    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
-    list.appendChild(el);
-  }
-
-  return list;
 }
 
 async function getContactAddressEl(id) {

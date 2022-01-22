@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 
-export default class {
+export default class DBService{
   static db;
   constructor() {
     this.db = this.db ? this.db : new Database("./database.db");
@@ -30,7 +30,7 @@ export default class {
 
   async selectAllContacts() {
     try {
-      const query = this.db.prepare("SELECT id, firstname, lastname FROM contacts WHERE archived = 0 ORDER BY lastname");
+      const query = this.db.prepare("SELECT id, firstname, lastname, archived FROM contacts ORDER BY lastname");
       const contactList = query.all();
       return contactList;
     } catch (error) {
