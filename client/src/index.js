@@ -49,6 +49,7 @@ async function buildPage(stateObj, addToHistory) {
   const module = await page.module;
   const content = await module.default();
   target.appendChild(content);
+  module.init?.();
 
   // add title
   const header = document.getElementsByTagName("HEADER")[0];

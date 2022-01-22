@@ -1,11 +1,12 @@
 import * as request from "./serverRequests";
 
-export default async function () {
+export default async function render() {
   const module = document.createElement("div");
   module.classList.add("module");
   module.id = "contact";
   module.innerHTML = `
     <div id="contact-list-section">
+      <button id="show-archived-btn" type="button" hidden>Show Archive</button>
       <button id="add-contact-btn" type="button">Add Contact</button>
       <div>
         <label for="search-contact__input">Search</label>
@@ -27,25 +28,25 @@ export default async function () {
   const contactList = await getContactListEl();
   contactListWrapper.appendChild(contactList);
 
-  const url = new URL(window.location);
-  let contactId = url.searchParams.get("id");
-  selectContact(contactId, module);
-
   const archivedContacts = await request.contacts(undefined, true);
   if (archivedContacts.length) {
-    const archivedBtn = document.createElement("button");
-    archivedBtn.type = "button";
-    archivedBtn.innerHTML = "Show Archived";
-    archivedBtn.id = "show-archived-btn";
+    const archivedBtn = module.querySelector("#show-archived-btn");
+    archivedBtn.removeAttribute("hidden");
+    archivedBtn.innerHTML = `Show Archived (${archivedContacts.length})`;
     archivedBtn.addEventListener("click", onShowArchived);
-    module.appendChild(archivedBtn);
   }
 
   return module;
 }
 
-async function selectContact(id, node) {
-  const list = node.querySelector("#contact-list");
+export function init() {
+  const url = new URL(window.location);
+  let contactId = url.searchParams.get("id");
+  selectContact(contactId);
+}
+
+async function selectContact(id) {
+  const list = document.querySelector("#contact-list");
   let contactDetails = "";
 
   try {
@@ -60,7 +61,7 @@ async function selectContact(id, node) {
     }
   }
 
-  const detailsWrapper = node.querySelector("#contact-detail-section");
+  const detailsWrapper = document.querySelector("#contact-detail-section");
 
   if (contactDetails) {
     detailsWrapper.replaceChildren(contactDetails);
@@ -91,7 +92,7 @@ async function removeContact(id) {
     if (previousSibling) selectContactId = previousSibling.dataset.contactId;
     else if (contactList.firstChild) selectContactId = contactList.firstChild.dataset.contactId;
   }
-  selectContact(selectContactId, document);
+  selectContact(selectContactId);
 }
 
 async function onShowArchived(event) {
@@ -99,7 +100,7 @@ async function onShowArchived(event) {
   const contactList = await getContactListEl(undefined, true);
   contactListWrapper.replaceChildren(contactList);
 
-  selectContact(0, document);
+  selectContact(0);
 }
 
 async function onEditContact(event) {
@@ -154,7 +155,7 @@ async function onPrepareNewContact(event) {
   discardBtn.type = "button";
   discardBtn.innerHTML = "Discard Contact";
   discardBtn.id = "discard-contact-btn";
-  discardBtn.addEventListener("click", () => selectContact(0, document));
+  discardBtn.addEventListener("click", () => selectContact(0));
 
   wrapper.appendChild(form);
   wrapper.appendChild(discardBtn);
@@ -175,7 +176,7 @@ async function onCreateNewContact(event) {
   const contactListWrapper = document.getElementById("contact-list-wrapper");
   const contactList = await getContactListEl();
   contactListWrapper.replaceChildren(contactList);
-  selectContact(id, document);
+  selectContact(id);
 }
 
 async function onDeleteContact(event) {
@@ -203,7 +204,7 @@ async function onRestoreContact(event) {
   const contactList = await getContactListEl();
   contactListWrapper.replaceChildren(contactList);
 
-  selectContact(id, document);
+  selectContact(id);
 }
 
 async function onSearchContact(event) {
@@ -251,7 +252,7 @@ async function getContactListEl(searchString, archived = false) {
     let el = document.createElement("li");
     el.dataset.contactId = id;
     el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
-    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId, document));
+    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
     list.appendChild(el);
   }
 

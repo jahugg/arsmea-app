@@ -1,4 +1,4 @@
-export default function() {
+export default function render() {
   const module = document.createElement("div");
   module.classList.add("module");
   module.id = "contact";

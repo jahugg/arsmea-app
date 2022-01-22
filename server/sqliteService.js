@@ -86,7 +86,7 @@ export default class {
 
   async searchContacts(string) {
     try {
-      const query = this.db.prepare("SELECT * FROM contacts WHERE firstname LIKE ? OR lastname LIKE ?");
+      const query = this.db.prepare("SELECT * FROM contacts WHERE archived = 1 AND firstname LIKE ? OR lastname LIKE ?");
       const contactList = query.all(`%${string}%`, `%${string}%`);
       return contactList;
     } catch (error) {

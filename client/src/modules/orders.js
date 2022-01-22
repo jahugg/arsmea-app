@@ -1,6 +1,6 @@
 import * as request from "./serverRequests";
 
-export default async function () {
+export default async function render() {
   const module = document.createElement("div");
   module.classList.add("module");
   module.id = "order";
@@ -20,15 +20,17 @@ export default async function () {
   const orderList = await getOrderListEl();
   orderListWrapper.appendChild(orderList);
 
-  const url = new URL(window.location);
-  let orderId = url.searchParams.get("id");
-  selectOrder(orderId, module);
-
   return module;
 }
 
-async function selectOrder(id, node) {
-  const list = node.querySelector("#order-list");
+export function init() {
+  const url = new URL(window.location);
+  let orderId = url.searchParams.get("id");
+  selectOrder(orderId);
+}
+
+async function selectOrder(id) {
+  const list = document.querySelector("#order-list");
   let orderDetails = "";
 
   try {
@@ -44,7 +46,7 @@ async function selectOrder(id, node) {
   }
 
   if (orderDetails) {
-    const detailsWrapper = node.querySelector("#order-detail-section");
+    const detailsWrapper = document.querySelector("#order-detail-section");
     detailsWrapper.replaceChildren(orderDetails);
 
     for (let item of list.children)
@@ -93,7 +95,7 @@ async function onPrepareNewOrder(event) {
   discardBtn.type = "button";
   discardBtn.innerHTML = "Discard Order";
   discardBtn.id = "discard-order-btn";
-  discardBtn.addEventListener("click", () => selectOrder(0, document));
+  discardBtn.addEventListener("click", () => selectOrder(0));
 
   wrapper.appendChild(form);
   wrapper.appendChild(discardBtn);
@@ -141,7 +143,7 @@ async function onCreateNewOrder(event) {
   const orderList = await getOrderListEl();
   orderListWrapper.replaceChildren(orderList);
 
-  selectOrder(id, document);
+  selectOrder(id);
 }
 
 async function onEditOrder(event) {
@@ -210,7 +212,7 @@ async function getOrderListEl(searchString) {
     let el = document.createElement("li");
     el.dataset.orderId = id;
     el.innerHTML = `${datetime_due} ${firstname} ${lastname ? lastname : ""} ${status}`;
-    el.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId, document));
+    el.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
     list.appendChild(el);
   }
 
