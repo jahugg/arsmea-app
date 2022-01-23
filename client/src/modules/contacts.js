@@ -8,12 +8,17 @@ export default async function render() {
   module.id = "contact";
   module.innerHTML = `
     <div id="contact-list-section">
-      <button id="show-archived-btn" type="button" hidden>Show Archive</button>
+
       <button id="add-contact-btn" type="button">Add Contact</button>
-      <div>
-        <label for="search-contact__input">Search</label>
-        <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Mustafa"/>
+
+      <label for="search-contact__input">Search</label>
+      <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Mustafa"/>
+
+      <div id="archive-toggle-wrapper" hidden>
+        <input type="checkbox" id="archive-toggle">
+        <label for="archive-toggle">Archived</label>
       </div>
+
       <div id="contact-list-wrapper">
       </div>
     </div>
@@ -26,36 +31,18 @@ export default async function render() {
   const searchInput = module.querySelector("#search-contact__input");
   searchInput.addEventListener("input", onSearchContact);
 
-  const contactListWrapper = module.querySelector("#contact-list-wrapper");
-  const contactList = await getContactListEl();
-  contactListWrapper.appendChild(contactList);
+  const archiveToggle = module.querySelector("#archive-toggle");
+  archiveToggle.addEventListener("input", onShowArchived);
 
   return module;
 }
 
-export function init() {
+export async function init() {
+  await refreshContactList();
+
   const url = new URL(window.location);
   let contactId = url.searchParams.get("id");
   selectContact(contactId);
-}
-
-async function getContactListEl() {
-  contacts = await request.contacts();
-
-  const list = document.createElement("ul");
-  list.id = "contact-list";
-
-  for (let data of contacts) {
-    const { id, firstname, lastname, archived } = data;
-    let el = document.createElement("li");
-    el.dataset.contactId = id;
-    archived ? (el.dataset.archived = true) : "";
-    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
-    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
-    list.appendChild(el);
-  }
-
-  return list;
 }
 
 async function selectContact(id) {
@@ -67,9 +54,16 @@ async function selectContact(id) {
     contactDetails = await getContactAddressEl(id);
   } catch (error) {
     // select first visible list item if any
-    const firstItem = list.querySelector('li:not([data-archived]):not([data-filtered])');
-    if (firstItem) {
-      id = firstItem.dataset.contactId;
+    const items = list.querySelectorAll("li");
+    let firstVisibleItem;
+    for (const item of items) {
+      if (item.offsetParent !== null) {
+        firstVisibleItem = item;
+        break;
+      }
+    }
+    if (firstVisibleItem) {
+      id = firstVisibleItem.dataset.contactId;
       contactDetails = await getContactAddressEl(id);
     }
   }
@@ -88,30 +82,62 @@ async function selectContact(id) {
     url.searchParams.set("id", id);
     const state = { contact_id: id };
     window.history.replaceState(state, "", url);
-  } else {
-    detailsWrapper.innerHTML = "";
-  }
+  } else detailsWrapper.innerHTML = "";
 }
 
-async function removeContact(id) {
+async function hideContact(id) {
   const contactList = document.getElementById("contact-list");
   const contactItem = contactList.querySelector(`li[data-contact-id="${id}"]`);
-  const previousSibling = contactItem.previousSibling;
-  contactItem.remove();
+  contactItem.dataset.archived = "true";
 
   // select previous, first or no contact
   let selectContactId;
   if (contactList.childNodes.length) {
+    const previousSibling = contactItem.previousSibling;
     if (previousSibling) selectContactId = previousSibling.dataset.contactId;
     else if (contactList.firstChild) selectContactId = contactList.firstChild.dataset.contactId;
   }
   selectContact(selectContactId);
 }
 
-async function onShowArchived(event) {
-  const contactListWrapper = document.getElementById("contact-list-wrapper");
-  const contactList = await getContactListEl(undefined, true);
+async function refreshContactList() {
+  contacts = await request.contacts();
+
+  const contactListWrapper = document.querySelector("#contact-list-wrapper");
+  const contactList = document.createElement("ul");
+  contactList.id = "contact-list";
+
+  let archiveCount = 0;
+
+  for (let data of contacts) {
+    const { id, firstname, lastname, archived } = data;
+    let el = document.createElement("li");
+    el.dataset.contactId = id;
+    if (archived) {
+      el.dataset.archived = true;
+      archiveCount ++;
+    }
+    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
+    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
+    contactList.appendChild(el);
+  }
+
   contactListWrapper.replaceChildren(contactList);
+
+  let archiveToggle = document.getElementById("archive-toggle-wrapper");
+  if (archiveCount) {
+    archiveToggle.removeAttribute("hidden");
+    archiveToggle.querySelector("label").innerHTML = `Archive (${archiveCount})`
+  } else {
+    delete contactListWrapper.dataset.archive;
+    archiveToggle.setAttribute("hidden", true);
+  }
+}
+
+async function onShowArchived(event) {
+  const checked = event.target.checked;
+  const wrapper = document.getElementById("contact-list-wrapper").dataset;
+  checked ? (wrapper.archive = "") : delete wrapper.archive;
 
   selectContact(0);
 }
@@ -186,9 +212,7 @@ async function onCreateNewContact(event) {
   const response = await request.newContact(data);
   const id = response.id;
 
-  const contactListWrapper = document.getElementById("contact-list-wrapper");
-  const contactList = await getContactListEl();
-  contactListWrapper.replaceChildren(contactList);
+  await refreshContactList();
   selectContact(id);
 }
 
@@ -197,7 +221,7 @@ async function onDeleteContact(event) {
 
   if (window.confirm("Delete Contact?")) {
     const result = await request.deleteContact(contactId);
-    removeContact(contactId);
+    hideContact(contactId);
   }
 }
 
@@ -205,7 +229,8 @@ async function onArchiveContact(event) {
   const id = event.target.dataset.contactId;
   const data = new URLSearchParams({ id: id, archived: 1 });
   let response = await request.updateContact(id, data);
-  removeContact(id);
+
+  hideContact(id);
 }
 
 async function onRestoreContact(event) {
@@ -213,23 +238,23 @@ async function onRestoreContact(event) {
   const data = new URLSearchParams({ id: id, archived: 0 });
   let response = await request.updateContact(id, data);
 
-  const contactListWrapper = document.getElementById("contact-list-wrapper");
-  const contactList = await getContactListEl();
-  contactListWrapper.replaceChildren(contactList);
+  const contactListItem = document.querySelector(`#contact-list li[data-contact-id="${id}"]`);
+  delete contactListItem.dataset.archived;
 
-  selectContact(id);
+  await refreshContactList();
+
+  selectContact(0);
 }
 
 async function onSearchContact(event) {
-  const searchString = event.target.value;
-
   const contactListItems = document.querySelectorAll("#contact-list li");
-  for (const item of contactListItems) item.dataset.filtered = '';
+  for (const item of contactListItems) item.dataset.filtered = "";
 
-  const searchResults = contacts.filter((item) => `${item.firstname.toLowerCase()} ${item.lastname.toLowerCase()}`.includes(searchString.toLowerCase()));
+  const searchString = event.target.value.toLowerCase();
+  const searchResults = contacts.filter((item) => `${item.firstname.toLowerCase()} ${item.lastname.toLowerCase()}`.includes(searchString));
   for (const item of searchResults) {
     const contactListItem = document.querySelector(`#contact-list li[data-contact-id="${item.id}"]`);
-    if(contactListItem) delete contactListItem.dataset.filtered;
+    if (contactListItem) delete contactListItem.dataset.filtered;
   }
 
   selectContact(0);
@@ -241,16 +266,12 @@ async function onUpdateContact(event) {
   const contactId = data.get("id");
   let response = await request.updateContact(contactId, data);
 
-  const contactListWrapper = document.getElementById("contact-list-wrapper");
-  const contactList = await getContactListEl();
-  contactListWrapper.replaceChildren(contactList);
+  await refreshContactList();
 
   const item = document.querySelector(`#contact-list li[data-contact-id="${contactId}"`);
   item.dataset.selected = "";
 
-  const contactDetailsWrapper = document.getElementById("contact-detail-section");
-  const address = await getContactAddressEl(contactId);
-  contactDetailsWrapper.replaceChildren(address);
+  selectContact(contactId);
 }
 
 async function getContactAddressEl(id) {

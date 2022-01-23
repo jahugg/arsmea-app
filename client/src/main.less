@@ -10,7 +10,7 @@ html {
 
 body {
   font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-  background: rgb(238, 234, 231)
+  background: rgb(238, 234, 231);
 }
 
 form {
@@ -28,23 +28,30 @@ form {
   #contact-list-section,
   #contact-detail-section {
     flex: 1;
+  }
+
+  #contact-list-wrapper {
+    li[data-selected] {
+      background: powderblue;
+    }
 
     li[data-archived] {
       display: none;
     }
 
     li[data-filtered] {
-      display: none;
+      display: none !important;
     }
   }
 
-  #contact-list li[data-selected] {
-    background: powderblue;
-  }
-
-  #delete-contact-btn[disabled="true"]::after {
-    color: red;
-    content: " (orders)";
+  #contact-list-wrapper[data-archive] {
+    li {
+      display: none;
+    }
+    
+    li[data-archived] {
+      display: list-item;
+    }
   }
 }
 
