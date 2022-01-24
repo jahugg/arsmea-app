@@ -1,11 +1,7 @@
-export async function contacts(searchString, archived = false) {
+export async function contacts(archived = false) {
   let response;
-  if (archived) {
-    response = await fetch(`${process.env.SERVER}/api/contactListArchived`);
-  } else {
-    if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
-    else response = await fetch(`${process.env.SERVER}/api/contactList`);
-  }
+  if (archived) response = await fetch(`${process.env.SERVER}/api/contactListArchived`);
+  else response = await fetch(`${process.env.SERVER}/api/contactList`);
   return await response.json();
 }
 

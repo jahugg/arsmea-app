@@ -7,18 +7,18 @@ export default async function render() {
   module.classList.add("module");
   module.id = "contact";
   module.innerHTML = `
-    <div id="contact-list-section">
-
+    <div id="contact-control-section">
+    <div id="search-contact">
+      <label id="search-contact__label" for="search-contact__input">Search</label>
+      <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Contact Name..." autocomplete="off"/>
+    </div>
       <button id="add-contact-btn" type="button">Add Contact</button>
-
-      <label for="search-contact__input">Search</label>
-      <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Mustafa"/>
-
       <div id="archive-toggle-wrapper" hidden>
         <input type="checkbox" id="archive-toggle">
         <label for="archive-toggle">Archived</label>
       </div>
-
+    </div>
+    <div id="contact-list-section">
       <div id="contact-list-wrapper">
       </div>
     </div>
@@ -32,48 +32,74 @@ export default async function render() {
   searchInput.addEventListener("input", onSearchContact);
 
   const archiveToggle = module.querySelector("#archive-toggle");
-  archiveToggle.addEventListener("input", onShowArchived);
+  archiveToggle.addEventListener("input", onToggleArchived);
 
   return module;
 }
 
 export async function init() {
-  await refreshContactList();
+  await updateContactList();
 
+  // get url parameters
   const url = new URL(window.location);
   let contactId = url.searchParams.get("id");
   selectContact(contactId);
+
+  // handle key controls
+  window.addEventListener("keydown", function (event) {
+    switch (event.key) {
+      case "ArrowDown":
+        selectNextContact();
+        break;
+      case "ArrowUp":
+        selectPreviousContact();
+        break;
+    }
+  });
+}
+
+async function updateContactList(archived = false) {
+  const contactListWrapper = document.querySelector("#contact-list-wrapper");
+  const contactList = await getContactListEl(archived);
+  contactListWrapper.replaceChildren(contactList);
+
+  // save current contacts for later (search)
+  contacts = await request.contacts(archived);
+
+  updateArchivedContacts();
+}
+
+async function updateArchivedContacts() {
+  const archivedContacts = await request.contacts(true);
+  const archiveToggle = document.querySelector("#archive-toggle-wrapper");
+  if (archivedContacts.length) {
+    archiveToggle.removeAttribute("hidden");
+    archiveToggle.querySelector("label").innerHTML = `Archive (${archivedContacts.length})`;
+  } else {
+    delete contactListWrapper.dataset.archive;
+    archiveToggle.setAttribute("hidden", true);
+  }
 }
 
 async function selectContact(id) {
-  const list = document.querySelector("#contact-list");
+  const contactList = document.querySelector("#contact-list");
   let contactDetails = "";
 
   try {
     // get contact details
     contactDetails = await getContactAddressEl(id);
   } catch (error) {
-    // select first visible list item if any
-    const items = list.querySelectorAll("li");
-    let firstVisibleItem;
-    for (const item of items) {
-      if (item.offsetParent !== null) {
-        firstVisibleItem = item;
-        break;
-      }
-    }
-    if (firstVisibleItem) {
-      id = firstVisibleItem.dataset.contactId;
-      contactDetails = await getContactAddressEl(id);
-    }
+    // select first child
+    const firstChild = contactList.firstElementChild;
+    if (firstChild) contactDetails = await getContactAddressEl(firstChild.dataset.contactId);
+    id = firstChild.dataset.contactId;
   }
 
   const detailsWrapper = document.querySelector("#contact-detail-section");
+  detailsWrapper.replaceChildren(contactDetails);
 
   if (contactDetails) {
-    detailsWrapper.replaceChildren(contactDetails);
-
-    for (let item of list.children)
+    for (let item of contactList.children)
       if (item.dataset.contactId == id) item.dataset.selected = "";
       else delete item.dataset.selected;
 
@@ -82,64 +108,20 @@ async function selectContact(id) {
     url.searchParams.set("id", id);
     const state = { contact_id: id };
     window.history.replaceState(state, "", url);
-  } else detailsWrapper.innerHTML = "";
-}
-
-async function hideContact(id) {
-  const contactList = document.getElementById("contact-list");
-  const contactItem = contactList.querySelector(`li[data-contact-id="${id}"]`);
-  contactItem.dataset.archived = "true";
-
-  // select previous, first or no contact
-  let selectContactId;
-  if (contactList.childNodes.length) {
-    const previousSibling = contactItem.previousSibling;
-    if (previousSibling) selectContactId = previousSibling.dataset.contactId;
-    else if (contactList.firstChild) selectContactId = contactList.firstChild.dataset.contactId;
-  }
-  selectContact(selectContactId);
-}
-
-async function refreshContactList() {
-  contacts = await request.contacts();
-
-  const contactListWrapper = document.querySelector("#contact-list-wrapper");
-  const contactList = document.createElement("ul");
-  contactList.id = "contact-list";
-
-  let archiveCount = 0;
-
-  for (let data of contacts) {
-    const { id, firstname, lastname, archived } = data;
-    let el = document.createElement("li");
-    el.dataset.contactId = id;
-    if (archived) {
-      el.dataset.archived = true;
-      archiveCount ++;
-    }
-    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
-    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
-    contactList.appendChild(el);
-  }
-
-  contactListWrapper.replaceChildren(contactList);
-
-  let archiveToggle = document.getElementById("archive-toggle-wrapper");
-  if (archiveCount) {
-    archiveToggle.removeAttribute("hidden");
-    archiveToggle.querySelector("label").innerHTML = `Archive (${archiveCount})`
-  } else {
-    delete contactListWrapper.dataset.archive;
-    archiveToggle.setAttribute("hidden", true);
   }
 }
 
-async function onShowArchived(event) {
+async function removeContact(id, archived = false) {
+  selectNextContact();
+  document.querySelector(`#contact-list li[data-contact-id="${id}"]`).remove();
+  updateArchivedContacts();
+  contacts = await request.contacts(archived);
+}
+
+async function onToggleArchived(event) {
   const checked = event.target.checked;
-  const wrapper = document.getElementById("contact-list-wrapper").dataset;
-  checked ? (wrapper.archive = "") : delete wrapper.archive;
-
-  selectContact(0);
+  await updateContactList(checked);
+  selectContact();
 }
 
 async function onEditContact(event) {
@@ -212,7 +194,7 @@ async function onCreateNewContact(event) {
   const response = await request.newContact(data);
   const id = response.id;
 
-  await refreshContactList();
+  await updateContactList();
   selectContact(id);
 }
 
@@ -221,7 +203,7 @@ async function onDeleteContact(event) {
 
   if (window.confirm("Delete Contact?")) {
     const result = await request.deleteContact(contactId);
-    hideContact(contactId);
+    removeContact(contactId, false);
   }
 }
 
@@ -229,21 +211,14 @@ async function onArchiveContact(event) {
   const id = event.target.dataset.contactId;
   const data = new URLSearchParams({ id: id, archived: 1 });
   let response = await request.updateContact(id, data);
-
-  hideContact(id);
+  removeContact(id, false);
 }
 
 async function onRestoreContact(event) {
   const id = event.target.dataset.contactId;
   const data = new URLSearchParams({ id: id, archived: 0 });
   let response = await request.updateContact(id, data);
-
-  const contactListItem = document.querySelector(`#contact-list li[data-contact-id="${id}"]`);
-  delete contactListItem.dataset.archived;
-
-  await refreshContactList();
-
-  selectContact(0);
+  removeContact(id, true);
 }
 
 async function onSearchContact(event) {
@@ -257,7 +232,9 @@ async function onSearchContact(event) {
     if (contactListItem) delete contactListItem.dataset.filtered;
   }
 
-  selectContact(0);
+  const firstResult = document.querySelector(`#contact-list li:not([data-filtered])`);
+  firstResult ? selectContact(firstResult.dataset.contactId) : '';
+  
 }
 
 async function onUpdateContact(event) {
@@ -266,12 +243,29 @@ async function onUpdateContact(event) {
   const contactId = data.get("id");
   let response = await request.updateContact(contactId, data);
 
-  await refreshContactList();
+  await updateContactList();
 
   const item = document.querySelector(`#contact-list li[data-contact-id="${contactId}"`);
   item.dataset.selected = "";
 
   selectContact(contactId);
+}
+
+async function getContactListEl(archived = false) {
+  const contacts = await request.contacts(archived);
+  const contactList = document.createElement("ul");
+  contactList.id = "contact-list";
+
+  for (let data of contacts) {
+    const { id, firstname, lastname } = data;
+    let el = document.createElement("li");
+    el.dataset.contactId = id;
+    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
+    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
+    contactList.appendChild(el);
+  }
+
+  return contactList;
 }
 
 async function getContactAddressEl(id) {
@@ -287,7 +281,7 @@ async function getContactAddressEl(id) {
   if (company) addressNode.innerHTML += `<div class="address__company">${company}</div>`;
   if (address) addressNode.innerHTML += `<div class="address__address">${address}</div>`;
   if (phone) addressNode.innerHTML += `<div class="address__tel"><a href="tel:${phone}">${phone}</a></div>`;
-  if (email) addressNode.innerHTML += `<div class="address__email"<a href="mailto:${email}">${email}</a></div>`;
+  if (email) addressNode.innerHTML += `<div class="address__email"><a href="mailto:${email}">${email}</a></div>`;
   if (notes) addressNode.innerHTML += `<div class="address__notes">${notes}</div>`;
 
   contactDetails.appendChild(addressNode);
@@ -405,4 +399,26 @@ async function getContactFormEl(id) {
   wrapper.appendChild(archiveBtn);
 
   return wrapper;
+}
+
+function selectNextContact() {
+  const contactList = document.getElementById("contact-list");
+  const currentContact = contactList.querySelector("li[data-selected]");
+
+  if (contactList.hasChildNodes()) {
+    let nextContact = currentContact.nextElementSibling;
+    if (nextContact) selectContact(nextContact.dataset.contactId);
+    else selectContact();
+  }
+}
+
+function selectPreviousContact() {
+  const contactList = document.getElementById("contact-list");
+  const currentContact = contactList.querySelector("li[data-selected]");
+
+  if (contactList.hasChildNodes()) {
+    let previousContact = currentContact.previousElementSibling;
+    if (previousContact) selectContact(previousContact.dataset.contactId);
+    else selectContact(contactList.lastChild.dataset.contactId);
+  }
 }

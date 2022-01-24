@@ -23,7 +23,7 @@ app.get("/api/contact/:id", async (request, response) => {
 });
 
 app.get("/api/contactList", async (request, response) => {
-  const contactList = await db.selectAllContacts();
+  const contactList = await db.selectContacts();
   response.json(contactList);
 });
 
