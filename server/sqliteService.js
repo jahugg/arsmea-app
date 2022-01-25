@@ -1,17 +1,31 @@
 import Database from "better-sqlite3";
 
-export default class DBService{
+export default class DBService {
   static db;
   constructor() {
     this.db = this.db ? this.db : new Database("./database.db");
   }
 
   async insertContact(data) {
+    // delete empty entries
+    Object.keys(data).forEach((key) => !data[key] && data[key] !== undefined && delete data[key]);
+    const dataKeys = Object.keys(data);
+    const dataValues = Object.values(data);
+
+    // cunstruct query string
+    let queryString = "INSERT INTO contacts (date_added";
+    dataKeys.forEach((key) => {
+      queryString += `, ${key}`;
+    });
+    queryString += `) VALUES (date('now')`;
+    dataKeys.forEach(() => {
+      queryString += `, ?`;
+    });
+    queryString += `)`;
+
     try {
-      const { firstname, lastname, company, address, email, phone, notes } = data;
-      const query = this.db.prepare(`INSERT INTO contacts (date_added, firstname, lastname, company, address, email, phone, notes)
-          VALUES (date('now'), ?, ?, ?, ?, ?, ?, ?)`);
-      const result = query.run(firstname, lastname, company, address, email, phone, notes);
+      const query = this.db.prepare(queryString);
+      const result = query.run(dataValues);
       return result.lastInsertRowid;
     } catch (error) {
       console.log(error);
@@ -52,8 +66,6 @@ export default class DBService{
     const id = data.id;
     delete data.id;
 
-    // delete empty entries
-    Object.keys(data).forEach((key) => !data[key] && data[key] !== undefined && delete data[key]);
     const dataKeys = Object.keys(data);
     const dataValues = Object.values(data);
 

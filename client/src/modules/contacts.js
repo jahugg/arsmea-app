@@ -417,7 +417,7 @@ function selectNextContact() {
     if (nextContact) selectContact(nextContact.dataset.contactId);
     else selectContact();
   }
-}
+} 
 
 function selectPreviousContact() {
   const contactList = document.getElementById("contact-list");
