@@ -214,6 +214,7 @@ textarea {
       margin: 0;
 
       li {
+        position: relative;
         padding: 4px 10px;
         border-radius: 5px;
         cursor: pointer;
@@ -232,6 +233,13 @@ textarea {
 
       li[data-filtered] {
         display: none;
+      }
+
+      li[data-order-letter]:before {
+        content: attr(data-order-letter);
+        position: absolute;
+        font-weight: 400;
+        left: -20px;
       }
     }
   }

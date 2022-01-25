@@ -270,6 +270,8 @@ async function getContactListEl(archived = false) {
   const contactList = document.createElement("ul");
   contactList.id = "contact-list";
 
+  let orderLetter;
+
   for (let data of contacts) {
     const { id, firstname, lastname } = data;
     let el = document.createElement("li");
@@ -277,6 +279,14 @@ async function getContactListEl(archived = false) {
     el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
     el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
     contactList.appendChild(el);
+
+    // check order letter
+    const firstLetter = lastname.charAt(0).toLowerCase();
+    if (orderLetter !== firstLetter) {
+      orderLetter = firstLetter;
+      el.dataset.orderLetter = firstLetter.toUpperCase();
+      console.log(orderLetter);
+    }
   }
 
   return contactList;

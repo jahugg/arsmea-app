@@ -44,7 +44,7 @@ export default class DBService {
 
   async selectContacts() {
     try {
-      const query = this.db.prepare("SELECT id, firstname, lastname, archived FROM contacts WHERE archived = 0 ORDER BY lastname");
+      const query = this.db.prepare("SELECT id, firstname, lastname, archived FROM contacts WHERE archived = 0 ORDER BY lastname COLLATE NOCASE");
       const contactList = query.all();
       return contactList;
     } catch (error) {
