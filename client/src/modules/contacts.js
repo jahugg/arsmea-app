@@ -14,7 +14,7 @@ export default async function render() {
           <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Contact Name..." autocomplete="off"/>
         </form>
 
-        <div id="archive-toggle-wrapper" hidden>
+        <div id="archive-toggle-wrapper" class="checkbox-wrapper" hidden>
           <input type="checkbox" id="archive-toggle">
           <label for="archive-toggle">Show Archive</label>
         </div>
@@ -130,6 +130,7 @@ async function removeContact(id, archived = false) {
 
   // if this was the last contact make sure to switch to unarchived list
   if (!document.getElementById("contact-list").hasChildNodes()) {
+    document.getElementById("archive-toggle").checked = false;
     await updateContactList(false);
     contacts = await request.contacts(false);
     selectContact();
