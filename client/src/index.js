@@ -5,16 +5,16 @@ const pages = {
     slug: "/",
     module: import("./modules/dashboard.js"),
   },
-  orders: {
-    title: "Orders",
-    slug: "/orders",
-    module: import("./modules/orders.js"),
-  },
   contacts: {
     title: "Contacts",
     slug: "/contacts",
     module: import("./modules/contacts.js"),
   },
+  orders: {
+    title: "Orders",
+    slug: "/orders",
+    module: import("./modules/orders.js"),
+  }
 };
 
 function init() {
@@ -49,15 +49,25 @@ async function buildPage(stateObj, addToHistory) {
   const module = await page.module;
   const content = await module.default(); // render
   target.appendChild(content);
-  module.init?.();  // only run if function exists
+  module.init?.(); // only run if function exists
 
-  // add title
-  const header = document.getElementsByTagName("HEADER")[0];
-  const title = document.createElement("h2");
-  title.id = "module-title";
-  title.innerHTML = page.title;
-  
-  header.appendChild(title);
+  updateNavigation(pageKey);
+}
+
+function updateNavigation(activePageKey) {
+  const navigation = document.getElementById("app-navigation");
+  const list = document.createElement("ul");
+
+  for (const key in pages) {
+    const listItem = document.createElement("li");
+    if (activePageKey === key) listItem.dataset.active = '';
+    const link = document.createElement("a");
+    link.href = pages[key].slug;
+    link.innerHTML = pages[key].title;
+    listItem.appendChild(link);
+    list.appendChild(listItem);
+  }
+  navigation.replaceChildren(list);
 }
 
 init();

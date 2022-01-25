@@ -8,10 +8,10 @@ export default class DBService{
 
   async insertContact(data) {
     try {
-      const { firstname, lastname, company, address, email, tel, notes } = data;
+      const { firstname, lastname, company, address, email, phone, notes } = data;
       const query = this.db.prepare(`INSERT INTO contacts (date_added, firstname, lastname, company, address, email, phone, notes)
           VALUES (date('now'), ?, ?, ?, ?, ?, ?, ?)`);
-      const result = query.run(firstname, lastname, company, address, email, tel, notes);
+      const result = query.run(firstname, lastname, company, address, email, phone, notes);
       return result.lastInsertRowid;
     } catch (error) {
       console.log(error);

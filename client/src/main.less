@@ -1,9 +1,6 @@
-:root {
-  --color-font: rgb(180, 100, 39);
-  --color-background: rgb(194, 204, 203);
-  --page-padding: 30px;
-}
-
+// ================================
+// preferred defaults
+// ================================
 html {
   box-sizing: border-box;
 }
@@ -15,29 +12,107 @@ html {
 }
 
 body {
-  font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   margin: 0;
+}
 
+// ================================
+// custom properties
+// ================================
+:root {
+  --color-font: rgb(180, 100, 39);
+  --color-background: rgb(194, 204, 203);
+  --color-inactive: rgba(255, 255, 255, .5);
+  --page-padding: 30px;
+  --font-size: 1.4rem;
+  --font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  --font-regular: normal 200 1em var(--font-family);
+  --font-small: normal 200 0.8em var(--font-family);
+}
+
+// ================================
+// general
+// ================================
+body {
+  font: normal 200 var(--font-size) "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   color: var(--color-font);
   background: var(--color-background);
-  font-size: 1.4rem;
-  font-weight: 200;
 }
 
-form {
-  > div {
-    margin-top: 0.5em;
+main {
+  margin: var(--page-padding);
+}
+
+input:not([type="submit"]):not([type="checkbox"]) {
+  border: none;
+  padding: 5px 0;
+  font: inherit;
+  font-size: 1.5em;
+  color: inherit;
+  background: none;
+  border-bottom: solid 1px var(--color-font);
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
   }
-  label {
-    display: block;
+  &::placeholder {
+    color: var(--color-inactive);
   }
 }
 
-header {
+textarea {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  resize: none;
+  color: inherit;
+  font: var(--font-regular);
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--color-inactive);
+  }
+}
+
+.content-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: var(--page-padding);
+}
+
+.button-small {
+  background: none;
+  border: solid 1px var(--color-font);
+  color: inherit;
+  font: var(--font-small);
+  letter-spacing: 0.05em;
+  padding: 2px 10px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-inactive);
+  }
+
+  &:disabled {
+    color: var(--color-inactive);
+    border-color: var(--color-inactive);
+  }
+}
+
+// ================================
+// app header
+// ================================
+#app-header {
   background: white;
   padding: 8px var(--page-padding);
 
-  #app-title {
+  #app-header__title {
     margin: 0;
     font-size: 0.8em;
     font-weight: 400;
@@ -47,21 +122,36 @@ header {
     }
   }
 
-  #module-title {
-    font-weight: 200;
-    font-size: 0.8em;
-    margin: 0;
+  nav {
+    ul {
+      list-style: none;
+      display: flex;
+      margin: 0;
+      padding: 0;
+      gap: 15px;
+    }
+
+    li[data-active] a {
+      text-decoration: underline;
+    }
+
+    a {
+      font-weight: 200;
+      font-size: 0.8em;
+      margin: 0;
+      color: inherit;
+      text-decoration: none;
+    }
   }
 }
 
-main {
-  margin: calc(var(--page-padding) * 2) var(--page-padding);
-}
-
+// ================================
+// contacts
+// ================================
 #contact {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 100px auto;
+  grid-template-columns: minmax(min-content, 350px) 1fr;
+  grid-template-rows: 130px auto;
   gap: var(--page-padding);
   grid-template-areas:
     "control control"
@@ -69,59 +159,69 @@ main {
 
   #contact-control-section {
     grid-area: control;
+    display: flex;
+    justify-content: space-between;
+
+    #add-contact-btn {
+      --size: 80px;
+      background: white;
+      border: none;
+      display: block;
+      height: var(--size);
+      width: var(--size);
+      border-radius: var(--size);
+      color: var(--color-font);
+      cursor: pointer;
+      box-shadow: 0 0 7px rgba(0, 0, 0, 0.05);
+    }
+
+    #search-contact__label {
+    }
   }
+
   #contact-list-section {
     grid-area: list;
-  }
-  #contact-detail-section {
-    grid-area: detail;
-  }
 
-  #contact-control-section {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+    #contact-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
 
-  #add-contact-btn {
-    --size: 80px;
-    background: white;
-    border: none;
-    display: block;
-    height: var(--size);
-    width: var(--size);
-    border-radius: var(--size);
-    color: var(--color-font);
-    cursor: pointer;
-    box-shadow: 0 0 7px rgba(0, 0, 0, 0.05);
-  }
+      li {
+        padding: 4px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.1s ease-out;
 
-  #search-contact__label {
-    display: block;
-  }
+        &:hover,
+        &[data-selected] {
+          transform: translateX(-5px);
+        }
+      }
 
-  #search-contact__input {
-    border: none;
-    padding: 4px 10px;
-    border-radius: 5px;
-    font: inherit;
-    font-size: 1.5em;
-    color: inherit;
-    background: rgba(255,255,255,.3);
+      li[data-selected] {
+        background: white;
+      }
 
-    &:focus {
-      outline: solid 2px var(--color-font);
+      li[data-filtered] {
+        display: none;
+      }
     }
   }
 
   #contact-detail-section {
+    grid-area: detail;
+
     address {
-        a {
-          color: white;
-        }
+      font-size: 2em;
+      a {
+        color: inherit;
+      }
     }
 
     h2 {
+      margin-top: 70px;
       font-weight: 300;
       font-size: 1.2em;
     }
@@ -134,37 +234,32 @@ main {
         color: inherit;
       }
     }
-  }
-  #contact-list-wrapper {
-    #contact-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
 
-    li {
-      padding: 4px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 0.1s ease-out;
-
-      &:hover,
-      &[data-selected] {
-        transform: translateX(-5px);
+    form {
+      max-width: 400px;
+      label {
+        display: block;
+        margin-top: 2em;
       }
-    }
+      summary {
+        margin: var(--page-padding);
+        list-style: none;
+        text-align: center;
+        width: 70%;
+        max-width: 250px;
+        margin: var(--page-padding) auto;
+      }
 
-    li[data-selected] {
-      background: white;
-    }
-
-    li[data-filtered] {
-      display: none;
+      details[open] > summary {
+        display: none;
+      }
     }
   }
 }
 
+// ================================
+// order
+// ================================
 #order {
   display: flex;
 
