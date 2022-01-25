@@ -361,12 +361,14 @@ async function getContactFormEl(id) {
   form.addEventListener("submit", onUpdateContact);
   form.innerHTML = `
     <section class="content-controls">
+
       <input type="submit" class="button-small" value="Save Changes"/>
       <button type="button" id="discard-contact-btn" class="button-small">Discard Changes</button>
+
       <button type="button" id="delete-contact-btn" class="button-small" data-contact-id="${id}">Delete Contact</button>
       <button type="button" id="archive-contact-btn" class="button-small" data-contact-id="${id}">Archive Contact</button>
-      <input type="hidden" id="edit-contact__id" name="id" value="${id}">
     </section>
+      <input type="hidden" id="edit-contact__id" name="id" value="${id}">
 
     <label for="edit-contact__firstname">First name</label>
     <input required type="text" pattern="[^0-9]*" name="firstname" autocapitalize="words" id="edit-contact__firstname" placeholder="Hanna" value="${
@@ -415,10 +417,15 @@ function selectNextContact() {
 
   if (contactList.hasChildNodes()) {
     let nextContact = currentContact.nextElementSibling;
+
+    while (nextContact && nextContact.offsetParent === null) {
+      nextContact = nextContact.nextElementSibling;
+    }
+
     if (nextContact) selectContact(nextContact.dataset.contactId);
     else selectContact();
   }
-} 
+}
 
 function selectPreviousContact() {
   const contactList = document.getElementById("contact-list");
@@ -426,6 +433,11 @@ function selectPreviousContact() {
 
   if (contactList.hasChildNodes()) {
     let previousContact = currentContact.previousElementSibling;
+
+    while (previousContact && previousContact.offsetParent === null) {
+      previousContact = previousContact.previousElementSibling;
+    }
+
     if (previousContact) selectContact(previousContact.dataset.contactId);
     else selectContact(contactList.lastChild.dataset.contactId);
   }

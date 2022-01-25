@@ -61,9 +61,10 @@ input:not([type="submit"]):not([type="checkbox"]) {
   }
 }
 
-
 .checkbox-wrapper {
-  display: inline-flex;
+  &:not[hidden] {
+    display: flex;
+  }
   align-items: center;
   gap: 8px;
   margin-top: 10px;
@@ -75,6 +76,7 @@ input[type="checkbox"] {
   height: var(--size);
   width: var(--size);
   border: solid 1px var(--color-font);
+  cursor: pointer;
 
   &:hover {
     background: var(--color-inactive);
