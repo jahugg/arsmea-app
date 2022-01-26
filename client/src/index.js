@@ -5,16 +5,16 @@ const pages = {
     slug: "/",
     module: import("./modules/dashboard.js"),
   },
-  contact: {
-    title: "Contact",
-    slug: "/contact",
-    module: import("./modules/contact.js"),
-  },
   contacts: {
     title: "Contacts",
     slug: "/contacts",
     module: import("./modules/contacts.js"),
   },
+  orders: {
+    title: "Orders",
+    slug: "/orders",
+    module: import("./modules/orders.js"),
+  }
 };
 
 function init() {
@@ -36,7 +36,7 @@ function navigateToCurrentURL() {
   buildPage(stateObj, true);
 }
 
-function buildPage(stateObj, addToHistory) {
+async function buildPage(stateObj, addToHistory) {
   let pageKey = stateObj.pageKey;
   let page = pages[pageKey];
   document.title = "Vlowers | " + page.title;
@@ -45,46 +45,29 @@ function buildPage(stateObj, addToHistory) {
   // if (addToHistory) window.history.pushState(stateObj, page.title, page.slug);
 
   // load page module
-  page.module
-    .then((module) => {
-      module.render();
-    })
-    .catch((err) => {
-      console.log("Cannot load module:" + err.message);
-    });
+  const target = document.getElementsByTagName("MAIN")[0];
+  const module = await page.module;
+  const content = await module.default(); // render
+  target.appendChild(content);
+  module.init?.(); // only run if function exists
+
+  updateNavigation(pageKey);
 }
 
+function updateNavigation(activePageKey) {
+  const navigation = document.getElementById("app-navigation");
+  const list = document.createElement("ul");
 
-// maybe try to render via function...
-async function insertModule(module) {
-  const moduleHTML = await module.render();
-  console.log(moduleHTML);
-  const main = document.getElementsByTagName("MAIN")[0];
-  main.appendChild(moduleHTML);
+  for (const key in pages) {
+    const listItem = document.createElement("li");
+    if (activePageKey === key) listItem.dataset.active = '';
+    const link = document.createElement("a");
+    link.href = pages[key].slug;
+    link.innerHTML = pages[key].title;
+    listItem.appendChild(link);
+    list.appendChild(listItem);
+  }
+  navigation.replaceChildren(list);
 }
 
 init();
-
-// ------------------------------------
-// ------------------------------------
-// TUTORIAL STUFF
-
-// updateBtn.addEventListener("click", () => {
-//   const updateNameInput = document.querySelector("#update-name-input");
-//   fetch(`${process.env.SERVER}/update`, {
-//     method: "PATCH",
-//     headers: {
-//       "Content-type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       id: updateNameInput.dataset.id,
-//       firstname: updateNameInput.value,
-//     }),
-//   })
-//     .then((response) => response.json())
-//     .then((data) => {
-//       if (data.success) {
-//         location.reload();
-//       }
-//     });
-// });

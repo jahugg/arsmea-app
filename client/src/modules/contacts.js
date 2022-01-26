@@ -1,220 +1,453 @@
-export async function render() {
-  const main = document.getElementsByTagName("MAIN")[0];
-  main.innerHTML = `
-    <h1>Contacts</h1>
-    <div id="contacts-wrapper">
+import * as request from "./serverRequests";
+
+let contacts;
+
+export default async function render() {
+  const module = document.createElement("div");
+  module.classList.add("module");
+  module.id = "contact";
+  module.innerHTML = `
+    <div id="contact-control-section">
       <div>
-        <button id="addButton" type="button" data-action="add">Add Contact</button>
-        <form action="${process.env.SERVER}/api/searchContacts" method="POST" id="search-contact" class="form">
-            <input list="search-contact__list" type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Search"/>
+        <form id="search-contact" role="search">
+          <label id="search-contact__label" for="search-contact__input">Search</label>
+          <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Contact Name..." autocomplete="off" required/>
         </form>
-        <div id="contact-list"></div>
+
+        <div id="archive-toggle-wrapper" class="checkbox-wrapper" hidden>
+          <input type="checkbox" id="archive-toggle">
+          <label for="archive-toggle">Show Archive</label>
+        </div>
       </div>
-      <div id="contact-details"></div>
+
+      <button id="add-contact-btn" type="button">Add Contact</button>
+    </div>
+    <div id="contact-list-section">
+      <div id="contact-list-wrapper">
+      </div>
+    </div>
+    <div id="contact-detail-section">
     </div>`;
 
-  const searchInput = document.getElementById("search-contact__input");
-  searchInput.addEventListener("input", (event) => insertContactList(event.target.value));
+  const addButton = module.querySelector("#add-contact-btn");
+  addButton.addEventListener("click", onPrepareNewContact);
 
-  const addButton = document.getElementById("addButton");
-  addButton.addEventListener("click", insertNewContact);
+  const searchInput = module.querySelector("#search-contact__input");
+  searchInput.addEventListener("input", onSearchContact);
 
-  insertContactList();
+  const searchForm = module.querySelector("#search-contact");
+  searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    console.log("reset search and select contact");
+  });
+
+  const archiveToggle = module.querySelector("#archive-toggle");
+  archiveToggle.addEventListener("input", onToggleArchived);
+
+  return module;
 }
 
-async function insertContactList(searchString) {
-  const contactList = await getContactListEl(searchString);
-  const contactListWrapper = document.getElementById("contact-list");
-  let firstIteration = false;
-  if (!contactListWrapper.childNodes.length) firstIteration = true;
+export async function init() {
+  const searchInput = document.querySelector("#search-contact__input");
+  searchInput.focus();
 
-  contactListWrapper.innerHTML = "";
-  contactListWrapper.appendChild(contactList);
+  await updateContactList();
 
-  if (firstIteration || searchString && contactList.childNodes.length) selectFirstContact();
+  // get url parameters
+  const url = new URL(window.location);
+  let contactId = url.searchParams.get("id");
+  selectContact(contactId);
+
+  // handle key controls
+  window.addEventListener("keydown", function (event) {
+    switch (event.key) {
+      case "ArrowDown":
+        selectNextContact();
+        break;
+      case "ArrowUp":
+        selectPreviousContact();
+        break;
+    }
+  });
 }
 
-async function insertContactDetails(contactId, mode) {
-  let el;
-  if (mode === "view") el = await getContactAddressEl(contactId);
-  else if (mode === "edit") el = await getContactFormEl(contactId);
+async function updateContactList(archived = false) {
+  const contactListWrapper = document.querySelector("#contact-list-wrapper");
+  const contactList = await getContactListEl(archived);
+  contactListWrapper.replaceChildren(contactList);
 
-  const wrapper = document.getElementById("contact-details");
-  wrapper.innerHTML = "";
-  wrapper.appendChild(el);
+  // save current contacts for later (search)
+  contacts = await request.contacts(archived);
 
-  if (mode === "edit") document.getElementById("edit-contact__firstname").select();
-
-  const contactItems = document.querySelectorAll("#contact-list ul li");
-  for (let el of contactItems)
-    if (el.dataset.contactId != contactId) el.removeAttribute("data-selected");
-    else el.dataset.selected = "";
+  updateArchivedContacts();
 }
 
-async function insertNewContact() {
-  let response = await requestNewContact();
-  insertContactList();
-  insertContactDetails(response.id, "edit");
+async function updateArchivedContacts() {
+  const archivedContacts = await request.contacts(true);
+  const archiveToggle = document.querySelector("#archive-toggle-wrapper");
+  if (archivedContacts.length) {
+    archiveToggle.removeAttribute("hidden");
+    archiveToggle.querySelector("label").innerHTML = `Show Archive (${archivedContacts.length})`;
+  } else archiveToggle.setAttribute("hidden", true);
 }
 
-async function getContactListEl(searchString) {
-  let contacts = await requestContacts(searchString);
-  const list = document.createElement("ul");
-  for (let data of contacts) {
-    let el = document.createElement("li");
-    el.dataset.contactId = data.id;
-    el.innerHTML = `${data.firstname} ${data.lastname}`;
-    el.addEventListener("click", () => insertContactDetails(data.id, "view"));
-    list.appendChild(el);
-    lastId = data.id;
+async function selectContact(id) {
+  const contactList = document.querySelector("#contact-list");
+  let contactDetails = "";
+
+  try {
+    // get contact details
+    contactDetails = await getContactAddressEl(id);
+  } catch (error) {
+    // select first child
+    const firstChild = contactList.firstElementChild;
+    if (firstChild) {
+      contactDetails = await getContactAddressEl(firstChild.dataset.contactId);
+      id = firstChild.dataset.contactId;
+    }
   }
 
-  return list;
+  const detailsWrapper = document.querySelector("#contact-detail-section");
+  detailsWrapper.replaceChildren(contactDetails);
+
+  if (contactDetails) {
+    for (let item of contactList.children)
+      if (item.dataset.contactId == id) item.dataset.selected = "";
+      else delete item.dataset.selected;
+
+    // add contact id to url
+    const url = new URL(window.location);
+    url.searchParams.set("id", id);
+    const state = { contact_id: id };
+    window.history.replaceState(state, "", url);
+  }
+}
+
+async function removeContact(id, archived = false) {
+  selectNextContact();
+  document.querySelector(`#contact-list li[data-contact-id="${id}"]`).remove();
+  updateArchivedContacts();
+
+  // if this was the last contact make sure to switch to unarchived list
+  if (!document.getElementById("contact-list").hasChildNodes()) {
+    document.getElementById("archive-toggle").checked = false;
+    await updateContactList(false);
+    contacts = await request.contacts(false);
+    selectContact();
+  } else contacts = await request.contacts(archived);
+}
+
+async function onToggleArchived(event) {
+  const checked = event.target.checked;
+  await updateContactList(checked);
+  selectContact();
+}
+
+async function onEditContact(event) {
+  const id = event.target.dataset.contactId;
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
+  const form = await getContactFormEl(id);
+  contactDetailsWrapper.replaceChildren(form);
+  form.querySelector("#edit-contact__firstname").select();
+}
+
+async function onPrepareNewContact(event) {
+  const contactDetailsWrapper = document.getElementById("contact-detail-section");
+  const wrapper = document.createElement("div");
+  wrapper.id = "contact-details";
+  const form = document.createElement("form");
+  form.action = `${process.env.SERVER}/api/contact`;
+  form.method = "POST";
+  form.id = "new-contact";
+  form.addEventListener("submit", onCreateNewContact);
+  form.innerHTML = `
+  <section class="content-controls">
+    <input type="submit" class="button-small" value="Create"/>
+    <button type="button" class="button-small" id="discard-contact-btn">Discard</button>
+  </section>
+
+  <label for="new-contact__firstname">First name</label>
+  <input required type="text" pattern="[^0-9]*" name="firstname" id="new-contact__firstname" placeholder="Hanna" />
+
+  <label for="new-contact__lastname">Last name</label>
+  <input type="text" pattern="[^0-9]*" name="lastname" id="new-contact__lastname" placeholder="Muster" />
+
+  <label for="new-contact__phone">Phone</label>
+  <input type="tel" name="phone" id="new-contact__phone" placeholder="+41 XXX XX XX" />
+
+  <details>
+    <summary class="button-small">More fields</summary>
+
+    <label for="new-contact__email">Email</label>
+    <input type="email" name="email" id="new-contact__email" placeholder="hanna.muster@email.com" />
+
+    <label for="new-contact__address">Address</label>
+    <textarea name="address" form="new-contact" name="address" id="new-contact__address" placeholder="Musterweg 34&#10;4321 Moon"></textarea>
+
+    <label for="new-contact__company">Company</label>
+    <input type="text" name="company" id="new-contact__company" placeholder="Fantasy Inc."/>
+
+    <label for="new-contact__notes">Notes</label>
+    <textarea name="notes" id="new-contact__notes" placeholder="Write something..."></textarea>
+  </details>`;
+
+  const discardBtn = form.querySelector("#discard-contact-btn");
+  discardBtn.addEventListener("click", selectContact);
+
+  wrapper.appendChild(form);
+  contactDetailsWrapper.replaceChildren(wrapper);
+
+  form.querySelector("#new-contact__firstname").focus();
+
+  const contactListItems = document.querySelectorAll("#contact-list li");
+  for (const item of contactListItems) delete item.dataset.selected;
+}
+
+async function onCreateNewContact(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const response = await request.newContact(data);
+  const id = response.id;
+
+  await updateContactList();
+  selectContact(id);
+}
+
+async function onDeleteContact(event) {
+  const contactId = event.target.dataset.contactId;
+
+  if (window.confirm("Delete Contact?")) {
+    const result = await request.deleteContact(contactId);
+    removeContact(contactId, false);
+  }
+}
+
+async function onArchiveContact(event) {
+  const id = event.target.dataset.contactId;
+  const data = new URLSearchParams({ id: id, archived: 1 });
+  let response = await request.updateContact(id, data);
+  removeContact(id, false);
+}
+
+async function onRestoreContact(event) {
+  const id = event.target.dataset.contactId;
+  const data = new URLSearchParams({ id: id, archived: 0 });
+  let response = await request.updateContact(id, data);
+  removeContact(id, true);
+}
+
+async function onSearchContact(event) {
+  const contactListItems = document.querySelectorAll("#contact-list li");
+  for (const item of contactListItems) item.dataset.filtered = "";
+
+  const searchString = event.target.value.toLowerCase();
+  const searchResults = contacts.filter((item) => `${item.firstname.toLowerCase()} ${item.lastname.toLowerCase()}`.includes(searchString));
+  for (const item of searchResults) {
+    const contactListItem = document.querySelector(`#contact-list li[data-contact-id="${item.id}"]`);
+    if (contactListItem) delete contactListItem.dataset.filtered;
+  }
+
+  const firstResult = document.querySelector(`#contact-list li:not([data-filtered])`);
+  firstResult ? selectContact(firstResult.dataset.contactId) : "";
+}
+
+async function onUpdateContact(event) {
+  event.preventDefault();
+  const data = new URLSearchParams(new FormData(event.target));
+  const contactId = data.get("id");
+  let response = await request.updateContact(contactId, data);
+
+  await updateContactList();
+
+  const item = document.querySelector(`#contact-list li[data-contact-id="${contactId}"`);
+  item.dataset.selected = "";
+
+  selectContact(contactId);
+}
+
+async function getContactListEl(archived = false) {
+  const contacts = await request.contacts(archived);
+  const contactList = document.createElement("ul");
+  contactList.id = "contact-list";
+
+  let orderLetter;
+
+  for (let data of contacts) {
+    const { id, firstname, lastname } = data;
+    let el = document.createElement("li");
+    el.dataset.contactId = id;
+    el.innerHTML = `${firstname ? firstname : ""} ${lastname ? lastname : ""}`;
+    el.addEventListener("click", (event) => selectContact(event.target.dataset.contactId));
+    contactList.appendChild(el);
+
+    // check order letter
+    const firstLetter = lastname.charAt(0).toLowerCase();
+    if (orderLetter !== firstLetter) {
+      orderLetter = firstLetter;
+      el.dataset.orderLetter = firstLetter.toUpperCase();
+    }
+  }
+
+  return contactList;
 }
 
 async function getContactAddressEl(id) {
-  let data = await requestContactDetails(id);
-  const { firstname, lastname, company, address, email, phone, notes } = data;
+  let data = await request.contactDetails(id);
+  const { firstname, lastname, company, address, email, phone, notes, archived } = data;
 
   const wrapper = document.createElement("div");
+  const contactDetails = document.createElement("div");
+  contactDetails.id = "contact-details";
+
+  const controls = document.createElement("section");
+  controls.classList.add("content-controls");
+  contactDetails.appendChild(controls);
+
+  if (archived) {
+    const restoreBtn = document.createElement("button");
+    restoreBtn.type = "button";
+    restoreBtn.innerHTML = "Restore Contact";
+    restoreBtn.id = "restore-contact-btn";
+    restoreBtn.dataset.contactId = id;
+    restoreBtn.classList.add("button-small");
+    restoreBtn.addEventListener("click", onRestoreContact);
+    controls.appendChild(restoreBtn);
+  } else {
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.id = "edit-btn";
+    editBtn.innerHTML = "Edit";
+    editBtn.dataset.contactId = id;
+    editBtn.classList.add("button-small");
+    editBtn.addEventListener("click", onEditContact);
+    controls.appendChild(editBtn);
+  }
+
   let addressNode = document.createElement("address");
   addressNode.dataset.contactId = id;
-  addressNode.innerHTML = `<h1>${firstname} ${lastname}</h1>`;
-  if (company) addressNode.innerHTML += `<p>${company}</p>`;
-  if (address) addressNode.innerHTML += `<p>${address}</p>`;
-  if (phone) addressNode.innerHTML += `<a href="tel:${phone}">${phone}</a>`;
-  if (email) addressNode.innerHTML += `<a href="mailto:${email}">${email}</a>`;
-  if (notes) addressNode.innerHTML += `<p>${notes}</p>`;
+  addressNode.innerHTML = `<div class="address__name">${firstname ? firstname : ""} ${lastname ? lastname : ""}</div>`;
+  if (company) addressNode.innerHTML += `<div class="address__company">${company}</div>`;
+  if (address) addressNode.innerHTML += `<div class="address__address">${address}</div>`;
+  if (phone) addressNode.innerHTML += `<div class="address__tel"><a href="tel:${phone}">${phone}</a></div>`;
+  if (email) addressNode.innerHTML += `<div class="address__email"><a href="mailto:${email}">${email}</a></div>`;
+  if (notes) addressNode.innerHTML += `<div class="address__notes">${notes}</div>`;
 
-  const editBtn = document.createElement("button");
-  editBtn.type = "button";
-  editBtn.id = "edit-btn";
-  editBtn.innerHTML = "Edit";
-  editBtn.dataset.contactId = id;
-  editBtn.addEventListener("click", () => insertContactDetails(id, "edit"));
-  wrapper.appendChild(editBtn);
+  contactDetails.appendChild(addressNode);
+  wrapper.appendChild(contactDetails);
 
-  wrapper.appendChild(addressNode);
-  wrapper.appendChild(editBtn);
+  // display orders of contact
+  const orders = await request.ordersByContact(id);
+  if (orders.length) {
+    const orderTitle = document.createElement("h2");
+    orderTitle.innerHTML = "Orders";
+    wrapper.appendChild(orderTitle);
+
+    const orderList = document.createElement("ul");
+    orderList.id = "contact-orders";
+    for (let order of orders) {
+      const { id, datetime_due, price, status } = order;
+      let item = document.createElement("li");
+      item.dataset.orderId = id;
+      item.innerHTML = `<a href="/orders?id=${id}">${datetime_due} ${price}CHF ${status}</a>`;
+      orderList.appendChild(item);
+    }
+    wrapper.appendChild(orderList);
+  }
 
   return wrapper;
 }
 
 async function getContactFormEl(id) {
-  let data = await requestContactDetails(id);
+  const data = await request.contactDetails(id);
   const { firstname, lastname, company, address, email, phone, notes } = data;
 
   const wrapper = document.createElement("div");
+  wrapper.id = "contact-details";
   const form = document.createElement("form");
   form.action = `${process.env.SERVER}/api/updateContact`;
   form.method = "POST";
   form.id = "edit-contact";
-  form.addEventListener("submit", submitUpdateContactForm);
-  form.innerHTML = `<input type="hidden" id="edit-contact__id" name="id" value="${id}">
-    <div>
-      <label for="edit-contact__firstname">First name</label>
-      <input type="text" pattern="[^0-9]*" name="firstname" id="edit-contact__firstname" placeholder="First name" value="${
-        firstname ? firstname : ""
-      }" />
-    </div>
-    <div>
-      <label for="edit-contact__lastname">Last name</label>
-      <input type="text" pattern="[^0-9]*" name="lastname" id="edit-contact__lastname" placeholder="Last name" value="${lastname ? lastname : ""}" />
-    </div>
-    <div>
-      <label for="edit-contact__company">Company name</label>
-      <input type="text" name="company" id="edit-contact__company" placeholder="Company" value="${company ? company : ""}" />
-    </div>
-    <div>
-      <label for="edit-contact__address">Address</label>
-      <textarea name="address" form="edit-contact" name="address" id="edit-contact__address" placeholder="Address">${
-        address ? address : ""
-      }</textarea>
-    </div>
-    <div>
-      <label for="edit-contact__email">Email</label>
-      <input type="email" name="email" id="edit-contact__email" placeholder="Email" value="${email ? email : ""}" />
-    </div>
-    <div>
-      <label for="edit-contact__phone">Phone</label>
-      <input type="tel" name="phone" id="edit-contact__phone" placeholder="Phone" value="${phone ? phone : ""}" />
-    </div>
-    <div>
-      <label for="edit-contact__notes">Notes</label>
-      <textarea form="edit-contact" name="notes" id="edit-contact__notes" placeholder="Notes">${notes ? notes : ""}</textarea>
-    </div>
-    <input type="submit" value="Done"/>`;
+  form.addEventListener("submit", onUpdateContact);
+  form.innerHTML = `
+    <section class="content-controls">
 
-  const deleteBtn = document.createElement("button");
-  deleteBtn.type = "button";
-  deleteBtn.innerHTML = "Delete Contact";
-  deleteBtn.id = "delete-btn";
-  deleteBtn.dataset.contactId = id;
-  deleteBtn.addEventListener("click", () => requestDeleteContact(id));
+      <input type="submit" class="button-small" value="Save Changes"/>
+      <button type="button" id="discard-contact-btn" class="button-small">Discard Changes</button>
+
+      <button type="button" id="delete-contact-btn" class="button-small" data-contact-id="${id}">Delete Contact</button>
+      <button type="button" id="archive-contact-btn" class="button-small" data-contact-id="${id}">Archive Contact</button>
+    </section>
+      <input type="hidden" id="edit-contact__id" name="id" value="${id}">
+
+    <label for="edit-contact__firstname">First name</label>
+    <input required type="text" pattern="[^0-9]*" name="firstname" autocapitalize="words" id="edit-contact__firstname" placeholder="Hanna" value="${
+      firstname ? firstname : ""
+    }" />
+    <label for="edit-contact__lastname">Last name</label>
+    <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Muster" value="${
+      lastname ? lastname : ""
+    }" />
+    <label for="edit-contact__phone">Phone</label>
+    <input type="tel" name="phone" id="edit-contact__phone" placeholder="+41 XXX XX XX" value="${phone ? phone : ""}" />
+
+    <label for="edit-contact__email">Email</label>
+    <input type="email" name="email" id="edit-contact__email" placeholder="hanna.muster@email.com" value="${email ? email : ""}" />
+
+    <label for="edit-contact__address">Address</label>
+    <textarea name="address" form="edit-contact" name="address" id="edit-contact__address" placeholder="Musterweg 34&#10;4321 Moon">${
+      address ? address : ""
+    }</textarea>
+
+    <label for="edit-contact__company">Company</label>
+    <input type="text" name="company" id="edit-contact__company" placeholder="Fantasy Inc." value="${company ? company : ""}" />
+
+    <label for="edit-contact__notes">Notes</label>
+    <textarea name="notes" id="edit-contact__notes" placeholder="Write something...">${notes ? notes : ""}</textarea>`;
+
+  const discardBtn = form.querySelector("#discard-contact-btn");
+  discardBtn.addEventListener("click", () => selectContact(id));
+
+  const deleteBtn = form.querySelector("#delete-contact-btn");
+  deleteBtn.addEventListener("click", onDeleteContact);
+  const orders = await request.ordersByContact(id);
+  if (orders.length) deleteBtn.setAttribute("disabled", "true");
+
+  const archiveBtn = form.querySelector("#archive-contact-btn");
+  archiveBtn.addEventListener("click", onArchiveContact);
 
   wrapper.appendChild(form);
-  wrapper.appendChild(deleteBtn);
 
   return wrapper;
 }
 
-async function requestContacts(searchString) {
-  let response;
-  if (searchString) response = await fetch(`${process.env.SERVER}/api/searchContacts/${searchString}`);
-  else response = await fetch(`${process.env.SERVER}/api/getAllContacts`);
-  return await response.json();
-}
+function selectNextContact() {
+  const contactList = document.getElementById("contact-list");
+  const currentContact = contactList.querySelector("li[data-selected]");
 
-async function requestContactDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/getContactById/${id}`);
-  return await response.json();
-}
+  if (contactList.hasChildNodes()) {
+    let nextContact = currentContact.nextElementSibling;
 
-async function requestDeleteContact(id) {
-  try {
-    const response = await fetch(`${process.env.SERVER}/api/contact/${id}`, {
-      method: "DELETE",
-    });
-    insertContactList();
-    selectFirstContact();
-  } catch (err) {
-    console.log(err);
+    while (nextContact && nextContact.offsetParent === null) {
+      nextContact = nextContact.nextElementSibling;
+    }
+
+    if (nextContact) selectContact(nextContact.dataset.contactId);
+    else selectContact();
   }
 }
 
-async function requestUpdateContact(data) {
-  const response = await fetch(`${process.env.SERVER}/api/updateContact`, {
-    method: "POST",
-    body: data,
-  });
-  return await response.json();
-}
+function selectPreviousContact() {
+  const contactList = document.getElementById("contact-list");
+  const currentContact = contactList.querySelector("li[data-selected]");
 
-async function requestNewContact() {
-  let defaultData = { firstname: "New", lastname: "Contact" };
-  let searchParams = new URLSearchParams(defaultData);
-  const response = await fetch(`${process.env.SERVER}/api/contact`, {
-    method: "POST",
-    body: searchParams,
-  });
-  return await response.json();
-}
+  if (contactList.hasChildNodes()) {
+    let previousContact = currentContact.previousElementSibling;
 
-async function submitUpdateContactForm(event) {
-  event.preventDefault();
-  const data = new URLSearchParams(new FormData(event.target));
-  // might be passed as FORM DATA directly...
-  // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#body
-  let response = await requestUpdateContact(data);
-  insertContactList();
-  insertContactDetails(response.id, "view");
-}
+    while (previousContact && previousContact.offsetParent === null) {
+      previousContact = previousContact.previousElementSibling;
+    }
 
-function selectFirstContact() {
-  const contactList = document.querySelector("#contact-list ul");
-  const firstContact = contactList.firstChild;
-  if (firstContact) {
-    const firstContactId = Number(firstContact.dataset.contactId);
-    insertContactDetails(firstContactId, "view");
+    if (previousContact) selectContact(previousContact.dataset.contactId);
+    else selectContact(contactList.lastChild.dataset.contactId);
   }
 }

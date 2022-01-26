@@ -1,33 +1,320 @@
-.form {
-  background: powderblue;
+// ================================
+// preferred defaults
+// ================================
+html {
+  box-sizing: border-box;
 }
 
-#new-contact label {
-  display: none;
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
 }
 
-input:required {
-  border: solid 1px red;
+body {
+  margin: 0;
 }
 
-p {
-  white-space: pre-wrap;
+// ================================
+// custom properties
+// ================================
+:root {
+  --color-font: black;
+  --color-background: white;
+  --color-inactive: rgba(0, 0, 0, 0.2);
+  --page-padding: 30px;
+  --font-size: 1.4rem;
+  --font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  --font-regular: normal 200 1em var(--font-family);
+  --font-small: normal 200 0.8em var(--font-family);
 }
 
-address a {
-  display: block;
+// ================================
+// general
+// ================================
+body {
+  font: normal 200 var(--font-size) "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  color: var(--color-font);
+  background: var(--color-background);
 }
 
-#contacts-wrapper {
+main {
+  margin: var(--page-padding);
+}
+
+input:not([type="submit"]):not([type="checkbox"]) {
+  border: none;
+  padding: 5px 0;
+  font: inherit;
+  font-size: 1.5em;
+  color: inherit;
+  background: none;
+  border-bottom: solid 1px var(--color-font);
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  &::placeholder {
+    color: var(--color-inactive);
+  }
+}
+
+.checkbox-wrapper {
+  &:not[hidden] {
+    display: flex;
+  }
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+input[type="checkbox"] {
+  --size: 18px;
+  appearance: none;
+  height: var(--size);
+  width: var(--size);
+  border: solid 1px var(--color-font);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-inactive);
+  }
+
+  &:checked {
+    background: var(--color-font);
+  }
+}
+
+textarea {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  resize: none;
+  color: inherit;
+  font: var(--font-regular);
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--color-inactive);
+  }
+}
+
+.content-controls {
   display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: var(--page-padding);
 }
 
-#contacts-wrapper > div {
-  flex: 1;
+.button-small {
+  background: none;
+  border: solid 1px var(--color-font);
+  color: inherit;
+  font: var(--font-small);
+  letter-spacing: 0.05em;
+  padding: 2px 10px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-font);
+    color: var(--color-background);
+  }
+
+  &:disabled {
+    color: var(--color-inactive);
+    border-color: var(--color-inactive);
+  }
 }
 
-#contact-list {
-  li[data-selected] {
+// ================================
+// app header
+// ================================
+#app-header {
+  background: white;
+  padding: 8px var(--page-padding);
+
+  #app-header__title {
+    margin: 0;
+    font-size: 0.8em;
+    font-weight: 400;
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+  }
+
+  nav {
+    ul {
+      list-style: none;
+      display: flex;
+      margin: 0;
+      padding: 0;
+      gap: 15px;
+    }
+
+    li[data-active] a {
+      text-decoration: underline;
+    }
+
+    a {
+      font-weight: 200;
+      font-size: 0.8em;
+      margin: 0;
+      color: inherit;
+      text-decoration: none;
+    }
+  }
+}
+
+// ================================
+// contacts
+// ================================
+#contact {
+  --list-width: 350px;
+
+  display: grid;
+  grid-template-columns: minmax(min-content, var(--list-width)) 1fr;
+  grid-template-rows: 120px auto;
+  gap: var(--page-padding);
+  grid-template-areas:
+    "control control"
+    "list detail";
+
+  #contact-control-section {
+    grid-area: control;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    #add-contact-btn {
+      --size: 80px;
+      background: var(--color-font);
+      border: none;
+      display: block;
+      height: var(--size);
+      width: var(--size);
+      border-radius: var(--size);
+      color: var(--color-background);
+      cursor: pointer;
+    }
+
+    #search-contact {
+      max-width: var(--list-width);
+    }
+  }
+
+  #contact-list-section {
+    grid-area: list;
+
+    #contact-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        position: relative;
+        padding: 4px 10px;
+        margin-left: 40px;
+        border-radius: 5px;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.1s ease-out;
+
+        &:hover,
+        &[data-selected] {
+          transform: translateX(-5px);
+        }
+      }
+
+      li[data-selected] {
+        background: var(--color-font);
+        color: var(--color-background);
+      }
+
+      li[data-filtered] {
+        display: none;
+      }
+
+      li[data-order-letter]:before {
+        content: attr(data-order-letter);
+        position: absolute;
+        font-weight: 400;
+        left: -40px;
+        color: var(--color-font);
+      }
+    }
+  }
+
+  #contact-detail-section {
+    grid-area: detail;
+
+    address {
+      font-size: 2em;
+      a {
+        color: inherit;
+      }
+    }
+
+    h2 {
+      margin-top: 70px;
+      font-weight: 300;
+      font-size: 1.2em;
+    }
+
+    #contact-orders {
+      list-style: none;
+      padding: 0;
+
+      a {
+        color: inherit;
+      }
+    }
+
+    form {
+      max-width: 400px;
+      label {
+        display: block;
+        margin-top: 2em;
+      }
+      summary {
+        margin: var(--page-padding);
+        list-style: none;
+        text-align: center;
+        width: 70%;
+        max-width: 250px;
+        margin: var(--page-padding) auto;
+      }
+
+      details[open] > summary {
+        display: none;
+      }
+    }
+  }
+}
+
+// ================================
+// order
+// ================================
+#order {
+  display: flex;
+
+  #order-list-section,
+  #order-detail-section {
+    flex: 1;
+  }
+
+  #order-list li[data-selected] {
     background: powderblue;
+  }
+
+  div[data-new-contact]::after {
+    content: "New Contact!";
+    color: red;
   }
 }
