@@ -19,9 +19,9 @@ body {
 // custom properties
 // ================================
 :root {
-  --color-font: rgb(180, 100, 39);
-  --color-background: rgb(194, 204, 203);
-  --color-inactive: rgba(255, 255, 255, 0.5);
+  --color-font: black;
+  --color-background: white;
+  --color-inactive: rgba(0, 0, 0, 0.2);
   --page-padding: 30px;
   --font-size: 1.4rem;
   --font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
@@ -122,7 +122,8 @@ textarea {
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: var(--color-inactive);
+    background: var(--color-font);
+    color: var(--color-background);
   }
 
   &:disabled {
@@ -175,9 +176,11 @@ textarea {
 // contacts
 // ================================
 #contact {
+  --list-width: 350px;
+
   display: grid;
-  grid-template-columns: minmax(min-content, 350px) 1fr;
-  grid-template-rows: 130px auto;
+  grid-template-columns: minmax(min-content, var(--list-width)) 1fr;
+  grid-template-rows: 120px auto;
   gap: var(--page-padding);
   grid-template-areas:
     "control control"
@@ -187,21 +190,22 @@ textarea {
     grid-area: control;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 
     #add-contact-btn {
       --size: 80px;
-      background: white;
+      background: var(--color-font);
       border: none;
       display: block;
       height: var(--size);
       width: var(--size);
       border-radius: var(--size);
-      color: var(--color-font);
+      color: var(--color-background);
       cursor: pointer;
-      box-shadow: 0 0 7px rgba(0, 0, 0, 0.05);
     }
 
-    #search-contact__label {
+    #search-contact {
+      max-width: var(--list-width);
     }
   }
 
@@ -216,6 +220,7 @@ textarea {
       li {
         position: relative;
         padding: 4px 10px;
+        margin-left: 40px;
         border-radius: 5px;
         cursor: pointer;
         user-select: none;
@@ -228,7 +233,8 @@ textarea {
       }
 
       li[data-selected] {
-        background: white;
+        background: var(--color-font);
+        color: var(--color-background);
       }
 
       li[data-filtered] {
@@ -239,7 +245,8 @@ textarea {
         content: attr(data-order-letter);
         position: absolute;
         font-weight: 400;
-        left: -20px;
+        left: -40px;
+        color: var(--color-font);
       }
     }
   }

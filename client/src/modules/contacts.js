@@ -11,7 +11,7 @@ export default async function render() {
       <div>
         <form id="search-contact" role="search">
           <label id="search-contact__label" for="search-contact__input">Search</label>
-          <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Contact Name..." autocomplete="off"/>
+          <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Contact Name..." autocomplete="off" required/>
         </form>
 
         <div id="archive-toggle-wrapper" class="checkbox-wrapper" hidden>
@@ -285,7 +285,6 @@ async function getContactListEl(archived = false) {
     if (orderLetter !== firstLetter) {
       orderLetter = firstLetter;
       el.dataset.orderLetter = firstLetter.toUpperCase();
-      console.log(orderLetter);
     }
   }
 
