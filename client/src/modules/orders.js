@@ -1,4 +1,7 @@
 import * as request from "./serverRequests";
+import Calendar from "./calendar";
+
+const calendar = new Calendar();
 
 export default async function render() {
   const module = document.createElement("div");
@@ -7,11 +10,13 @@ export default async function render() {
   module.innerHTML = `
     <div id="order-list-section">
         <button id="add-order-btn" type="button">Add Order</button>
-        <div id="order-list-wrapper">
-        </div>
+        <div id="order-list-wrapper"></div>
     </div>
     <div id="order-detail-section">
     </div>`;
+
+
+  module.appendChild(calendar.getHTML());
 
   const addButton = module.querySelector("#add-order-btn");
   addButton.addEventListener("click", onPrepareNewOrder);

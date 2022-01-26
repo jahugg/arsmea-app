@@ -32,10 +32,14 @@ body {
 // ================================
 // general
 // ================================
-body {
+#app {
   font: normal 200 var(--font-size) "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   color: var(--color-font);
-  background: var(--color-background);
+}
+
+::selection {
+  color: var(--color-background);
+  background: var(--color-font);
 }
 
 main {
@@ -136,7 +140,6 @@ textarea {
 // app header
 // ================================
 #app-header {
-  background: white;
   padding: 8px var(--page-padding);
 
   #app-header__title {
@@ -316,5 +319,17 @@ textarea {
   div[data-new-contact]::after {
     content: "New Contact!";
     color: red;
+  }
+}
+
+.calendar {
+  width: 400px;
+  border-collapse: collapse;
+  td {
+    border: 1px solid black;
+    width: calc(100% / 7);
+  }
+
+  .calendar__body {
   }
 }

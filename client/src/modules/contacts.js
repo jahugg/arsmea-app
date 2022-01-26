@@ -16,7 +16,7 @@ export default async function render() {
 
         <div id="archive-toggle-wrapper" class="checkbox-wrapper" hidden>
           <input type="checkbox" id="archive-toggle">
-          <label for="archive-toggle">Show Archive</label>
+          <label for="archive-toggle">Archive</label>
         </div>
       </div>
 
@@ -87,7 +87,7 @@ async function updateArchivedContacts() {
   const archiveToggle = document.querySelector("#archive-toggle-wrapper");
   if (archivedContacts.length) {
     archiveToggle.removeAttribute("hidden");
-    archiveToggle.querySelector("label").innerHTML = `Show Archive (${archivedContacts.length})`;
+    archiveToggle.querySelector("label").innerHTML = `Archive (${archivedContacts.length})`;
   } else archiveToggle.setAttribute("hidden", true);
 }
 
