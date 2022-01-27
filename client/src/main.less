@@ -22,11 +22,13 @@ body {
   --color-font: black;
   --color-background: white;
   --color-inactive: rgba(0, 0, 0, 0.2);
+  --color-highlight: red;
   --page-padding: 30px;
   --font-size: 1.4rem;
   --font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   --font-regular: normal 200 1em var(--font-family);
   --font-small: normal 200 0.8em var(--font-family);
+  --font-tiny: normal 200 0.6em var(--font-family);
 }
 
 // ================================
@@ -259,6 +261,7 @@ textarea {
 
     address {
       font-size: 2em;
+      white-space: pre-line;
       a {
         color: inherit;
       }
@@ -305,7 +308,6 @@ textarea {
 // order
 // ================================
 #order {
-  display: flex;
 
   #order-list-section,
   #order-detail-section {
@@ -323,13 +325,54 @@ textarea {
 }
 
 .calendar {
-  width: 400px;
+  min-width: 400px;
   border-collapse: collapse;
+  font: var(--font-small);
   td {
     border: 1px solid black;
     width: calc(100% / 7);
   }
 
+  .calendar__head {
+  }
   .calendar__body {
+
+    .calendar__day {
+      position: relative;
+      height: 50px;
+
+      &::before {
+        --size: 1.9em;
+        font: var(--font-tiny);
+        content: attr(data-date);
+        position: absolute;
+        display: block;
+        height: var(--size);
+        width: var(--size);
+        border-radius: var(--size);
+        text-align: center;
+        top: 2px;
+        right: 2px;
+        line-height: var(--size);
+        color: var(--color-inactive);
+      }
+
+      &:hover {
+        background: var(--color-inactive);
+      }
+
+      &[data-current-month]::before {
+        color: var(--color-font);
+      }
+
+      &[data-selected]::before {
+        color: var(--color-background);
+        background: var(--color-highlight);
+      }
+
+      &[data-selected] {
+
+      }
+    }
   }
 }

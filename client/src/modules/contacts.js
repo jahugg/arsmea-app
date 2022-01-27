@@ -327,9 +327,9 @@ async function getContactAddressEl(id) {
   addressNode.dataset.contactId = id;
   addressNode.innerHTML = `<div class="address__name">${firstname ? firstname : ""} ${lastname ? lastname : ""}</div>`;
   if (company) addressNode.innerHTML += `<div class="address__company">${company}</div>`;
-  if (address) addressNode.innerHTML += `<div class="address__address">${address}</div>`;
   if (phone) addressNode.innerHTML += `<div class="address__tel"><a href="tel:${phone}">${phone}</a></div>`;
   if (email) addressNode.innerHTML += `<div class="address__email"><a href="mailto:${email}">${email}</a></div>`;
+  if (address) addressNode.innerHTML += `<div class="address__address">${address}</div>`;
   if (notes) addressNode.innerHTML += `<div class="address__notes">${notes}</div>`;
 
   contactDetails.appendChild(addressNode);

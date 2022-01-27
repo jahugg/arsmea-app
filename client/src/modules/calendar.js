@@ -1,38 +1,27 @@
-const today = new Date();
-let selectedDate;
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export default class Calendar {
-  constructor() {}
+  constructor() {
+    this.selectedDate = new Date();
+  }
 
-  getHTML(date = today) {
+  getHTML(date = this.selectedDate) {
     const year = date.getFullYear();
-    const month = this.nameOfMonth(date);
+    const monthName = this.nameOfMonth(date);
 
     const calendarEl = document.createElement("table");
     calendarEl.classList.add("calendar");
     calendarEl.innerHTML = `
-        <thead class="calendar__head>
+        <thead class="calendar__head">
             <tr class="calendar__year"><th colspan="7">${year}</th></tr>
-            <tr class="calendar__month"><th colspan="7">${month}</th></tr>
-            <tr class="calendar__weekdays">
-            </tr>
+            <tr class="calendar__month"><th colspan="7">${monthName}</th></tr>
+            <tr class="calendar__weekdays"></tr>
         </thead>
-        <tbody class="calendar__body">
-            <tr class="calendar__week">
-                <td class="calendar__day" data-day="1">1</td>
-                <td class="calendar__day" data-day="2">2</td>
-                <td class="calendar__day" data-day="3">3</td>
-                <td class="calendar__day" data-day="4">4</td>
-                <td class="calendar__day" data-day="5">5</td>
-                <td class="calendar__day" data-day="6">6</td>
-                <td class="calendar__day" data-day="7">7</td>
-            </tr>
-        </tbod>
+        <tbody class="calendar__body"></tbod>
     `;
 
-    // populate weekdays
+    // populate weekdays header
     const weekdaysEl = calendarEl.querySelector(".calendar__weekdays");
     weekdays.forEach((name, index) => {
       const el = document.createElement("th");
@@ -42,40 +31,74 @@ export default class Calendar {
       weekdaysEl.appendChild(el);
     });
 
-    // populate body
+    // populate dates
     const bodyEl = calendarEl.querySelector(".calendar__body");
-    const daysCount = this.daysInMonth(date);
     const weeksCount = this.weeksInMonth(date);
-    for (const i = 0; i < daysCount; i++) {
-        
+    const firstOfCurrentMonth = this.firstDayOfMonth(date);
+    let nextInCalendar = new Date(firstOfCurrentMonth);
+    nextInCalendar.setDate(nextInCalendar.getDate() - firstOfCurrentMonth.getDay());
 
+    for (let week = 0; week < weeksCount; week++) {
+      const weekEl = document.createElement("tr");
+      weekEl.classList.add("calendar__week");
+
+      for (let day = 0; day < 7; day++) {
+        const dayEl = document.createElement("td");
+        dayEl.classList.add("calendar__day");
+        dayEl.dataset.date = nextInCalendar.getDate();
+        dayEl.dataset.month = nextInCalendar.getMonth();
+        dayEl.dataset.year = nextInCalendar.getFullYear();
+        dayEl.addEventListener("click", this.onSelectDate.bind(this));
+        dayEl.dataset.month == date.getMonth() ? (dayEl.dataset.currentMonth = "") : "";
+        nextInCalendar.toDateString() === date.toDateString() ? (dayEl.dataset.selected = "") : "";
+        weekEl.appendChild(dayEl);
+
+        // select next day
+        nextInCalendar.setDate(nextInCalendar.getDate() + 1);
+      }
+      bodyEl.appendChild(weekEl);
     }
 
-    console.log(this.weeksInMonth(date));
     return calendarEl;
   }
 
-  set selectedDate(date) {
+  onSelectDate(event) {
+    const year = Number(event.target.dataset.year);
+    const month = Number(event.target.dataset.month);
+    const day = Number(event.target.dataset.date);
+    const date = new Date(year, month, day);
+
+    this.selectDate(date);
+  }
+
+  selectDate(date) {
     this.selectedDate = date;
+
+    const calendar = document.querySelector(".calendar");
+    if (calendar) {
+      const days = document.getElementsByClassName("calendar__day");
+      for (const tile of days) {
+        delete tile.dataset.selected;
+
+        const year = Number(tile.dataset.year);
+        const month = Number(tile.dataset.month);
+        const day = Number(tile.dataset.date);
+        const tileDate = new Date(year, month, day);
+        tileDate.toDateString() === date.toDateString() ? tile.dataset.selected = '' : '';
+      }
+    }
   }
 
-  nameOfMonth(date) {
-    return months[date.getMonth()];
-  }
+  // calendar functionalities
+  nameOfMonth = (date) => months[date.getMonth()];
+  nameOfWeekday = (date) => weekdays[date.getDay()];
+  firstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+  lastDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 0).getDate();
 
-  nameOfWeekday(date) {
-    return weekdays[date.getDay()];
-  }
-
-  daysInMonth(date) {
-    return new Date(date.getFullYear(), date.getMonth(), 0).getDate();
-  }
-
-  weeksInMonth(date, fromMonday = true) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
+  weeksInMonth(date, fromMonday = false) {
+    const first = this.firstDayOfMonth(date);
+    const last = this.lastDayOfMonth(date);
     let dayOfWeek = first.getDay();
 
     if (fromMonday && dayOfWeek === 0) dayOfWeek = 7;
