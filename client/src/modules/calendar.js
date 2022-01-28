@@ -1,9 +1,15 @@
+import * as request from "./serverRequests";
+
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export default class Calendar {
   constructor() {
     this.selectedDate = new Date();
+    this.selectedRange = {
+      start: new Date(),
+      end: new Date(),
+    };
   }
 
   getHTML(date = this.selectedDate) {
@@ -71,9 +77,12 @@ export default class Calendar {
     this.selectDate(date);
   }
 
-  selectDate(date) {
+  async selectDate(date) {
     this.selectedDate = date;
+    this.selectedRange.start = date;
+    this.selectedRange.end = date;
 
+    // mark range in calendar
     const calendar = document.querySelector(".calendar");
     if (calendar) {
       const days = document.getElementsByClassName("calendar__day");
@@ -84,8 +93,18 @@ export default class Calendar {
         const month = Number(tile.dataset.month);
         const day = Number(tile.dataset.date);
         const tileDate = new Date(year, month, day);
-        tileDate.toDateString() === date.toDateString() ? tile.dataset.selected = '' : '';
+        tileDate.toDateString() === date.toDateString() ? (tile.dataset.selected = "") : "";
       }
+    }
+    // get orders within range
+    const orderList = await request.ordersWithinRange(this.selectedRange);
+    this.renderOrders(orderList);
+  }
+
+  renderOrders(orderList) {
+    for (const order of orderList) {
+      let dueDate = new Date(order.datetime_due);
+      console.log(`${dueDate.getHours()}:${dueDate.getMinutes()}`);
     }
   }
 

@@ -173,8 +173,23 @@ export default class DBService {
         ON orders.contact_id=contacts.id 
         WHERE contacts.id = ?
         ORDER BY orders.datetime_due, orders.status`);
-      const contactList = query.all(id);
-      return contactList;
+      const orderList = query.all(id);
+      return orderList;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async selectOrdersWithinRange(startDate, endDate) {
+    try {
+      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, orders.price
+        FROM orders 
+        INNER JOIN contacts 
+        ON orders.contact_id=contacts.id 
+        WHERE orders.datetime_due BETWEEN ? AND ?
+        ORDER BY orders.datetime_due, orders.status`);
+      const ordersList = query.all(startDate, endDate);
+      return ordersList;
     } catch (error) {
       console.log(error);
     }

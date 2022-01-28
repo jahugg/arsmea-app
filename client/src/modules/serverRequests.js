@@ -81,3 +81,16 @@ export async function deleteOrder(id) {
     console.log(err);
   }
 }
+
+export async function ordersWithinRange(range) {
+  const start = range.start.toJSON().slice(0, 10) + "T00:00:00";
+  const end = range.end.toJSON().slice(0, 10) + "T23:59:00";
+  console.log(start, end);
+  try {
+    let response;
+    response = await fetch(`${process.env.SERVER}/api/ordersWithinRange/?start=${start}&end=${end}`);
+    return await response.json();
+  } catch (err) {
+    console.log(err);
+  }
+}

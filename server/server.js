@@ -59,6 +59,7 @@ app.get("/api/searchContacts/:string", async (request, response) => {
 
 app.post("/api/order", async (request, response) => {
   const data = request.body;
+  console.log(data);
   const { contactName, contactId } = data;
   // optionally create new contact
   if (contactId == 0) {
@@ -101,6 +102,14 @@ app.get("/api/ordersByContact/:id", async (request, response) => {
   const { id } = request.params;
   const contactList = await db.selectOrdersByContactId(id);
   response.json(contactList);
+});
+
+app.get("/api/ordersWithinRange/", async (request, response) => {
+  const start = request.query.start;
+  const end = request.query.end;
+  const ordersList = await db.selectOrdersWithinRange(start, end);
+  console.log(ordersList);
+  response.json(ordersList);
 });
 
 app.listen(process.env.PORT);
