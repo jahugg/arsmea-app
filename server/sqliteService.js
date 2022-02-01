@@ -182,7 +182,7 @@ export default class DBService {
 
   async selectOrdersWithinRange(startDate, endDate) {
     try {
-      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, orders.price
+      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, orders.price, contacts.firstname, contacts.lastname
         FROM orders 
         INNER JOIN contacts 
         ON orders.contact_id=contacts.id 

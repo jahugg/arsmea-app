@@ -1,3 +1,5 @@
+import DateExt from "./dateExtended";
+
 export async function contacts(archived = false) {
   let response;
   if (archived) response = await fetch(`${process.env.SERVER}/api/contactListArchived`);
@@ -83,16 +85,11 @@ export async function deleteOrder(id) {
 }
 
 export async function ordersWithinRange(start, end) {
-  // workaround correction due to toJSON() function returning -1 day
-  const startDateCorrected = new Date(start)
-  startDateCorrected.setDate(startDateCorrected.getDate() + 1)
-  let endDateCorrected = new Date(end);
-  endDateCorrected.setDate(endDateCorrected.getDate() + 1);
 
   // get String and set Time
-  const startDateString = startDateCorrected.toJSON().slice(0, 10) + "T00:00";
-  const endDateString = endDateCorrected.toJSON().slice(0, 10) + "T23:59";
-  
+  const startDateString = start.getDateString() + "T00:00";
+  const endDateString = end.getDateString() + "T23:59";
+
   try {
     let response;
     response = await fetch(`${process.env.SERVER}/api/ordersWithinRange/?start=${startDateString}&end=${endDateString}`);

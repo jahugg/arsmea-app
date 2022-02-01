@@ -15,7 +15,6 @@ export default async function render() {
     <div id="order-detail-section">
     </div>`;
 
-
   module.prepend(await calendar.getHTML());
 
   const addButton = module.querySelector("#add-order-btn");
