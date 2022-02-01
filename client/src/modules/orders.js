@@ -1,5 +1,6 @@
 import * as request from "./serverRequests";
 import Calendar from "./calendar";
+import DateExt from "./dateExtended";
 
 const calendar = new Calendar();
 
@@ -17,6 +18,24 @@ export default async function render() {
 
   module.prepend(await calendar.getHTML());
 
+  // populate calendar with orders
+  const orderOfView = await request.ordersWithinRange(calendar.firstDayOfView, calendar.lastDayOfView);
+
+  for (const order of orderOfView) {
+    const thisDate = new DateExt(order.datetime_due);
+    const date = thisDate.getDateString();
+
+    // add event to calendar
+    const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
+    const ordersEl = module.querySelector(selector);
+    if (ordersEl) ordersEl.innerHTML += "\u{1F98A}";
+  }
+
+  const calendarDays = module.getElementsByClassName("calendar__day");
+  for (const day of calendarDays) {
+    day.addEventListener("click", onClickCalendarDay);
+  }
+
   const addButton = module.querySelector("#add-order-btn");
   addButton.addEventListener("click", onPrepareNewOrder);
 
@@ -25,6 +44,17 @@ export default async function render() {
   orderListWrapper.appendChild(orderList);
 
   return module;
+}
+
+async function onClickCalendarDay(event) {
+  const target = event.target.closest(".calendar__day");
+  const selectedDate = new DateExt(target.dataset.date);
+  const ordersOfDay = await request.ordersWithinRange(selectedDate, selectedDate);
+  renderOrdersList(ordersOfDay);
+}
+
+function updateCalendar() {
+
 }
 
 export function init() {
@@ -297,4 +327,27 @@ async function getOrderFormEl(id) {
   wrapper.appendChild(deleteBtn);
 
   return wrapper;
+}
+
+function renderOrdersList(orderList) {
+  const orderListWrapper = document.getElementById("order-list-wrapper");
+
+  const listEl = document.createElement("ul");
+    listEl.id = "order-list";
+
+    for (const order of orderList) {
+      const { id, datetime_due, status, price, firstname, lastname } = order;
+      let itemEl = document.createElement("li");
+      itemEl.dataset.orderId = id;
+
+      let dueDate = new DateExt(datetime_due);
+      let dateString = dueDate.toLocaleDateString().replace(/\//g, ".");
+      let timeString = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
+      itemEl.innerHTML = `${timeString} ${firstname} ${lastname ? lastname : ""} ${price}CHF ${status}`;
+
+      itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
+      listEl.appendChild(itemEl);
+    }
+
+    orderListWrapper.replaceChildren(listEl);
 }

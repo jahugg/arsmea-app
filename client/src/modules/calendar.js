@@ -12,16 +12,17 @@ export default class Calendar {
     this.lastDayOfView = new DateExt();
   }
 
-  async getHTML(date = this.selectedDate) {
-    const year = date.getFullYear();
-    const monthName = date.nameOfMonth();
+  updateView() {
+    // setting first and last day here is cleaner
+  }
 
+  async getHTML(date = this.selectedDate) {
     const calendarEl = document.createElement("table");
     calendarEl.classList.add("calendar");
     calendarEl.innerHTML = `
         <thead class="calendar__head">
-            <tr class="calendar__year"><th colspan="7">${year}</th></tr>
-            <tr class="calendar__month"><th colspan="7">${monthName}</th></tr>
+            <tr class="calendar__year"><th colspan="7">${date.getFullYear()}</th></tr>
+            <tr class="calendar__month"><th colspan="7">${date.nameOfMonth()}</th></tr>
             <tr class="calendar__weekdays"></tr>
         </thead>
         <tbody class="calendar__body"></tbod>
@@ -43,7 +44,7 @@ export default class Calendar {
     const firstOfCurrentMonth = date.firstDayOfMonth();
     let nextInCalendar = new DateExt(firstOfCurrentMonth);
     nextInCalendar.setDate(nextInCalendar.getDate() - firstOfCurrentMonth.getDay());
-    this.firstDayOfView.setDate(nextInCalendar.getDate);
+    this.firstDayOfView.setTime(nextInCalendar.getTime());
 
     for (let week = 0; week < weeksCount; week++) {
       const weekEl = document.createElement("tr");
@@ -74,20 +75,9 @@ export default class Calendar {
       bodyEl.appendChild(weekEl);
     }
 
-    // request orders of the current view
-    this.lastDayOfView.setDate(nextInCalendar.getDate() - 1);
-
-    // const orderList = await request.ordersWithinRange(firstDayOfView, lastDayOfView);
-
-    // for (const order of orderList) {
-    //   const thisDate = new DateExt(order.datetime_due);
-    //   const date = thisDate.toJSON().slice(0, 10);
-
-    //   // add event to calendar
-    //   const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
-    //   const ordersEl = calendarEl.querySelector(selector);
-    //   if (ordersEl) ordersEl.innerHTML += "\u{1F98A}";
-    // }
+    // determine last day of view
+    this.lastDayOfView.setTime(nextInCalendar.getTime());
+    this.lastDayOfView.setDate(this.lastDayOfView.getDate() - 1);
 
     return calendarEl;
   }
@@ -114,32 +104,5 @@ export default class Calendar {
         tileDate.toDateString() === startDate.toDateString() ? (tile.dataset.selected = "") : "";
       }
     }
-
-    // get orders within range
-    const orderList = await request.ordersWithinRange(startDate, endDate);
-
-    const nodeEl = document.getElementById("order-list-wrapper");
-    this.renderOrders(orderList, nodeEl);
-  }
-
-  renderOrders(orderList, node) {
-    const listEl = document.createElement("ul");
-    listEl.id = "order-list";
-
-    for (const order of orderList) {
-      const { id, datetime_due, status, price, firstname, lastname } = order;
-      let itemEl = document.createElement("li");
-      itemEl.dataset.orderId = id;
-
-      let dueDate = new DateExt(datetime_due);
-      let dateString = dueDate.toLocaleDateString().replace(/\//g, ".");
-      let timeString = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
-      itemEl.innerHTML = `${timeString} ${firstname} ${lastname ? lastname : ""} ${price}CHF ${status}`;
-
-      itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
-      listEl.appendChild(itemEl);
-    }
-
-    node.replaceChildren(listEl);
   }
 }
