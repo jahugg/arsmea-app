@@ -12,7 +12,7 @@ export default class Calendar {
     };
   }
 
-  getHTML(date = this.selectedDate) {
+  async getHTML(date = this.selectedDate) {
     const year = date.getFullYear();
     const monthName = this.nameOfMonth(date);
 
@@ -43,6 +43,7 @@ export default class Calendar {
     const firstOfCurrentMonth = this.firstDayOfMonth(date);
     let nextInCalendar = new Date(firstOfCurrentMonth);
     nextInCalendar.setDate(nextInCalendar.getDate() - firstOfCurrentMonth.getDay());
+    const firstDayOfView = new Date(nextInCalendar);
 
     for (let week = 0; week < weeksCount; week++) {
       const weekEl = document.createElement("tr");
@@ -54,9 +55,15 @@ export default class Calendar {
         dayEl.dataset.date = nextInCalendar.getDate();
         dayEl.dataset.month = nextInCalendar.getMonth();
         dayEl.dataset.year = nextInCalendar.getFullYear();
-        dayEl.addEventListener("click", this.onSelectDate.bind(this));
+        dayEl.addEventListener("click", this.onClickDate.bind(this));
         dayEl.dataset.month == date.getMonth() ? (dayEl.dataset.currentMonth = "") : "";
         nextInCalendar.toDateString() === date.toDateString() ? (dayEl.dataset.selected = "") : "";
+
+        // add order container
+        const orders = document.createElement("div");
+        orders.classList.add("calender__day__orders");
+        dayEl.appendChild(orders);
+
         weekEl.appendChild(dayEl);
 
         // select next day
@@ -65,22 +72,41 @@ export default class Calendar {
       bodyEl.appendChild(weekEl);
     }
 
+    // request orders of the current view
+    const lastDayOfView = new Date(nextInCalendar);
+    lastDayOfView.setDate(nextInCalendar.getDate() - 1);
+    const orderList = await request.ordersWithinRange(firstDayOfView, lastDayOfView);
+
+    for (const order of orderList) {
+      const thisDate = new Date(order.datetime_due);
+      const date = thisDate.getDate();
+      const month = thisDate.getMonth();
+      const year = thisDate.getFullYear();
+
+      // add indicator to calendar
+      const selector = `.calendar__day[data-date="${date}"][data-month="${month}"][data-year="${year}"] .calender__day__orders`;
+      const ordersEl = calendarEl.querySelector(selector);
+      if (ordersEl) ordersEl.innerHTML += "\u{1F98A}";
+    }
+
     return calendarEl;
   }
 
-  onSelectDate(event) {
-    const year = Number(event.target.dataset.year);
-    const month = Number(event.target.dataset.month);
-    const day = Number(event.target.dataset.date);
+  onClickDate(event) {
+
+    const target = event.target.closest(".calendar__day");
+
+    const year = Number(target.dataset.year);
+    const month = Number(target.dataset.month);
+    const day = Number(target.dataset.date);
     const date = new Date(year, month, day);
 
-    this.selectDate(date);
+    this.selectRange(date, date);
   }
 
-  async selectDate(date) {
-    this.selectedDate = date;
-    this.selectedRange.start = date;
-    this.selectedRange.end = date;
+  async selectRange(startDate, endDate) {
+    // this.selectedRange.start = startDate;
+    // this.selectedRange.end = endDate;
 
     // mark range in calendar
     const calendar = document.querySelector(".calendar");
@@ -93,19 +119,35 @@ export default class Calendar {
         const month = Number(tile.dataset.month);
         const day = Number(tile.dataset.date);
         const tileDate = new Date(year, month, day);
-        tileDate.toDateString() === date.toDateString() ? (tile.dataset.selected = "") : "";
+        tileDate.toDateString() === startDate.toDateString() ? (tile.dataset.selected = "") : "";
       }
     }
     // get orders within range
-    const orderList = await request.ordersWithinRange(this.selectedRange);
-    this.renderOrders(orderList);
+    const orderList = await request.ordersWithinRange(startDate, endDate);
+
+    const nodeEl = document.getElementById("order-list-wrapper");
+    this.renderOrders(orderList, nodeEl);
   }
 
-  renderOrders(orderList) {
+  renderOrders(orderList, node) {
+
+    const listEl = document.createElement("ul");
+    listEl.id = "order-list";
+
     for (const order of orderList) {
-      let dueDate = new Date(order.datetime_due);
-      console.log(`${dueDate.getHours()}:${dueDate.getMinutes()}`);
+      const { id, datetime_due, status, firstname, lastname } = order;
+      let itemEl = document.createElement("li");
+      itemEl.dataset.orderId = id;
+
+      let dueDate = new Date(datetime_due);
+      let time = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
+      itemEl.innerHTML = `${datetime_due} ${firstname} ${lastname ? lastname : ""} ${status}`;
+
+      itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
+      listEl.appendChild(itemEl);
     }
+        
+    node.replaceChildren(listEl);
   }
 
   // calendar functionalities

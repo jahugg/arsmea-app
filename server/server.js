@@ -108,7 +108,6 @@ app.get("/api/ordersWithinRange/", async (request, response) => {
   const start = request.query.start;
   const end = request.query.end;
   const ordersList = await db.selectOrdersWithinRange(start, end);
-  console.log(ordersList);
   response.json(ordersList);
 });
 

@@ -16,7 +16,7 @@ export default async function render() {
     </div>`;
 
 
-  module.prepend(calendar.getHTML());
+  module.prepend(await calendar.getHTML());
 
   const addButton = module.querySelector("#add-order-btn");
   addButton.addEventListener("click", onPrepareNewOrder);

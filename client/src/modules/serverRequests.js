@@ -82,13 +82,20 @@ export async function deleteOrder(id) {
   }
 }
 
-export async function ordersWithinRange(range) {
-  const start = range.start.toJSON().slice(0, 10) + "T00:00:00";
-  const end = range.end.toJSON().slice(0, 10) + "T23:59:00";
-  console.log(start, end);
+export async function ordersWithinRange(start, end) {
+  // workaround correction due to toJSON() function returning -1 day
+  const startDateCorrected = new Date(start)
+  startDateCorrected.setDate(startDateCorrected.getDate() + 1)
+  let endDateCorrected = new Date(end);
+  endDateCorrected.setDate(endDateCorrected.getDate() + 1);
+
+  // get String and set Time
+  const startDateString = startDateCorrected.toJSON().slice(0, 10) + "T00:00";
+  const endDateString = endDateCorrected.toJSON().slice(0, 10) + "T23:59";
+  
   try {
     let response;
-    response = await fetch(`${process.env.SERVER}/api/ordersWithinRange/?start=${start}&end=${end}`);
+    response = await fetch(`${process.env.SERVER}/api/ordersWithinRange/?start=${startDateString}&end=${endDateString}`);
     return await response.json();
   } catch (err) {
     console.log(err);
