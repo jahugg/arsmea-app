@@ -1,6 +1,5 @@
 import * as request from "./serverRequests";
-import Calendar from "./calendar";
-import DateExt from "./dateExtended";
+import { Calendar, DateExt } from "./calendar";
 
 const calendar = new Calendar();
 
@@ -53,9 +52,7 @@ async function onClickCalendarDay(event) {
   renderOrdersList(ordersOfDay);
 }
 
-function updateCalendar() {
-
-}
+function updateCalendar() {}
 
 export function init() {
   const url = new URL(window.location);
@@ -333,21 +330,22 @@ function renderOrdersList(orderList) {
   const orderListWrapper = document.getElementById("order-list-wrapper");
 
   const listEl = document.createElement("ul");
-    listEl.id = "order-list";
+  listEl.id = "order-list";
 
-    for (const order of orderList) {
-      const { id, datetime_due, status, price, firstname, lastname } = order;
-      let itemEl = document.createElement("li");
-      itemEl.dataset.orderId = id;
+  for (const order of orderList) {
+    const { id, datetime_due, status, price, firstname, lastname } = order;
+    let itemEl = document.createElement("li");
+    itemEl.dataset.orderId = id;
+    itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
 
-      let dueDate = new DateExt(datetime_due);
-      let dateString = dueDate.toLocaleDateString().replace(/\//g, ".");
-      let timeString = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
-      itemEl.innerHTML = `${timeString} ${firstname} ${lastname ? lastname : ""} ${price}CHF ${status}`;
+    let dueDate = new DateExt(datetime_due);
+    let dateString = dueDate.toLocaleDateString().replace(/\//g, ".");
+    let timeString = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
+    itemEl.innerHTML = `${timeString} ${firstname} ${lastname ? lastname : ""} ${price}CHF ${status}`;
 
-      itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
-      listEl.appendChild(itemEl);
-    }
+    itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
+    listEl.appendChild(itemEl);
+  }
 
-    orderListWrapper.replaceChildren(listEl);
+  orderListWrapper.replaceChildren(listEl);
 }

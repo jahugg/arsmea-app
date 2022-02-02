@@ -1,4 +1,4 @@
-import DateExt from "./dateExtended";
+import { DateExt } from "./calendar";
 
 export async function contacts(archived = false) {
   let response;
@@ -85,7 +85,6 @@ export async function deleteOrder(id) {
 }
 
 export async function ordersWithinRange(start, end) {
-
   // get String and set Time
   const startDateString = start.getDateString() + "T00:00";
   const endDateString = end.getDateString() + "T23:59";
