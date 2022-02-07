@@ -11,8 +11,13 @@ export class Calendar {
     this.lastDayOfView = new DateExt();
   }
 
-  updateView() {
+  updateView(date = new DateExt()) {
     // setting first and last day here is cleaner
+    const year = document.querySelector(".calendar__year th");
+    year.innerHTML = date.getFullYear();
+
+    const month = document.querySelector(".calendar__month th span");
+    month.innerHTML = date.nameOfMonth();
   }
 
   async getHTML(date = this.selectedDate) {
@@ -20,12 +25,21 @@ export class Calendar {
     calendarEl.classList.add("calendar");
     calendarEl.innerHTML = `
         <thead class="calendar__head">
-            <tr class="calendar__year"><th colspan="7">${date.getFullYear()}</th></tr>
-            <tr class="calendar__month"><th colspan="7">${date.nameOfMonth()}</th></tr>
+            <tr><th colspan="7">
+              <button type="button" class="calendar__month__previous">Previous</button>
+              <span class="calendar__month">${date.nameOfMonth()}</span> <span class="calendar__year"> ${date.getFullYear()}</span>
+              <button type="button" class="calendar__month__next">Next</button>
+            </th></tr>
             <tr class="calendar__weekdays"></tr>
         </thead>
         <tbody class="calendar__body"></tbod>
     `;
+
+    const prevBtn = calendarEl.querySelector(".calendar__month__previous");
+    prevBtn.addEventListener("click", this.onClickPreviousMonth);
+
+    const nextBtn = calendarEl.querySelector(".calendar__month__next");
+    nextBtn.addEventListener("click", this.onClickPreviousMonth);
 
     // populate weekdays header
     const weekdaysEl = calendarEl.querySelector(".calendar__weekdays");
@@ -39,10 +53,10 @@ export class Calendar {
 
     // populate dates
     const bodyEl = calendarEl.querySelector(".calendar__body");
-    const weeksCount = date.weeksInMonth();
+    const weeksCount = date.weeksInMonth(true);
     const firstOfCurrentMonth = date.firstDayOfMonth();
     let nextInCalendar = new DateExt(firstOfCurrentMonth);
-    nextInCalendar.setDate(nextInCalendar.getDate() - firstOfCurrentMonth.getDay());
+    nextInCalendar.setDate(nextInCalendar.getDate() - firstOfCurrentMonth.getDayStartMonday());
     this.firstDayOfView.setTime(nextInCalendar.getTime());
 
     for (let week = 0; week < weeksCount; week++) {
@@ -81,6 +95,10 @@ export class Calendar {
     return calendarEl;
   }
 
+  onClickPreviousMonth(event) {
+    console.log("previous month");
+  }
+
   onClickDate(event) {
     const target = event.target.closest(".calendar__day");
     const date = new DateExt(target.dataset.date);
@@ -108,7 +126,7 @@ export class Calendar {
 
 export class DateExt extends Date {
   months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   getDateString = () => `${this.getFullYear()}-${String(this.getMonth() + 1).padStart(2, "0")}-${String(this.getDate()).padStart(2, "0")}`;
   nameOfMonth = () => this.months[this.getMonth()];
@@ -116,16 +134,14 @@ export class DateExt extends Date {
   firstDayOfMonth = () => new DateExt(this.getFullYear(), this.getMonth(), 1);
   lastDayOfMonth = () => new DateExt(this.getFullYear(), this.getMonth() + 1, 0);
   daysInMonth = () => new DateExt(this.getFullYear(), this.getMonth(), 0).getDate();
+  getDayStartMonday = () => (this.getDay() === 0 ? 6 : this.getDay() - 1);
 
   weeksInMonth(fromMonday = false) {
     const first = this.firstDayOfMonth(this.date);
     const last = this.lastDayOfMonth(this.date);
-    let dayOfWeek = first.getDay();
-
-    if (fromMonday && dayOfWeek === 0) dayOfWeek = 7;
-
+    let dayOfWeek
+    fromMonday ? dayOfWeek = first.getDay() : dayOfWeek = first.getDayStartMonday();
     let days = dayOfWeek + last.getDate();
-    if (fromMonday) days -= 1;
 
     return Math.ceil(days / 7);
   }

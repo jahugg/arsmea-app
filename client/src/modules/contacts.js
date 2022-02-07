@@ -281,10 +281,12 @@ async function getContactListEl(archived = false) {
     contactList.appendChild(el);
 
     // check order letter
-    const firstLetter = lastname.charAt(0).toLowerCase();
-    if (orderLetter !== firstLetter) {
-      orderLetter = firstLetter;
-      el.dataset.orderLetter = firstLetter.toUpperCase();
+    if (lastname) {
+      const firstLetter = lastname.charAt(0).toLowerCase();
+      if (orderLetter !== firstLetter) {
+        orderLetter = firstLetter;
+        el.dataset.orderLetter = firstLetter.toUpperCase();
+      }
     }
   }
 

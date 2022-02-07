@@ -308,10 +308,40 @@ textarea {
 // order
 // ================================
 #order {
+  --list-width: 350px;
 
-  #order-list-section,
+  display: grid;
+  grid-template-columns: minmax(min-content, var(--list-width)) 1fr;
+  grid-template-rows: auto auto;
+  gap: var(--page-padding);
+  grid-template-areas:
+    "control control"
+    "list detail";
+
+  #order-control-section {
+    grid-area: control;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    #add-order-btn {
+      --size: 80px;
+      background: var(--color-font);
+      border: none;
+      display: block;
+      height: var(--size);
+      width: var(--size);
+      border-radius: var(--size);
+      color: var(--color-background);
+      cursor: pointer;
+    }
+  }
+
+  #order-list-section {
+    grid-area: list;
+  }
   #order-detail-section {
-    flex: 1;
+    grid-area: detail;
   }
 
   #order-list li[data-selected] {
@@ -334,9 +364,10 @@ textarea {
   }
 
   .calendar__head {
+    .calendar__month {
+    }
   }
   .calendar__body {
-
     .calendar__day {
       position: relative;
       height: 50px;
@@ -372,7 +403,6 @@ textarea {
       }
 
       &[data-selected] {
-
       }
     }
   }

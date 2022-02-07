@@ -12,6 +12,8 @@ export default class DBService {
     const dataKeys = Object.keys(data);
     const dataValues = Object.values(data);
 
+    // use array.map to process keys inidividually...
+
     // cunstruct query string
     let queryString = "INSERT INTO contacts (date_added";
     dataKeys.forEach((key) => {

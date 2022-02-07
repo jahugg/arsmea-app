@@ -8,14 +8,18 @@ export default async function render() {
   module.classList.add("module");
   module.id = "order";
   module.innerHTML = `
+    <div id="order-control-section">
+      <div id="calendar-wrapper"></div>
+      <button id="add-order-btn" type="button">Add Order</button>
+    </div>
     <div id="order-list-section">
-        <button id="add-order-btn" type="button">Add Order</button>
         <div id="order-list-wrapper"></div>
     </div>
     <div id="order-detail-section">
     </div>`;
 
-  module.prepend(await calendar.getHTML());
+  const orderListSection = module.querySelector("#calendar-wrapper");
+  orderListSection.replaceChildren(await calendar.getHTML());
 
   // populate calendar with orders
   const orderOfView = await request.ordersWithinRange(calendar.firstDayOfView, calendar.lastDayOfView);
@@ -102,6 +106,10 @@ async function onPrepareNewOrder(event) {
   form.id = "new-order";
   form.addEventListener("submit", onCreateNewOrder);
   form.innerHTML = `
+    <section class="content-controls">
+      <input type="submit" class="button-small" value="Create Order"/>
+      <button type="button" class="button-small" id="discard-order-btn">Discard</button>
+    </section>
     <div>
       <label for="new-order__contact">Client</label>
       <input list="contact-list" name="contactName" id="new-order__contact" autocomplete="off" required />
@@ -119,18 +127,14 @@ async function onPrepareNewOrder(event) {
     <div>
       <label for="new-order__description">Description</label>
       <textarea name="description" id="new-order__description" placeholder="Notes"></textarea>
-    </div>
-    <input type="submit" value="Create Order"/>`;
+    </div>`;
 
-  const discardBtn = document.createElement("button");
-  discardBtn.type = "button";
-  discardBtn.innerHTML = "Discard Order";
-  discardBtn.id = "discard-order-btn";
-  discardBtn.addEventListener("click", () => selectOrder(0));
 
   wrapper.appendChild(form);
-  wrapper.appendChild(discardBtn);
   orderDetailsWrapper.replaceChildren(wrapper);
+
+  const discardBtn = document.getElementById("discard-order-btn");
+  discardBtn.addEventListener("click", () => selectOrder(0));
 
   const orderListItems = document.querySelectorAll("#order-list li");
   for (const item of orderListItems) delete item.dataset.selected;
