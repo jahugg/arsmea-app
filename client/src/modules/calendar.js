@@ -2,57 +2,50 @@ import * as request from "./serverRequests";
 
 export class Calendar {
   constructor() {
-    this.selectedDate = new DateExt();
+    this.today = new DateExt();
+    this.selectedDate = new DateExt(this.today);
     this.selectedRange = {
-      start: new DateExt(),
-      end: new DateExt(),
+      start: new DateExt(this.today),
+      end: new DateExt(this.today),
     };
+    this.datesOfView = this.getDatesOfView(this.today);
+
     this.firstDayOfView = new DateExt();
     this.lastDayOfView = new DateExt();
   }
 
-  updateView(date = new DateExt()) {
-    // setting first and last day here is cleaner
-    const year = document.querySelector(".calendar__year th");
-    year.innerHTML = date.getFullYear();
+  getDatesOfView(date = new DateExt()) {
+    let datesOfView = [];
+    const firstDayOfMonth = date.firstDayOfMonth();
+    let nextDayOfView = new DateExt(firstDayOfMonth);
+    nextDayOfView.setDate(nextDayOfView.getDate() - firstDayOfMonth.getDayStartMonday());
 
-    const month = document.querySelector(".calendar__month th span");
-    month.innerHTML = date.nameOfMonth();
+    const daysInView = date.weeksInMonth(true) * 7;
+    for (let i = 0; i < daysInView; i++) {
+      datesOfView.push(new DateExt(nextDayOfView));
+      nextDayOfView.setDate(nextDayOfView.getDate() + 1);
+    }
+
+    return datesOfView;
   }
 
-  async getHTML(date = this.selectedDate) {
-    const calendarEl = document.createElement("table");
-    calendarEl.classList.add("calendar");
-    calendarEl.innerHTML = `
-        <thead class="calendar__head">
-            <tr><th colspan="7">
-              <button type="button" class="calendar__month__previous">Previous</button>
-              <span class="calendar__month">${date.nameOfMonth()}</span> <span class="calendar__year"> ${date.getFullYear()}</span>
-              <button type="button" class="calendar__month__next">Next</button>
-            </th></tr>
-            <tr class="calendar__weekdays"></tr>
-        </thead>
-        <tbody class="calendar__body"></tbod>
-    `;
+  populateCalendar(date = new DateExt()) {
+    
+    const previousBtn = document.querySelector(".calendar__month__previous");
+    previousBtn.dataset.date = date.getDateString();
+    const nextBtn = document.querySelector(".calendar__month__next");
+    nextBtn.dataset.date = date.getDateString();
 
-    const prevBtn = calendarEl.querySelector(".calendar__month__previous");
-    prevBtn.addEventListener("click", this.onClickPreviousMonth);
 
-    const nextBtn = calendarEl.querySelector(".calendar__month__next");
-    nextBtn.addEventListener("click", this.onClickPreviousMonth);
+    const year = document.querySelector(".calendar__year");
+    year.innerHTML = date.getFullYear();
 
-    // populate weekdays header
-    const weekdaysEl = calendarEl.querySelector(".calendar__weekdays");
-    new DateExt().weekdays.forEach((name, index) => {
-      const el = document.createElement("th");
-      el.classList.add("calendar__weekdays__day");
-      el.dataset.weekday = index;
-      el.innerHTML = name.substring(0, 3);
-      weekdaysEl.appendChild(el);
-    });
+    const month = document.querySelector(".calendar__month");
+    month.innerHTML = date.nameOfMonth();
 
     // populate dates
-    const bodyEl = calendarEl.querySelector(".calendar__body");
+    const bodyEl = document.querySelector(".calendar__body");
+    bodyEl.replaceChildren();
     const weeksCount = date.weeksInMonth(true);
     const firstOfCurrentMonth = date.firstDayOfMonth();
     let nextInCalendar = new DateExt(firstOfCurrentMonth);
@@ -91,12 +84,50 @@ export class Calendar {
     // determine last day of view
     this.lastDayOfView.setTime(nextInCalendar.getTime());
     this.lastDayOfView.setDate(this.lastDayOfView.getDate() - 1);
+  }
+
+  getHTML(date = this.selectedDate) {
+    const calendarEl = document.createElement("table");
+    calendarEl.classList.add("calendar");
+    calendarEl.innerHTML = `
+        <thead class="calendar__head">
+            <tr><th colspan="7">
+              <button type="button" data-date="${date.getDateString()}" class="calendar__month__previous">Previous</button>
+              <span class="calendar__month">${date.nameOfMonth()}</span> <span class="calendar__year"> ${date.getFullYear()}</span>
+              <button type="button" data-date="${date.getDateString()}" class="calendar__month__next">Next</button>
+            </th></tr>
+            <tr class="calendar__weekdays"></tr>
+        </thead>
+        <tbody class="calendar__body"></tbod>
+    `;
+
+    const prevBtn = calendarEl.querySelector(".calendar__month__previous");
+    prevBtn.addEventListener("click", this.onClickPreviousMonth.bind(this));
+
+    const nextBtn = calendarEl.querySelector(".calendar__month__next");
+    nextBtn.addEventListener("click", this.onClickNextMonth.bind(this));
+
+    // populate weekdays header
+    const weekdaysEl = calendarEl.querySelector(".calendar__weekdays");
+    new DateExt().weekdays.forEach((name, index) => {
+      const el = document.createElement("th");
+      el.classList.add("calendar__weekdays__day");
+      el.dataset.weekday = index;
+      el.innerHTML = name.substring(0, 3);
+      weekdaysEl.appendChild(el);
+    });
 
     return calendarEl;
   }
 
   onClickPreviousMonth(event) {
-    console.log("previous month");
+    const currentDate = new DateExt(event.target.dataset.date);
+    this.populateCalendar(currentDate.getPreviousMonth());
+  }
+
+  onClickNextMonth(event){
+    const currentDate = new DateExt(event.target.dataset.date);
+    this.populateCalendar(currentDate.getNextMonth());
   }
 
   onClickDate(event) {
@@ -135,12 +166,14 @@ export class DateExt extends Date {
   lastDayOfMonth = () => new DateExt(this.getFullYear(), this.getMonth() + 1, 0);
   daysInMonth = () => new DateExt(this.getFullYear(), this.getMonth(), 0).getDate();
   getDayStartMonday = () => (this.getDay() === 0 ? 6 : this.getDay() - 1);
+  getNextMonth = () => new DateExt(this.getFullYear(), this.getMonth() + 1, 1);
+  getPreviousMonth = () => new DateExt(this.getFullYear(), this.getMonth() - 1, 1);
 
   weeksInMonth(fromMonday = false) {
     const first = this.firstDayOfMonth(this.date);
     const last = this.lastDayOfMonth(this.date);
-    let dayOfWeek
-    fromMonday ? dayOfWeek = first.getDay() : dayOfWeek = first.getDayStartMonday();
+    let dayOfWeek;
+    fromMonday ? (dayOfWeek = first.getDay()) : (dayOfWeek = first.getDayStartMonday());
     let days = dayOfWeek + last.getDate();
 
     return Math.ceil(days / 7);

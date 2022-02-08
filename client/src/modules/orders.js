@@ -19,25 +19,7 @@ export default async function render() {
     </div>`;
 
   const orderListSection = module.querySelector("#calendar-wrapper");
-  orderListSection.replaceChildren(await calendar.getHTML());
-
-  // populate calendar with orders
-  const orderOfView = await request.ordersWithinRange(calendar.firstDayOfView, calendar.lastDayOfView);
-
-  for (const order of orderOfView) {
-    const thisDate = new DateExt(order.datetime_due);
-    const date = thisDate.getDateString();
-
-    // add event to calendar
-    const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
-    const ordersEl = module.querySelector(selector);
-    if (ordersEl) ordersEl.innerHTML += "\u{1F98A}";
-  }
-
-  const calendarDays = module.getElementsByClassName("calendar__day");
-  for (const day of calendarDays) {
-    day.addEventListener("click", onClickCalendarDay);
-  }
+  orderListSection.replaceChildren(calendar.getHTML());
 
   const addButton = module.querySelector("#add-order-btn");
   addButton.addEventListener("click", onPrepareNewOrder);
@@ -56,12 +38,33 @@ async function onClickCalendarDay(event) {
   renderOrdersList(ordersOfDay);
 }
 
-function updateCalendar() {}
-
 export function init() {
   const url = new URL(window.location);
   let orderId = url.searchParams.get("id");
   selectOrder(orderId);
+  updateCalendar();
+}
+
+async function updateCalendar(){
+  calendar.populateCalendar();
+
+  // populate calendar with orders
+  const orderOfView = await request.ordersWithinRange(calendar.firstDayOfView, calendar.lastDayOfView);
+
+  for (const order of orderOfView) {
+    const thisDate = new DateExt(order.datetime_due);
+    const date = thisDate.getDateString();
+
+    // add event to calendar
+    const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
+    const ordersEl = document.querySelector(selector);
+    if (ordersEl) ordersEl.innerHTML += "\u{1F98A}";
+  }
+
+  const calendarDays = document.getElementsByClassName("calendar__day");
+  for (const day of calendarDays) {
+    day.addEventListener("click", onClickCalendarDay);
+  }
 }
 
 async function selectOrder(id) {
