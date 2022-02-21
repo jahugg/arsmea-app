@@ -138,6 +138,44 @@ textarea {
   }
 }
 
+.styled-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    position: relative;
+    padding: 4px 10px;
+    margin-left: 40px;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s ease-out;
+
+    &:hover,
+    &[data-selected] {
+      transform: translateX(-5px);
+    }
+  }
+
+  li[data-selected] {
+    background: var(--color-font);
+    color: var(--color-background);
+  }
+
+  li[data-filtered] {
+    display: none;
+  }
+
+  li[data-order-letter]:before {
+    content: attr(data-order-letter);
+    position: absolute;
+    font-weight: 400;
+    left: -40px;
+    color: var(--color-font);
+  }
+}
+
 // ================================
 // app header
 // ================================
@@ -218,41 +256,7 @@ textarea {
     grid-area: list;
 
     #contact-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-
-      li {
-        position: relative;
-        padding: 4px 10px;
-        margin-left: 40px;
-        border-radius: 5px;
-        cursor: pointer;
-        user-select: none;
-        transition: transform 0.1s ease-out;
-
-        &:hover,
-        &[data-selected] {
-          transform: translateX(-5px);
-        }
-      }
-
-      li[data-selected] {
-        background: var(--color-font);
-        color: var(--color-background);
-      }
-
-      li[data-filtered] {
-        display: none;
-      }
-
-      li[data-order-letter]:before {
-        content: attr(data-order-letter);
-        position: absolute;
-        font-weight: 400;
-        left: -40px;
-        color: var(--color-font);
-      }
+      .styled-list;
     }
   }
 
@@ -339,7 +343,12 @@ textarea {
 
   #order-list-section {
     grid-area: list;
+
+    #order-list {
+      .styled-list;
+    }
   }
+
   #order-detail-section {
     grid-area: detail;
   }
@@ -358,34 +367,53 @@ textarea {
   min-width: 400px;
   border-collapse: collapse;
   font: var(--font-small);
+
   td {
-    border: 1px solid black;
+    border: 1px solid white;
     width: calc(100% / 7);
   }
 
   .calendar__head {
-    .calendar__month {
+    background: rgb(228, 228, 228);
+
+    th {
+      font: var(--font-small);
+      font-weight: normal;
+      padding: 5px;
+    }
+
+    .calendar__controls {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .calendar__weekdays__day {
+      text-align: left;
+      font: var(--font-tiny);
+    }
+
+    .calendar__month__previous,
+    .calendar__month__next {
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 50px;
     }
   }
+
   .calendar__body {
+    background: rgb(243, 243, 243);
+
     .calendar__day {
-      position: relative;
-      height: 50px;
+      height: 45px;
       cursor: pointer;
+      vertical-align: top;
+      padding: 5px;
 
       &::before {
-        --size: 1.9em;
         font: var(--font-tiny);
-        content: attr(data-day);
-        position: absolute;
         display: block;
-        height: var(--size);
-        width: var(--size);
-        border-radius: var(--size);
-        text-align: center;
-        top: 2px;
-        right: 2px;
-        line-height: var(--size);
+        content: attr(data-day);
         color: var(--color-inactive);
       }
 
@@ -397,17 +425,27 @@ textarea {
         color: var(--color-font);
       }
 
-      &[data-selected]::before {
+      &[data-today]::before {
+        --size: 1.6em;
         color: var(--color-background);
         background: var(--color-highlight);
+        display: inline-block;
+        width: var(--size);
+        height: var(--size);
+        text-align: center;
+        line-height: var(--size);
+        transform: translateY(calc(var(--size) / -2.5));
+        border-radius: 999px;
       }
 
       &[data-selected] {
+        background: var(--color-inactive);
       }
     }
     .calendar__day__events {
       text-shadow: 0 0 2px black;
       letter-spacing: -0.6em;
+      font-size: 0.8em;
     }
   }
 }

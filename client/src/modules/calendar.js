@@ -3,15 +3,10 @@ import * as request from "./serverRequests";
 export class Calendar {
   constructor() {
     this.today = new DateExt();
-    this.selectedDate = new DateExt(this.today);
-    this.selectedRange = {
-      start: new DateExt(this.today),
-      end: new DateExt(this.today),
-    };
-    this.datesOfView = this.getDatesOfView(this.today);
-
-    this.firstDayOfView = new DateExt();
-    this.lastDayOfView = new DateExt();
+    this.selectedRange = {};
+    this.activeMonthDate;
+    this.datesOfView;
+    this.setActiveMonth(this.today);
   }
 
   getDatesOfView(date = new DateExt()) {
@@ -29,73 +24,81 @@ export class Calendar {
     return datesOfView;
   }
 
-  populateCalendar(date = new DateExt()) {
-    
-    const previousBtn = document.querySelector(".calendar__month__previous");
-    previousBtn.dataset.date = date.getDateString();
-    const nextBtn = document.querySelector(".calendar__month__next");
-    nextBtn.dataset.date = date.getDateString();
-
-
-    const year = document.querySelector(".calendar__year");
-    year.innerHTML = date.getFullYear();
-
-    const month = document.querySelector(".calendar__month");
-    month.innerHTML = date.nameOfMonth();
-
-    // populate dates
-    const bodyEl = document.querySelector(".calendar__body");
-    bodyEl.replaceChildren();
-    const weeksCount = date.weeksInMonth(true);
-    const firstOfCurrentMonth = date.firstDayOfMonth();
-    let nextInCalendar = new DateExt(firstOfCurrentMonth);
-    nextInCalendar.setDate(nextInCalendar.getDate() - firstOfCurrentMonth.getDayStartMonday());
-    this.firstDayOfView.setTime(nextInCalendar.getTime());
-
-    for (let week = 0; week < weeksCount; week++) {
-      const weekEl = document.createElement("tr");
-      weekEl.classList.add("calendar__week");
-
-      for (let day = 0; day < 7; day++) {
-        const dayEl = document.createElement("td");
-        dayEl.classList.add("calendar__day");
-
-        const dateString = nextInCalendar.getDateString();
-        dayEl.dataset.date = dateString;
-        dayEl.dataset.day = nextInCalendar.getDate();
-        dayEl.addEventListener("click", this.onClickDate.bind(this));
-
-        // mark if current month
-        dayEl.dataset.date.startsWith(date.toJSON().slice(0, 7)) ? (dayEl.dataset.currentMonth = "") : "";
-        nextInCalendar.toDateString() === date.toDateString() ? (dayEl.dataset.selected = "") : "";
-
-        // add event container
-        const events = document.createElement("div");
-        events.classList.add("calendar__day__events");
-        dayEl.appendChild(events);
-        weekEl.appendChild(dayEl);
-
-        // jump to next day
-        nextInCalendar.setDate(nextInCalendar.getDate() + 1);
-      }
-      bodyEl.appendChild(weekEl);
-    }
-
-    // determine last day of view
-    this.lastDayOfView.setTime(nextInCalendar.getTime());
-    this.lastDayOfView.setDate(this.lastDayOfView.getDate() - 1);
+  setActiveMonth(date) {
+    this.activeMonthDate = date.firstDayOfMonth();
+    this.datesOfView = this.getDatesOfView(this.activeMonthDate);
   }
 
-  getHTML(date = this.selectedDate) {
+  populateCalendar() {
+    const year = document.querySelector(".calendar__year");
+    year.innerHTML = this.activeMonthDate.getFullYear();
+
+    const month = document.querySelector(".calendar__month");
+    month.innerHTML = this.activeMonthDate.nameOfMonth();
+
+    const previousBtn = document.querySelector(".calendar__month__previous");
+    previousBtn.dataset.date = this.activeMonthDate.getDateString();
+
+    const nextBtn = document.querySelector(".calendar__month__next");
+    nextBtn.dataset.date = this.activeMonthDate.getDateString();
+
+    const bodyEl = document.querySelector(".calendar__body");
+    bodyEl.replaceChildren();
+
+    // populate calendar days
+    let weekEl;
+    this.datesOfView.forEach((date, index) => {
+      // start new week
+      if (index == 0 || !(index % 7)) {
+        weekEl = document.createElement("tr");
+        weekEl.classList.add("calendar__week");
+        bodyEl.appendChild(weekEl);
+      }
+
+      const dayEl = document.createElement("td");
+      dayEl.classList.add("calendar__day");
+
+      dayEl.dataset.date = date.getDateString();
+      dayEl.dataset.day = date.getDate();
+      dayEl.addEventListener("click", this.onClickDate.bind(this));
+
+      // mark today
+      date.getDateString() === this.today.getDateString() ? (dayEl.dataset.today = "") : "";
+
+      // mark current month
+      dayEl.dataset.date.startsWith(this.activeMonthDate.getDateString().slice(0, 7)) ? (dayEl.dataset.currentMonth = "") : "";
+
+      // add event container
+      const events = document.createElement("div");
+      events.classList.add("calendar__day__events");
+      dayEl.appendChild(events);
+
+      weekEl.appendChild(dayEl);
+    });
+
+    //dispatching custom event
+    bodyEl.dispatchEvent(
+      new CustomEvent("monthloaded", {
+        bubbles: true,
+        detail: {
+          date: this.activeMonthDate,
+        },
+      })
+    );
+  }
+
+  getHTML(date = this.activeMonthDate) {
     const calendarEl = document.createElement("table");
     calendarEl.classList.add("calendar");
     calendarEl.innerHTML = `
         <thead class="calendar__head">
-            <tr><th colspan="7">
-              <button type="button" data-date="${date.getDateString()}" class="calendar__month__previous">Previous</button>
-              <span class="calendar__month">${date.nameOfMonth()}</span> <span class="calendar__year"> ${date.getFullYear()}</span>
-              <button type="button" data-date="${date.getDateString()}" class="calendar__month__next">Next</button>
-            </th></tr>
+            <tr><th colspan="7"> 
+              <div class="calendar__controls">
+                <button type="button" data-date="${date.getDateString()}" class="calendar__month__previous">&lsaquo;</button>
+                <div><span class="calendar__month">${date.nameOfMonth()}</span> <span class="calendar__year"> ${date.getFullYear()}</span></div>
+                <button type="button" data-date="${date.getDateString()}" class="calendar__month__next">&rsaquo;</button>
+              </div>
+              </th></tr>
             <tr class="calendar__weekdays"></tr>
         </thead>
         <tbody class="calendar__body"></tbod>
@@ -122,12 +125,14 @@ export class Calendar {
 
   onClickPreviousMonth(event) {
     const currentDate = new DateExt(event.target.dataset.date);
-    this.populateCalendar(currentDate.getPreviousMonth());
+    this.setActiveMonth(currentDate.getPreviousMonth());
+    this.populateCalendar();
   }
 
-  onClickNextMonth(event){
+  onClickNextMonth(event) {
     const currentDate = new DateExt(event.target.dataset.date);
-    this.populateCalendar(currentDate.getNextMonth());
+    this.setActiveMonth(currentDate.getNextMonth());
+    this.populateCalendar();
   }
 
   onClickDate(event) {
@@ -170,6 +175,7 @@ export class DateExt extends Date {
   getPreviousMonth = () => new DateExt(this.getFullYear(), this.getMonth() - 1, 1);
 
   weeksInMonth(fromMonday = false) {
+    //WRONG RESULTS WHEN SET TO START MONDAY
     const first = this.firstDayOfMonth(this.date);
     const last = this.lastDayOfMonth(this.date);
     let dayOfWeek;
