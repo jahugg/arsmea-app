@@ -25,7 +25,10 @@ export default async function render() {
   addButton.addEventListener("click", onPrepareNewOrder);
 
   const orderListWrapper = module.querySelector("#order-list-wrapper");
-  const orderList = await getOrderListEl();
+
+  let sevenDaysAhead = new DateExt();
+  sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
+  const orderList = await getOrderListEl(new DateExt(), sevenDaysAhead);
   orderListWrapper.appendChild(orderList);
 
   return module;
@@ -36,8 +39,7 @@ export function init() {
   let orderId = url.searchParams.get("id");
   selectOrder(orderId);
   calendar.populateCalendar();
-  updateCalendar();
-
+  updateCalendar(); // why is this necessary for eventlistener to fire?
   document.addEventListener("monthloaded", updateCalendar);
 }
 
@@ -71,7 +73,7 @@ async function updateCalendar() {
     // add event to calendar
     const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
     const ordersEl = document.querySelector(selector);
-    if (ordersEl) ordersEl.innerHTML += "\u{1F98A}";
+    if (ordersEl) ordersEl.innerHTML += "&middot;";
   }
 
   const calendarDays = document.getElementsByClassName("calendar__day");
@@ -81,7 +83,7 @@ async function updateCalendar() {
 }
 
 async function selectOrder(id) {
-  const list = document.querySelector("#order-list");
+  const list = document.querySelector(".order-list");
   let orderDetails = "";
 
   try {
@@ -332,8 +334,41 @@ async function getOrderFormEl(id) {
 
 async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()) {
   const orderList = await request.ordersWithinRange(startDate, endDate);
+
+  const orderListEl = document.createElement("ul");
+  orderListEl.id = "order-list";
+
+  if (startDate === endDate) {
+    const weekday = startDate.nameOfWeekday()
+    const dateString = startDate.getDateString();
+    const dateStringLong = `${startDate.getDate()}. ${startDate.nameOfMonth()} ${startDate.getFullYear()}`;
+    const orderListDay = document.createElement("li");
+    orderListDay.classList.add("order-list__day");
+    orderListDay.innerHTML = `<h2>${weekday}<time datetime="${dateString}">${dateStringLong}</time></h2>`;
+    orderListEl.appendChild(orderListDay);
+
+  } else {
+    const listDate = new DateExt();
+    const dayHeader = document.createElement("ul");
+    console.log("multiple days");
+  }
+
+  let template = `
+    <ul id="order-list">
+      <li class="order-list__day">
+        <h2>Sonntag <time datetime="2008-02-14">12. April 2022</time></h2>
+        <ul class="order-list__item-list>
+          <li class="order-list__item>
+            <time datetime="2008-02-14 10:00">10:00</time>
+            <span>Stefan Brandt</span> <b>60CHF</b>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  `;
+
   const listEl = document.createElement("ul");
-  listEl.id = "order-list";
+  listEl.classList.add("order-list");
 
   if (orderList.length) {
     for (const order of orderList) {

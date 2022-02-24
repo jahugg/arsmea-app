@@ -21,14 +21,17 @@ body {
 :root {
   --color-font: black;
   --color-background: white;
-  --color-inactive: rgba(0, 0, 0, 0.2);
+  --color-grey-01: rgb(77, 77, 77);
+  --color-grey-02: rgb(138, 136, 136);
   --color-highlight: red;
+
   --page-padding: 30px;
+
   --font-size: 1.4rem;
   --font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   --font-regular: normal 200 1em var(--font-family);
   --font-small: normal 200 0.8em var(--font-family);
-  --font-tiny: normal 200 0.6em var(--font-family);
+  --font-tiny: normal 200 0.7em var(--font-family);
 }
 
 // ================================
@@ -63,7 +66,7 @@ input:not([type="submit"]):not([type="checkbox"]) {
     background: rgba(255, 255, 255, 0.1);
   }
   &::placeholder {
-    color: var(--color-inactive);
+    color: var(--color-grey-02);
   }
 }
 
@@ -85,7 +88,7 @@ input[type="checkbox"] {
   cursor: pointer;
 
   &:hover {
-    background: var(--color-inactive);
+    background: var(--color-grey-02);
   }
 
   &:checked {
@@ -107,7 +110,7 @@ textarea {
   }
 
   &::placeholder {
-    color: var(--color-inactive);
+    color: var(--color-grey-02);
   }
 }
 
@@ -133,8 +136,8 @@ textarea {
   }
 
   &:disabled {
-    color: var(--color-inactive);
-    border-color: var(--color-inactive);
+    color: var(--color-grey-02);
+    border-color: var(--color-grey-02);
   }
 }
 
@@ -344,7 +347,7 @@ textarea {
   #order-list-section {
     grid-area: list;
 
-    #order-list {
+    .order-list {
       .styled-list;
     }
   }
@@ -364,17 +367,16 @@ textarea {
 }
 
 .calendar {
-  min-width: 400px;
-  border-collapse: collapse;
+  width: 270px;
+  color: white;
   font: var(--font-small);
+  background: var(--color-font);
 
   td {
-    border: 1px solid white;
     width: calc(100% / 7);
   }
 
   .calendar__head {
-    background: rgb(228, 228, 228);
 
     th {
       font: var(--font-small);
@@ -385,11 +387,13 @@ textarea {
     .calendar__controls {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      padding-top: 7px;
     }
 
     .calendar__weekdays__day {
-      text-align: left;
       font: var(--font-tiny);
+      color: var(--color-grey-02);
     }
 
     .calendar__month__previous,
@@ -398,54 +402,60 @@ textarea {
       border: none;
       cursor: pointer;
       width: 50px;
+      color: white;
+      font-size: 1.4em;
     }
   }
 
   .calendar__body {
-    background: rgb(243, 243, 243);
 
     .calendar__day {
-      height: 45px;
+      height: 30px;
       cursor: pointer;
       vertical-align: top;
       padding: 5px;
+      position: relative;
+      vertical-align: middle;
 
       &::before {
         font: var(--font-tiny);
         display: block;
+        text-align: center;
         content: attr(data-day);
-        color: var(--color-inactive);
+        color: var(--color-grey-02);
       }
 
       &:hover {
-        background: var(--color-inactive);
+        background: var(--color-grey-01);
       }
 
       &[data-current-month]::before {
-        color: var(--color-font);
+        color: var(--color-background);
       }
 
-      &[data-today]::before {
-        --size: 1.6em;
-        color: var(--color-background);
-        background: var(--color-highlight);
-        display: inline-block;
-        width: var(--size);
-        height: var(--size);
-        text-align: center;
-        line-height: var(--size);
-        transform: translateY(calc(var(--size) / -2.5));
-        border-radius: 999px;
+      &[data-today] {
+        background: var(--color-grey-01);
       }
 
       &[data-selected] {
-        background: var(--color-inactive);
+        background: var(--color-highlight);
+        .calendar__day__events {
+          color: white;
+        }
       }
     }
+
     .calendar__day__events {
-      text-shadow: 0 0 2px black;
-      letter-spacing: -0.6em;
-      font-size: 0.8em;
+      position: absolute;
+      text-align: center;
+      width: 100%;
+      bottom: 0;
+      left: 0;
+      letter-spacing: -0.1em;
+      line-height: .4em;
+      font-size: 1.5em;
+      color: var(--color-highlight);
+      overflow: hidden;
     }
   }
 }

@@ -81,11 +81,6 @@ app.get("/api/order/:id", async (request, response) => {
   response.json(order);
 });
 
-app.get("/api/orderList", async (request, response) => {
-  const orderList = await db.selectAllOrders();
-  response.json(orderList);
-});
-
 app.post("/api/updateOrder/:id", async (request, response) => {
   const data = request.body;
   const result = await db.updateOrder(data);
