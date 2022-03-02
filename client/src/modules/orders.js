@@ -77,7 +77,6 @@ async function updateCalendar() {
 async function selectOrder(id) {
   const orderList = document.querySelectorAll(".order-list__order");
   let orderDetails = "";
-  console.log(id);
 
   try {
     // get order details
@@ -339,11 +338,11 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
 
     const weekday = date.nameOfWeekday();
     const dateString = date.getDateString();
-    const dateStringLong = `${date.getDate()}. ${date.nameOfMonth()} ${date.getFullYear()}`;
+    const dateStringLong = `${date.getDate()}. ${date.nameOfMonth()}`;
 
     const dayEl = document.createElement("li");
     dayEl.classList.add("day-list__day");
-    dayEl.innerHTML = `<h2>${weekday}<time datetime="${dateString}">${dateStringLong}</time></h2>`;
+    dayEl.innerHTML = `<h2>${weekday}</h2><time datetime="${dateString}">${dateStringLong}</time>`;
     dayListEl.appendChild(dayEl);
 
     const orderListEl = document.createElement("ul");
