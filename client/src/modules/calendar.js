@@ -184,4 +184,13 @@ export class DateExt extends Date {
 
     return Math.ceil(days / 7);
   }
+
+  // https://stackoverflow.com/a/15289883
+  diffInDaysTo(date) {
+    // Discard the time and time-zone information.
+    const utc1 = Date.UTC(this.getFullYear(), this.getMonth(), this.getDate());
+    const utc2 = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  
+    return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+  }
 }

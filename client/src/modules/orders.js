@@ -48,16 +48,8 @@ async function onClickCalendarDay(event) {
   const selectedDate = new DateExt(target.dataset.date);
   const orderListWrapper = document.getElementById("order-list-wrapper");
 
-  // add title
-  const listTitle = document.createElement("h2");
-  listTitle.id = "order-list__title";
-  const title = `${selectedDate.nameOfWeekday()}, <br/>${selectedDate.getDate()}. ${selectedDate.nameOfMonth()}`;
-  listTitle.innerHTML = title;
-  orderListWrapper.replaceChildren(listTitle);
-
-  // add list
   const orderList = await getOrderListEl(selectedDate, selectedDate);
-  orderListWrapper.appendChild(orderList);
+  orderListWrapper.replaceChildren(orderList);
 }
 
 async function updateCalendar() {
@@ -83,16 +75,17 @@ async function updateCalendar() {
 }
 
 async function selectOrder(id) {
-  const list = document.querySelector(".order-list");
+  const orderList = document.querySelectorAll(".order-list__order");
   let orderDetails = "";
+  console.log(id);
 
   try {
     // get order details
     orderDetails = await getOrderDetailsEl(id);
   } catch (error) {
-    // select first list item if any
-    if (list.firstChild) {
-      const firstOrder = list.firstChild;
+    // select first order item if any
+    if (orderList.length) {
+      const firstOrder = orderList.item(0);
       id = firstOrder.dataset.orderId;
       orderDetails = await getOrderDetailsEl(id);
     }
@@ -102,9 +95,9 @@ async function selectOrder(id) {
     const detailsWrapper = document.querySelector("#order-detail-section");
     detailsWrapper.replaceChildren(orderDetails);
 
-    for (let item of list.children)
-      if (item.dataset.orderId == id) item.dataset.selected = "";
-      else delete item.dataset.selected;
+    for (let order of orderList)
+      if (order.dataset.orderId == id) order.dataset.selected = "";
+      else delete order.dataset.selected;
 
     // add order id to url
     const url = new URL(window.location);
@@ -335,57 +328,49 @@ async function getOrderFormEl(id) {
 async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()) {
   const orderList = await request.ordersWithinRange(startDate, endDate);
 
-  const orderListEl = document.createElement("ul");
-  orderListEl.id = "order-list";
+  const dayListEl = document.createElement("ul");
+  dayListEl.classList.add("day-list");
 
-  if (startDate === endDate) {
-    const weekday = startDate.nameOfWeekday()
-    const dateString = startDate.getDateString();
-    const dateStringLong = `${startDate.getDate()}. ${startDate.nameOfMonth()} ${startDate.getFullYear()}`;
-    const orderListDay = document.createElement("li");
-    orderListDay.classList.add("order-list__day");
-    orderListDay.innerHTML = `<h2>${weekday}<time datetime="${dateString}">${dateStringLong}</time></h2>`;
-    orderListEl.appendChild(orderListDay);
+  const dateDiff = startDate.diffInDaysTo(endDate);
+  let i = 0;
+  do {
+    const date = new DateExt(startDate);
+    date.setDate(date.getDate() + i);
 
-  } else {
-    const listDate = new DateExt();
-    const dayHeader = document.createElement("ul");
-    console.log("multiple days");
-  }
+    const weekday = date.nameOfWeekday();
+    const dateString = date.getDateString();
+    const dateStringLong = `${date.getDate()}. ${date.nameOfMonth()} ${date.getFullYear()}`;
 
-  let template = `
-    <ul id="order-list">
-      <li class="order-list__day">
-        <h2>Sonntag <time datetime="2008-02-14">12. April 2022</time></h2>
-        <ul class="order-list__item-list>
-          <li class="order-list__item>
-            <time datetime="2008-02-14 10:00">10:00</time>
-            <span>Stefan Brandt</span> <b>60CHF</b>
-          </li>
-        </ul>
-      </li>
-    </ul>
-  `;
+    const dayEl = document.createElement("li");
+    dayEl.classList.add("day-list__day");
+    dayEl.innerHTML = `<h2>${weekday}<time datetime="${dateString}">${dateStringLong}</time></h2>`;
+    dayListEl.appendChild(dayEl);
 
-  const listEl = document.createElement("ul");
-  listEl.classList.add("order-list");
+    const orderListEl = document.createElement("ul");
+    orderListEl.classList.add("order-list");
+    dayEl.appendChild(orderListEl);
 
-  if (orderList.length) {
-    for (const order of orderList) {
+    const ordersOfDate = orderList.filter(function (order) {
+      const dueDate = new DateExt(order.datetime_due);
+      return date.getDateString() === dueDate.getDateString();
+    });
+
+    for (const order of ordersOfDate) {
       const { id, datetime_due, status, price, firstname, lastname } = order;
-      let itemEl = document.createElement("li");
-      itemEl.dataset.orderId = id;
-      itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
-
       let dueDate = new DateExt(datetime_due);
       let dateString = dueDate.toLocaleDateString().replace(/\//g, ".");
       let timeString = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
-      itemEl.innerHTML = `${timeString} ${firstname} ${lastname ? lastname : ""} ${price}CHF ${status}`;
 
-      itemEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
-      listEl.appendChild(itemEl);
+      const orderEl = document.createElement("li");
+      orderEl.classList.add("order-list__order");
+      orderEl.dataset.orderId = id;
+      orderEl.innerHTML = `${timeString} ${firstname} ${lastname ? lastname : ""} ${price}CHF ${status}`;
+      orderEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
+      orderListEl.appendChild(orderEl);
     }
-  }
 
-  return listEl;
+    i++;
+  } while (i < dateDiff);
+
+  return dayListEl;
 }
