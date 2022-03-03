@@ -1,15 +1,18 @@
-import * as request from "./serverRequests";
-import { Calendar, DateExt } from "./calendar";
+import * as request from './serverRequests';
+import { Calendar, DateExt } from './calendar';
 
 const calendar = new Calendar();
 
 export default async function render() {
-  const module = document.createElement("div");
-  module.classList.add("module");
-  module.id = "order";
+  const module = document.createElement('div');
+  module.classList.add('module');
+  module.id = 'order';
   module.innerHTML = `
     <div id="order-control-section">
-      <div id="calendar-wrapper"></div>
+      <div id="calendar-container">
+        <button id="calendar-toggle" type="button">Calendar</button>
+        <div id="calendar-wrapper" hidden></div>
+      </div>
       <button id="add-order-btn" type="button">Add Order</button>
     </div>
     <div id="order-list-section">
@@ -18,17 +21,23 @@ export default async function render() {
     <div id="order-detail-section">
     </div>`;
 
-  const orderListSection = module.querySelector("#calendar-wrapper");
+  const calendarBtn = module.querySelector('#calendar-toggle');
+  calendarBtn.addEventListener('click', (event) => {
+    const calendar = event.target.nextElementSibling;
+    calendar.hidden ? (calendar.hidden = false) : (calendar.hidden = true);
+  });
+
+  const orderListSection = module.querySelector('#calendar-wrapper');
   orderListSection.replaceChildren(calendar.getHTML());
 
-  const addButton = module.querySelector("#add-order-btn");
-  addButton.addEventListener("click", onPrepareNewOrder);
+  const addButton = module.querySelector('#add-order-btn');
+  addButton.addEventListener('click', onPrepareNewOrder);
 
-  const orderListWrapper = module.querySelector("#order-list-wrapper");
+  const orderListWrapper = module.querySelector('#order-list-wrapper');
 
-  let sevenDaysAhead = new DateExt();
-  sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
-  const orderList = await getOrderListEl(new DateExt(), sevenDaysAhead);
+  let endDate = new DateExt();
+  endDate.setDate(endDate.getDate() + 10);
+  const orderList = await getOrderListEl(new DateExt(), endDate);
   orderListWrapper.appendChild(orderList);
 
   return module;
@@ -36,17 +45,17 @@ export default async function render() {
 
 export function init() {
   const url = new URL(window.location);
-  let orderId = url.searchParams.get("id");
+  let orderId = url.searchParams.get('id');
   selectOrder(orderId);
   calendar.populateCalendar();
   updateCalendar(); // why is this necessary for eventlistener to fire?
-  document.addEventListener("monthloaded", updateCalendar);
+  document.addEventListener('monthloaded', updateCalendar);
 }
 
 async function onClickCalendarDay(event) {
-  const target = event.target.closest(".calendar__day");
+  const target = event.target.closest('.calendar__day');
   const selectedDate = new DateExt(target.dataset.date);
-  const orderListWrapper = document.getElementById("order-list-wrapper");
+  const orderListWrapper = document.getElementById('order-list-wrapper');
 
   const orderList = await getOrderListEl(selectedDate, selectedDate);
   orderListWrapper.replaceChildren(orderList);
@@ -65,18 +74,18 @@ async function updateCalendar() {
     // add event to calendar
     const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
     const ordersEl = document.querySelector(selector);
-    if (ordersEl) ordersEl.innerHTML += "&middot;";
+    if (ordersEl) ordersEl.innerHTML += '&middot;';
   }
 
-  const calendarDays = document.getElementsByClassName("calendar__day");
+  const calendarDays = document.getElementsByClassName('calendar__day');
   for (const day of calendarDays) {
-    day.addEventListener("click", onClickCalendarDay);
+    day.addEventListener('click', onClickCalendarDay);
   }
 }
 
 async function selectOrder(id) {
-  const orderList = document.querySelectorAll(".order-list__order");
-  let orderDetails = "";
+  const orderList = document.querySelectorAll('.order-list__order');
+  let orderDetails = '';
 
   try {
     // get order details
@@ -91,30 +100,30 @@ async function selectOrder(id) {
   }
 
   if (orderDetails) {
-    const detailsWrapper = document.querySelector("#order-detail-section");
+    const detailsWrapper = document.querySelector('#order-detail-section');
     detailsWrapper.replaceChildren(orderDetails);
 
     for (let order of orderList)
-      if (order.dataset.orderId == id) order.dataset.selected = "";
+      if (order.dataset.orderId == id) order.dataset.selected = '';
       else delete order.dataset.selected;
 
     // add order id to url
     const url = new URL(window.location);
-    url.searchParams.set("id", id);
+    url.searchParams.set('id', id);
     const state = { order_id: id };
-    window.history.replaceState(state, "", url);
+    window.history.replaceState(state, '', url);
   }
 }
 
 async function onPrepareNewOrder(event) {
-  const orderDetailsWrapper = document.getElementById("order-detail-section");
-  const wrapper = document.createElement("div");
-  wrapper.id = "order-details";
-  const form = document.createElement("form");
+  const orderDetailsWrapper = document.getElementById('order-detail-section');
+  const wrapper = document.createElement('div');
+  wrapper.id = 'order-details';
+  const form = document.createElement('form');
   form.action = `${process.env.SERVER}/api/order`;
-  form.method = "POST";
-  form.id = "new-order";
-  form.addEventListener("submit", onCreateNewOrder);
+  form.method = 'POST';
+  form.id = 'new-order';
+  form.addEventListener('submit', onCreateNewOrder);
   form.innerHTML = `
     <section class="content-controls">
       <input type="submit" class="button-small" value="Create Order"/>
@@ -142,35 +151,35 @@ async function onPrepareNewOrder(event) {
   wrapper.appendChild(form);
   orderDetailsWrapper.replaceChildren(wrapper);
 
-  const discardBtn = document.getElementById("discard-order-btn");
-  discardBtn.addEventListener("click", () => selectOrder(0));
+  const discardBtn = document.getElementById('discard-order-btn');
+  discardBtn.addEventListener('click', () => selectOrder(0));
 
-  const orderListItems = document.querySelectorAll("#order-list li");
+  const orderListItems = document.querySelectorAll('#order-list li');
   for (const item of orderListItems) delete item.dataset.selected;
 
-  const datalist = wrapper.querySelector("#contact-list");
-  datalist.addEventListener("input", (e) => console.log("now"));
+  const datalist = wrapper.querySelector('#contact-list');
+  datalist.addEventListener('input', (e) => console.log('now'));
   const contacts = await request.contacts();
   for (const contact of contacts) {
     const { id, firstname, lastname } = contact;
-    const option = document.createElement("option");
+    const option = document.createElement('option');
     option.dataset.contactId = id;
     option.value = `${firstname} ${lastname}`;
     datalist.appendChild(option);
   }
 
   // check if given contact is new
-  const contactInput = wrapper.querySelector("#new-order__contact");
-  const contactIdInput = wrapper.querySelector("#contact-id");
-  contactInput.addEventListener("input", (event) => {
+  const contactInput = wrapper.querySelector('#new-order__contact');
+  const contactIdInput = wrapper.querySelector('#contact-id');
+  contactInput.addEventListener('input', (event) => {
     const value = event.target.value;
     let contactId = 0;
     for (const item of datalist.children) {
       if (item.value === value) contactId = item.dataset.contactId;
     }
     contactIdInput.value = contactId;
-    if (contactIdInput.value == 0 && contactInput.value !== "") {
-      contactInput.parentNode.dataset.newContact = "";
+    if (contactIdInput.value == 0 && contactInput.value !== '') {
+      contactInput.parentNode.dataset.newContact = '';
     } else {
       delete contactInput.parentNode.dataset.newContact;
     }
@@ -185,7 +194,7 @@ async function onCreateNewOrder(event) {
 
   console.log(data);
 
-  const orderListWrapper = document.getElementById("order-list-wrapper");
+  const orderListWrapper = document.getElementById('order-list-wrapper');
   const orderList = await getOrderListEl();
   orderListWrapper.replaceChildren(orderList);
 
@@ -194,7 +203,7 @@ async function onCreateNewOrder(event) {
 
 async function onEditOrder(event) {
   const id = event.target.dataset.orderId;
-  const contactDetailsWrapper = document.getElementById("order-detail-section");
+  const contactDetailsWrapper = document.getElementById('order-detail-section');
   const form = await getOrderFormEl(id);
   contactDetailsWrapper.replaceChildren(form);
 }
@@ -202,17 +211,17 @@ async function onEditOrder(event) {
 async function onUpdateOrder(event) {
   event.preventDefault();
   const data = new URLSearchParams(new FormData(event.target));
-  const orderId = data.get("id");
+  const orderId = data.get('id');
   let response = await request.updateOrder(orderId, data);
 
-  const orderListWrapper = document.getElementById("order-list-wrapper");
+  const orderListWrapper = document.getElementById('order-list-wrapper');
   const orderList = await getOrderListEl();
   orderListWrapper.replaceChildren(orderList);
 
   const item = document.querySelector(`#order-list li[data-order-id="${orderId}"`);
-  item.dataset.selected = "";
+  item.dataset.selected = '';
 
-  const orderDetailsWrapper = document.getElementById("order-detail-section");
+  const orderDetailsWrapper = document.getElementById('order-detail-section');
   const orderDetails = await getOrderDetailsEl(orderId);
   orderDetailsWrapper.replaceChildren(orderDetails);
 }
@@ -220,10 +229,10 @@ async function onUpdateOrder(event) {
 async function onDeleteOrder(event) {
   const orderId = event.target.dataset.orderId;
 
-  if (window.confirm("Delete Order?")) {
+  if (window.confirm('Delete Order?')) {
     const result = await request.deleteOrder(orderId);
 
-    const orderList = document.getElementById("order-list");
+    const orderList = document.getElementById('order-list');
     const orderItem = orderList.querySelector(`li[data-order-id="${orderId}"]`);
     const previousSibling = orderItem.previousSibling;
     orderItem.remove();
@@ -233,38 +242,38 @@ async function onDeleteOrder(event) {
       let selectOrderId;
       if (previousSibling) {
         selectOrderId = previousSibling.dataset.orderId;
-        previousSibling.dataset.selected = "";
+        previousSibling.dataset.selected = '';
       } else if (orderList.firstChild) {
         selectOrderId = orderList.firstChild.dataset.orderId;
-        orderList.firstChild.dataset.selected = "";
+        orderList.firstChild.dataset.selected = '';
       }
-      const orderDetailsWrapper = document.getElementById("order-detail-section");
+      const orderDetailsWrapper = document.getElementById('order-detail-section');
       const orderDetails = await getOrderDetailsEl(selectOrderId);
       orderDetailsWrapper.replaceChildren(orderDetails);
     } else {
-      const orderDetailsWrapper = document.getElementById("order-detail-section");
-      orderDetailsWrapper.innerHTML = "";
+      const orderDetailsWrapper = document.getElementById('order-detail-section');
+      orderDetailsWrapper.innerHTML = '';
     }
   }
 }
 
 async function getOrderDetailsEl(id) {
   let { datetime_placed, datetime_due, price, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
-  const wrapper = document.createElement("div");
-  wrapper.id = "order-details";
-  wrapper.innerHTML = `<a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ""}</a><br>
+  const wrapper = document.createElement('div');
+  wrapper.id = 'order-details';
+  wrapper.innerHTML = `<a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a><br>
   Placed: ${datetime_placed}<br>
   Due: ${datetime_due}<br>
-  ${price ? price + " CHF<br>" : ""}
-  ${description ? description + "<br>" : ""}
+  ${price ? price + ' CHF<br>' : ''}
+  ${description ? description + '<br>' : ''}
   Status: ${status}`;
 
-  const editBtn = document.createElement("button");
-  editBtn.type = "button";
-  editBtn.id = "edit-btn";
-  editBtn.innerHTML = "Edit";
+  const editBtn = document.createElement('button');
+  editBtn.type = 'button';
+  editBtn.id = 'edit-btn';
+  editBtn.innerHTML = 'Edit';
   editBtn.dataset.orderId = id;
-  editBtn.addEventListener("click", onEditOrder);
+  editBtn.addEventListener('click', onEditOrder);
 
   wrapper.appendChild(editBtn);
 
@@ -275,17 +284,17 @@ async function getOrderFormEl(id) {
   const data = await request.orderDetails(id);
   const { datetime_due, status, price, description } = data;
 
-  const wrapper = document.createElement("div");
-  wrapper.id = "order-details";
-  const form = document.createElement("form");
+  const wrapper = document.createElement('div');
+  wrapper.id = 'order-details';
+  const form = document.createElement('form');
   form.action = `${process.env.SERVER}/api/updateOrder`;
-  form.method = "POST";
-  form.id = "edit-order";
-  form.addEventListener("submit", onUpdateOrder);
+  form.method = 'POST';
+  form.id = 'edit-order';
+  form.addEventListener('submit', onUpdateOrder);
   form.innerHTML = `<input type="hidden" id="edit-order__id" name="id" value="${id}">
     <div>
       <label for="edit-order__due">Due Date</label>
-      <input type="datetime-local" name="duedate" id="edit-order__due" value="${datetime_due ? datetime_due : ""}" />
+      <input type="datetime-local" name="duedate" id="edit-order__due" value="${datetime_due ? datetime_due : ''}" />
     </div>
     <div>
         <label for="edit-order__status">Status</label>
@@ -301,22 +310,22 @@ async function getOrderFormEl(id) {
     </div>
     <div>
       <label for="edit-order__description">Description</label>
-      <textarea name="description" id="edit-order__description" placeholder="Notes">${description ? description : ""}</textarea>
+      <textarea name="description" id="edit-order__description" placeholder="Notes">${description ? description : ''}</textarea>
     </div>
     <input type="submit" value="Done"/>`;
 
   // select current status
-  const statusOptions = form.querySelectorAll("#edit-order__status option");
+  const statusOptions = form.querySelectorAll('#edit-order__status option');
   for (let option of statusOptions) {
-    if (option.value === status) option.setAttribute("selected", "true");
+    if (option.value === status) option.setAttribute('selected', 'true');
   }
 
-  const deleteBtn = document.createElement("button");
-  deleteBtn.type = "button";
-  deleteBtn.innerHTML = "Delete Order";
-  deleteBtn.id = "delete-order-btn";
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.innerHTML = 'Delete Order';
+  deleteBtn.id = 'delete-order-btn';
   deleteBtn.dataset.orderId = id;
-  deleteBtn.addEventListener("click", onDeleteOrder);
+  deleteBtn.addEventListener('click', onDeleteOrder);
 
   wrapper.appendChild(form);
   wrapper.appendChild(deleteBtn);
@@ -327,8 +336,8 @@ async function getOrderFormEl(id) {
 async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()) {
   const orderList = await request.ordersWithinRange(startDate, endDate);
 
-  const dayListEl = document.createElement("ul");
-  dayListEl.classList.add("day-list");
+  const dayListEl = document.createElement('ul');
+  dayListEl.classList.add('day-list');
 
   const dateDiff = startDate.diffInDaysTo(endDate);
   let i = 0;
@@ -340,32 +349,41 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
     const dateString = date.getDateString();
     const dateStringLong = `${date.getDate()}. ${date.nameOfMonth()}`;
 
-    const dayEl = document.createElement("li");
-    dayEl.classList.add("day-list__day");
-    dayEl.innerHTML = `<h2>${weekday}</h2><time datetime="${dateString}">${dateStringLong}</time>`;
+    const dayEl = document.createElement('li');
+    dayEl.classList.add('day-list__day');
+    date.getDay() == 1 ? dayEl.dataset.weekStart = '' : '';
+    dayEl.innerHTML = `<div class="day-list__day__header">
+      <h2>${weekday}</h2><time datetime="${dateString}">${dateStringLong}</time>
+      </div>`;
     dayListEl.appendChild(dayEl);
-
-    const orderListEl = document.createElement("ul");
-    orderListEl.classList.add("order-list");
-    dayEl.appendChild(orderListEl);
 
     const ordersOfDate = orderList.filter(function (order) {
       const dueDate = new DateExt(order.datetime_due);
       return date.getDateString() === dueDate.getDateString();
     });
 
-    for (const order of ordersOfDate) {
-      const { id, datetime_due, status, price, firstname, lastname } = order;
-      let dueDate = new DateExt(datetime_due);
-      let dateString = dueDate.toLocaleDateString().replace(/\//g, ".");
-      let timeString = `${String(dueDate.getHours()).padStart(2, "0")}:${String(dueDate.getMinutes()).padStart(2, "0")}`;
+    if (ordersOfDate.length) {
+      dayEl.dataset.active = '';
 
-      const orderEl = document.createElement("li");
-      orderEl.classList.add("order-list__order");
-      orderEl.dataset.orderId = id;
-      orderEl.innerHTML = `${timeString} ${firstname} ${lastname ? lastname : ""} ${price}CHF ${status}`;
-      orderEl.addEventListener("click", (event) => selectOrder(event.target.dataset.orderId));
-      orderListEl.appendChild(orderEl);
+      const orderListEl = document.createElement('ul');
+      orderListEl.classList.add('order-list');
+      dayEl.appendChild(orderListEl);
+
+      for (const order of ordersOfDate) {
+        const { id, datetime_due, status, price, firstname, lastname } = order;
+        let dueDate = new DateExt(datetime_due);
+        let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
+        let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+
+        const orderEl = document.createElement('li');
+        orderEl.classList.add('order-list__order');
+        orderEl.dataset.orderId = id;
+        orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time>
+          <span>${firstname} ${lastname ? lastname : ''}</span>
+          <strong>${price}CHF</strong>`;
+        orderEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
+        orderListEl.appendChild(orderEl);
+      }
     }
 
     i++;

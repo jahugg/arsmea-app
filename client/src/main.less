@@ -23,6 +23,7 @@ body {
   --color-background: white;
   --color-grey-01: rgb(77, 77, 77);
   --color-grey-02: rgb(138, 136, 136);
+  --color-grey-03: rgb(201, 201, 201);
   --color-highlight: red;
 
   --page-padding: 30px;
@@ -150,7 +151,6 @@ textarea {
   li {
     position: relative;
     padding: 4px 10px;
-    margin-left: 40px;
     border-radius: 5px;
     cursor: pointer;
     user-select: none;
@@ -169,14 +169,6 @@ textarea {
 
   li[data-filtered] {
     display: none;
-  }
-
-  li[data-order-letter]:before {
-    content: attr(data-order-letter);
-    position: absolute;
-    font-weight: 400;
-    left: -40px;
-    color: var(--color-font);
   }
 }
 
@@ -261,6 +253,18 @@ textarea {
 
     #contact-list {
       .styled-list;
+
+      li {
+        margin-left: 40px;
+      }
+
+      li[data-order-letter]:before {
+        content: attr(data-order-letter);
+        position: absolute;
+        font-weight: 400;
+        left: -40px;
+        color: var(--color-font);
+      }
     }
   }
 
@@ -345,11 +349,22 @@ textarea {
     }
   }
 
+  #calendar-wrapper {
+    position: absolute;
+    z-index: 100;
+  }
+
   #order-list-section {
     grid-area: list;
 
     .order-list {
       .styled-list;
+      margin-bottom: .7em;
+
+      li {
+        display: flex;
+        justify-content: space-between;
+      }
     }
   }
 
@@ -361,21 +376,25 @@ textarea {
     list-style-type: none;
     padding: 0;
 
-    h2 {
-      font: var(--font-h1);
-      display: inline-block;
-      margin: 0;
+    [data-week-start] {
+      margin-top: 2em;
+      border-top: 1px solid black;
     }
 
-    time {
-      color: var(--color-grey-02);
-      font: var(--font-regular);
-      margin-left: 1em;
-    }
-  }
+    .day-list__day__header {
+      display: flex;
+      align-items: baseline;
+      width: 100%;
 
-  #order-list li[data-selected] {
-    background: powderblue;
+      time {
+        color: var(--color-grey-03);
+      }
+
+      h2 {
+        font: var(--font-h1);
+        margin: 0 .5em 0 0;
+      }
+    }
   }
 
   div[data-new-contact]::after {

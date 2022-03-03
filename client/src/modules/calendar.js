@@ -112,7 +112,9 @@ export class Calendar {
 
     // populate weekdays header
     const weekdaysEl = calendarEl.querySelector(".calendar__weekdays");
-    new DateExt().weekdays.forEach((name, index) => {
+    let weekdays = new DateExt().weekdays;
+    weekdays.push(weekdays.shift()); // move sunday to end of array
+    weekdays.forEach((name, index) => {
       const el = document.createElement("th");
       el.classList.add("calendar__weekdays__day");
       el.dataset.weekday = index;
@@ -162,7 +164,7 @@ export class Calendar {
 
 export class DateExt extends Date {
   months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   getDateString = () => `${this.getFullYear()}-${String(this.getMonth() + 1).padStart(2, "0")}-${String(this.getDate()).padStart(2, "0")}`;
   nameOfMonth = () => this.months[this.getMonth()];
