@@ -29,7 +29,8 @@ body {
   --page-padding: 30px;
 
   --font-size: 1.4rem;
-  --font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  --font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  --font-big: normal 200 2em var(--font-family);
   --font-h1: normal 200 1.4em var(--font-family);
   --font-regular: normal 200 1em var(--font-family);
   --font-small: normal 200 0.8em var(--font-family);
@@ -40,7 +41,7 @@ body {
 // general
 // ================================
 #app {
-  font: normal 200 var(--font-size) "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  font: normal 200 var(--font-size) 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
   color: var(--color-font);
 }
 
@@ -53,7 +54,7 @@ main {
   margin: var(--page-padding);
 }
 
-input:not([type="submit"]):not([type="checkbox"]) {
+input:not([type='submit']):not([type='checkbox']) {
   border: none;
   padding: 5px 0;
   font: inherit;
@@ -81,7 +82,7 @@ input:not([type="submit"]):not([type="checkbox"]) {
   margin-top: 10px;
 }
 
-input[type="checkbox"] {
+input[type='checkbox'] {
   --size: 18px;
   appearance: none;
   height: var(--size);
@@ -222,8 +223,8 @@ textarea {
   grid-template-rows: 120px auto;
   gap: var(--page-padding);
   grid-template-areas:
-    "control control"
-    "list detail";
+    'control control'
+    'list detail';
 
   #contact-control-section {
     grid-area: control;
@@ -272,7 +273,7 @@ textarea {
     grid-area: detail;
 
     address {
-      font-size: 2em;
+      font: var(--font-big);
       white-space: pre-line;
       a {
         color: inherit;
@@ -320,15 +321,15 @@ textarea {
 // order
 // ================================
 #order {
-  --list-width: 350px;
+  --list-width: 400px;
 
   display: grid;
   grid-template-columns: minmax(min-content, var(--list-width)) 1fr;
   grid-template-rows: auto auto;
   gap: var(--page-padding);
   grid-template-areas:
-    "control control"
-    "list detail";
+    'control control'
+    'list detail';
 
   #order-control-section {
     grid-area: control;
@@ -359,7 +360,7 @@ textarea {
 
     .order-list {
       .styled-list;
-      margin-bottom: .7em;
+      margin-bottom: 0.7em;
 
       li {
         display: flex;
@@ -370,35 +371,71 @@ textarea {
 
   #order-detail-section {
     grid-area: detail;
+
+    #order-details {
+      > div {
+        font: var(--font-big);
+      }
+
+      a {
+        color: inherit;
+      }
+    }
   }
 
   .day-list {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 
     [data-week-start] {
-      margin-top: 2em;
-      border-top: 1px solid black;
+      margin-top: 1.5em;
     }
 
-    .day-list__day__header {
+    [data-active] .day-list__summary {
+      cursor: pointer;
+    }
+
+    .day-list__summary {
       display: flex;
+      gap: 10px;
       align-items: baseline;
-      width: 100%;
+      user-select: none;
+    }
 
-      time {
-        color: var(--color-grey-03);
-      }
+    .dots {
+      display: flex;
+      flex-wrap: wrap;
+      align-self: center;
+      width: 25px;
+      justify-content: center;
+      align-items: center;
 
-      h2 {
-        font: var(--font-h1);
-        margin: 0 .5em 0 0;
+      span {
+        --size: 5px;
+        height: var(--size);
+        width: var(--size);
+        border-radius: var(--size);
+        margin: 1px;
+        background: red;
       }
+    }
+
+    .weekday {
+      font: var(--font-h1);
+    }
+
+    time {
+      color: var(--color-grey-03);
+    }
+
+    .total-price {
+      font-weight: 400;
     }
   }
 
   div[data-new-contact]::after {
-    content: "New Contact!";
+    content: 'New Contact!';
     color: red;
   }
 }

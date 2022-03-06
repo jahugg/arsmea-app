@@ -9,8 +9,12 @@ export default async function render() {
   module.id = 'order';
   module.innerHTML = `
     <div id="order-control-section">
+      <form id="search-order" role="search">
+        <label id="search-order__label" for="search-order__input">Search</label>
+        <input type="text" pattern="[^0-9]*" name="input" id="search-order__input" placeholder="Contact Name..." autocomplete="off" required/>
+      </form>
       <div id="calendar-container">
-        <button id="calendar-toggle" type="button">Calendar</button>
+        <button id="calendar-toggle" type="button" class="button-small">Calendar</button>
         <div id="calendar-wrapper" hidden></div>
       </div>
       <button id="add-order-btn" type="button">Add Order</button>
@@ -36,7 +40,7 @@ export default async function render() {
   const orderListWrapper = module.querySelector('#order-list-wrapper');
 
   let endDate = new DateExt();
-  endDate.setDate(endDate.getDate() + 10);
+  endDate.setDate(endDate.getDate() + 30);
   const orderList = await getOrderListEl(new DateExt(), endDate);
   orderListWrapper.appendChild(orderList);
 
@@ -258,24 +262,30 @@ async function onDeleteOrder(event) {
 }
 
 async function getOrderDetailsEl(id) {
-  let { datetime_placed, datetime_due, price, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
+  const { datetime_placed, datetime_due, price, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
+
+  const datePlaced = new DateExt(datetime_placed);
+  const dateDue = new DateExt(datetime_due);
+  const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
+  const dueString = `${dateDue.getDate()}. ${dateDue.nameOfMonth()} ${dateDue.getFullYear()}<br/>
+    ${dateDue.getHours()}:${String(dateDue.getMinutes()).padStart(2, '0')} h`;
+
   const wrapper = document.createElement('div');
   wrapper.id = 'order-details';
-  wrapper.innerHTML = `<a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a><br>
-  Placed: ${datetime_placed}<br>
-  Due: ${datetime_due}<br>
-  ${price ? price + ' CHF<br>' : ''}
-  ${description ? description + '<br>' : ''}
-  Status: ${status}`;
+  wrapper.innerHTML = `
+  <section class="content-controls">
+    <button type="button" id="edit-btn" class="button-small" data-order-id="${id}">Edit</button>
+  </section>
+  <div>
+    <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
+    <div>${dueString}</div>
+    <div> ${price ? price + ' CHF' : ''}</div>
+    ${description ? `<div>${description}</div>` : ''}
+    <div>${status}</div>
+  </div>`;
 
-  const editBtn = document.createElement('button');
-  editBtn.type = 'button';
-  editBtn.id = 'edit-btn';
-  editBtn.innerHTML = 'Edit';
-  editBtn.dataset.orderId = id;
+  const editBtn = wrapper.querySelector('#edit-btn');
   editBtn.addEventListener('click', onEditOrder);
-
-  wrapper.appendChild(editBtn);
 
   return wrapper;
 }
@@ -291,7 +301,12 @@ async function getOrderFormEl(id) {
   form.method = 'POST';
   form.id = 'edit-order';
   form.addEventListener('submit', onUpdateOrder);
-  form.innerHTML = `<input type="hidden" id="edit-order__id" name="id" value="${id}">
+  form.innerHTML = `<section class="content-controls">
+      <input type="submit" class="button-small" value="Done" />
+      <button type="button" id="delete-order-btn" class="button-small" data-order-id="${id}">Delete Order</button>
+    </section>
+
+    <input type="hidden" id="edit-order__id" name="id" value="${id}">
     <div>
       <label for="edit-order__due">Due Date</label>
       <input type="datetime-local" name="duedate" id="edit-order__due" value="${datetime_due ? datetime_due : ''}" />
@@ -311,24 +326,17 @@ async function getOrderFormEl(id) {
     <div>
       <label for="edit-order__description">Description</label>
       <textarea name="description" id="edit-order__description" placeholder="Notes">${description ? description : ''}</textarea>
-    </div>
-    <input type="submit" value="Done"/>`;
+    </div>`;
 
   // select current status
   const statusOptions = form.querySelectorAll('#edit-order__status option');
   for (let option of statusOptions) {
     if (option.value === status) option.setAttribute('selected', 'true');
   }
-
-  const deleteBtn = document.createElement('button');
-  deleteBtn.type = 'button';
-  deleteBtn.innerHTML = 'Delete Order';
-  deleteBtn.id = 'delete-order-btn';
-  deleteBtn.dataset.orderId = id;
-  deleteBtn.addEventListener('click', onDeleteOrder);
-
   wrapper.appendChild(form);
-  wrapper.appendChild(deleteBtn);
+
+  const deleteBtn = wrapper.querySelector('#delete-order-btn');
+  deleteBtn.addEventListener('click', onDeleteOrder);
 
   return wrapper;
 }
@@ -351,10 +359,16 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
 
     const dayEl = document.createElement('li');
     dayEl.classList.add('day-list__day');
-    date.getDay() == 1 ? dayEl.dataset.weekStart = '' : '';
-    dayEl.innerHTML = `<div class="day-list__day__header">
-      <h2>${weekday}</h2><time datetime="${dateString}">${dateStringLong}</time>
-      </div>`;
+    date.getDay() == 1 ? (dayEl.dataset.weekStart = '') : '';
+
+    const details = document.createElement('details');
+    dayEl.appendChild(details);
+    details.innerHTML = `<summary class="day-list__summary">
+        <span class="dots"></span>
+        <span class="weekday">${weekday}</span>
+        <time datetime="${dateString}">${dateStringLong}</time>
+        <span class="total-price"><span>
+      </summary>`;
     dayListEl.appendChild(dayEl);
 
     const ordersOfDate = orderList.filter(function (order) {
@@ -367,7 +381,9 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
 
       const orderListEl = document.createElement('ul');
       orderListEl.classList.add('order-list');
-      dayEl.appendChild(orderListEl);
+      details.appendChild(orderListEl);
+
+      let totalPrice = 0;
 
       for (const order of ordersOfDate) {
         const { id, datetime_due, status, price, firstname, lastname } = order;
@@ -378,12 +394,21 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
         const orderEl = document.createElement('li');
         orderEl.classList.add('order-list__order');
         orderEl.dataset.orderId = id;
-        orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time>
-          <span>${firstname} ${lastname ? lastname : ''}</span>
-          <strong>${price}CHF</strong>`;
+        orderEl.innerHTML = `<div><time datetime="${timeString}">${timeString}</time> 
+          <span>${firstname} ${lastname ? lastname : ''}</span></div>
+          <span>${price}CHF</span>`;
         orderEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
         orderListEl.appendChild(orderEl);
+
+        totalPrice += price;
+
+        // add dots to summary
+        const dotEl = details.querySelector('.dots');
+        const dot = document.createElement('span');
+        dotEl.appendChild(dot);
       }
+      const totalPriceEl = details.querySelector('.total-price');
+      totalPriceEl.innerHTML = `${totalPrice} CHF`;
     }
 
     i++;
