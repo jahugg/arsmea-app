@@ -360,7 +360,8 @@ textarea {
 
     .order-list {
       .styled-list;
-      margin-bottom: 0.7em;
+      margin: 0 0 0.7em 50px;
+      border-left: solid 1px black;
 
       li {
         display: flex;
@@ -392,15 +393,31 @@ textarea {
       margin-top: 1.5em;
     }
 
-    [data-active] .day-list__summary {
-      cursor: pointer;
+    [data-active] {
+
+      .weekday {
+        color: black;
+      }
+
+      .day-list__summary {
+        cursor: pointer;
+      }
     }
 
     .day-list__summary {
       display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      user-select: none;
+
+      [data-today] {
+        background: red;
+      }
+    }
+    .day-list__summary > div {
+      display: flex;
       gap: 10px;
       align-items: baseline;
-      user-select: none;
     }
 
     .dots {
@@ -423,14 +440,17 @@ textarea {
 
     .weekday {
       font: var(--font-h1);
-    }
-
-    time {
       color: var(--color-grey-03);
     }
 
     .total-price {
-      font-weight: 400;
+      font-style: italic;
+    }
+
+    time {
+      font-style: italic;
+      color: var(--color-grey-03);
+      text-align: center;
     }
   }
 

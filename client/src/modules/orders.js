@@ -353,9 +353,16 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
     const date = new DateExt(startDate);
     date.setDate(date.getDate() + i);
 
-    const weekday = date.nameOfWeekday();
+    let today = new DateExt();
+    let tomorrow = new DateExt();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    let weekday;
+    if (today.getDateString() === date.getDateString()) weekday = 'Today';
+    else if (tomorrow.getDateString() === date.getDateString()) weekday = 'Tomorrow';
+    else weekday = date.nameOfWeekday();
+
     const dateString = date.getDateString();
-    const dateStringLong = `${date.getDate()}. ${date.nameOfMonth()}`;
+    const dateStringLong = `${String(date.getDate()).padStart(2, 0)}.`;
 
     const dayEl = document.createElement('li');
     dayEl.classList.add('day-list__day');
@@ -364,9 +371,11 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
     const details = document.createElement('details');
     dayEl.appendChild(details);
     details.innerHTML = `<summary class="day-list__summary">
-        <span class="dots"></span>
-        <span class="weekday">${weekday}</span>
-        <time datetime="${dateString}">${dateStringLong}</time>
+        <div>
+          <span class="dots"></span>
+          <time datetime="${dateString}">${dateStringLong}</time>
+          <span class="weekday">${weekday}</span>
+        </div>
         <span class="total-price"><span>
       </summary>`;
     dayListEl.appendChild(dayEl);
