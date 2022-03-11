@@ -24,6 +24,7 @@ body {
   --color-grey-01: rgb(77, 77, 77);
   --color-grey-02: rgb(138, 136, 136);
   --color-grey-03: rgb(201, 201, 201);
+  --color-grey-04: rgb(231, 231, 231);
   --color-highlight: red;
 
   --page-padding: 30px;
@@ -324,8 +325,8 @@ textarea {
   --list-width: 400px;
 
   display: grid;
-  grid-template-columns: minmax(min-content, var(--list-width)) 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: var(--list-width) 1fr;
+  grid-template-rows: 120px auto;
   gap: var(--page-padding);
   grid-template-areas:
     'control control'
@@ -358,14 +359,106 @@ textarea {
   #order-list-section {
     grid-area: list;
 
+    .month-name {
+      margin: 0;
+      font: var(--font-h1);
+    }
+
+    #day-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+
+      .day-list__summary {
+        display: flex;
+        align-items: baseline;
+        user-select: none;
+        cursor: pointer;
+        width: 100%;
+        transition: transform 0.1s ease-out;
+
+        .add-order {
+          align-self: center;
+          white-space: nowrap;
+        }
+
+        &:hover .add-order {
+          display: block;
+        }
+      }
+
+      [data-today] .weekday {
+        background: var(--color-grey-04);
+        border-radius: 4px;
+      }
+
+      [data-empty] .day-list__summary {
+        cursor: inherit;
+      }
+
+      [data-past] .day-list__summary {
+        color: var(--color-grey-03);
+      }
+
+      [data-week-start]:not(:first-child) {
+        margin-top: 1.5em;
+      }
+
+      .dots {
+        align-self: center;
+        width: 25px;
+        margin-right: 20px;
+        word-wrap: break-word;
+        color: red;
+        font-size: 1em;
+        letter-spacing: -0.1em;
+        line-height: 0.2em;
+        font-size: 1.7em;
+      }
+
+      .weekday {
+        font: var(--font-h1);
+        padding: 0 0.3em;
+        flex: 0 1 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .total {
+        padding: 0 0.2em;
+        text-align: right;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+    }
+
     .order-list {
       .styled-list;
-      margin: 0 0 0.7em 50px;
-      border-left: solid 1px black;
+      padding: 0;
+      margin: 0.5em 0 1em 35px;
 
       li {
         display: flex;
-        justify-content: space-between;
+      }
+
+      time {
+        flex-shrink: 0;
+        width: 6ch;
+      }
+
+      .contact {
+        flex: 1 1 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .price {
+        margin-left: auto;
+        min-width: 7ch;
+        white-space: nowrap;
+        text-align: right;
       }
     }
   }
@@ -373,90 +466,22 @@ textarea {
   #order-detail-section {
     grid-area: detail;
 
-    #order-details {
-      > div {
-        font: var(--font-big);
-      }
+    .order-details__info {
+      font: var(--font-h1);
 
       a {
         color: inherit;
       }
     }
-  }
 
-  .day-list {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-
-    [data-week-start] {
-      margin-top: 1.5em;
-    }
-
-    [data-active] {
-
-      .weekday {
-        color: black;
-      }
-
-      .day-list__summary {
-        cursor: pointer;
-      }
-    }
-
-    .day-list__summary {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      user-select: none;
-
-      [data-today] {
-        background: red;
-      }
-    }
-    .day-list__summary > div {
-      display: flex;
-      gap: 10px;
-      align-items: baseline;
-    }
-
-    .dots {
-      display: flex;
-      flex-wrap: wrap;
-      align-self: center;
-      width: 25px;
-      justify-content: center;
-      align-items: center;
-
-      span {
-        --size: 5px;
-        height: var(--size);
-        width: var(--size);
-        border-radius: var(--size);
-        margin: 1px;
-        background: red;
-      }
-    }
-
-    .weekday {
+    .new-order__input {
       font: var(--font-h1);
-      color: var(--color-grey-03);
     }
 
-    .total-price {
-      font-style: italic;
+    [data-new-contact]::after {
+      content: 'New Contact!';
+      color: red;
     }
-
-    time {
-      font-style: italic;
-      color: var(--color-grey-03);
-      text-align: center;
-    }
-  }
-
-  div[data-new-contact]::after {
-    content: 'New Contact!';
-    color: red;
   }
 }
 
