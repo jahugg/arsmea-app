@@ -11,12 +11,10 @@ export default async function render() {
     <div id="order-control-section">
       <form id="search-order" role="search">
         <label id="search-order__label" for="search-order__input">Search</label>
-        <input type="text" pattern="[^0-9]*" name="input" id="search-order__input" placeholder="Contact Name..." autocomplete="off" required/>
+        <input list="contact-list-main" name="contactName" id="search-order__input" placeholder="Contact Name..." autocomplete="off" required pattern=""/>
+        <datalist id="contact-list-main"></datalist>
+        <input type="hidden" name="contactId" class="contact-id" value="0">
       </form>
-      <div id="calendar-container">
-        <button id="calendar-toggle" type="button" class="button-small">Calendar</button>
-        <div id="calendar-wrapper" hidden></div>
-      </div>
       <button id="add-order-btn" type="button">Add Order</button>
     </div>
     <div id="order-list-section">
@@ -25,33 +23,68 @@ export default async function render() {
     <div id="order-detail-section">
     </div>`;
 
-  const calendarBtn = module.querySelector('#calendar-toggle');
+  const addButton = module.querySelector('#add-order-btn');
+  addButton.addEventListener('click', onPrepareNewOrder);
+
+  // search orders by contact
+  const searchForm = module.querySelector('#search-order');
+  searchForm.addEventListener('submit', onSearchOrder);
+
+  const datalist = module.querySelector('#contact-list-main');
+  const contacts = await request.contacts();
+  let patternString = '';
+  for (const contact of contacts) {
+    const { id, firstname, lastname } = contact;
+    const option = document.createElement('option');
+    option.dataset.contactId = id;
+    option.value = `${firstname} ${lastname}`;
+    datalist.appendChild(option);
+
+    patternString += `${firstname} ${lastname}|`;
+  }
+
+  // save current contact id
+  const contactIdInput = module.querySelector('#search-order .contact-id');
+  const searchInput = module.querySelector('#search-order__input');
+  searchInput.pattern = patternString;
+  searchInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    let contactId = 0;
+    for (const item of datalist.children) {
+      item.value === value ? (contactId = item.dataset.contactId) : '';
+    }
+    contactIdInput.value = contactId;
+  });
+
+  // set default date range
+  let startDate = new DateExt();
+  startDate.setDate(startDate.getDate() - 3);
+  let endDate = new DateExt(startDate);
+  endDate.setDate(startDate.getDate() + 17);
+
+  // prepare calendar
+  const calendarEl = document.createElement('div');
+  calendarEl.id = 'calendar-container';
+  calendarEl.innerHTML = `<button id="calendar-toggle" type="button" class="button-small">
+      ${new DateExt().nameOfMonth()} ${startDate.getDate()}. – ${endDate.getDate()}.
+    </button>
+    <div id="calendar-wrapper" hidden></div>`;
+
+  const calendarBtn = calendarEl.querySelector('#calendar-toggle');
   calendarBtn.addEventListener('click', (event) => {
     const calendar = event.target.nextElementSibling;
     calendar.hidden ? (calendar.hidden = false) : (calendar.hidden = true);
   });
 
-  const orderListSection = module.querySelector('#calendar-wrapper');
-  orderListSection.replaceChildren(calendar.getHTML());
-
-  const addButton = module.querySelector('#add-order-btn');
-  addButton.addEventListener('click', onPrepareNewOrder);
+  const calendarWrapper = calendarEl.querySelector('#calendar-wrapper');
+  calendarWrapper.replaceChildren(calendar.getHTML());
 
   const orderListWrapper = module.querySelector('#order-list-wrapper');
+  orderListWrapper.appendChild(calendarEl);
 
-  // get last monday as startdate
-
-  let startDate = new DateExt();
-  startDate.setDate(startDate.getDate() - 3);
-  let endDate = new DateExt().lastDayOfMonth();
-
-  const monthEl = document.createElement('h1');
-  monthEl.classList.add('month-name');
-  monthEl.innerHTML = `${new DateExt().nameOfMonth()} ${startDate.getDate()}. – ${endDate.getDate()}.`;
-  orderListWrapper.appendChild(monthEl);
-
-  const orderList = await getOrderListEl(startDate, endDate);
-  orderListWrapper.appendChild(orderList);
+  const orderList = await request.ordersWithinRange(startDate, endDate);
+  const orderListEl = getOrderListEl(orderList, { customView: { startView: startDate, endView: endDate } });
+  orderListWrapper.appendChild(orderListEl);
 
   return module;
 }
@@ -63,6 +96,22 @@ export function init() {
   calendar.populateCalendar();
   updateCalendar(); // why is this necessary for eventlistener to fire?
   document.addEventListener('monthloaded', updateCalendar);
+}
+
+async function onSearchOrder(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  id = data.get('contactId');
+
+  // display orders of contact
+  const orderList = await request.ordersByContact(id);
+  const orderListWrapper = document.getElementById('order-list-wrapper');
+  if (orderList.length) {
+    const orderListEl = getOrderListEl(orderList, { compactStyle: true });
+    orderListWrapper.replaceChildren(orderListEl);
+  } else {
+    orderListWrapper.innerHTML = 'No orders yet. Add Order.';
+  }
 }
 
 async function onClickCalendarDay(event) {
@@ -104,9 +153,19 @@ async function selectOrder(id) {
     // get order details
     orderDetails = await getOrderDetailsEl(id);
   } catch (error) {
-    // select first order item if any
+    // select first order item in the future if any
     if (orderList.length) {
-      const firstOrder = orderList.item(0);
+      const today = new DateExt();
+      let date = new DateExt();
+      let i = 0;
+
+      do {
+        let tempDate = new DateExt(orderList.item(i).dataset.date);
+        date.setDate(tempDate.getDate());
+        i++;
+      } while (date < today);
+
+      const firstOrder = orderList.item(i - 1);
       id = firstOrder.dataset.orderId;
       orderDetails = await getOrderDetailsEl(id);
     }
@@ -171,7 +230,6 @@ async function onPrepareNewOrder(event) {
   for (const item of orderListItems) delete item.dataset.selected;
 
   const datalist = wrapper.querySelector('#contact-list');
-  datalist.addEventListener('input', (e) => console.log('now'));
   const contacts = await request.contacts();
   for (const contact of contacts) {
     const { id, firstname, lastname } = contact;
@@ -350,11 +408,20 @@ async function getOrderFormEl(id) {
   return wrapper;
 }
 
-async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()) {
-  const orderList = await request.ordersWithinRange(startDate, endDate);
+function getOrderListEl(orderList, options = { compactStyle: false }) {
+  let startDate, endDate;
+
+  if (options.customView) {
+    startDate = options.customView.startView;
+    endDate = options.customView.endView;
+  } else {
+    startDate = new DateExt(orderList[0].datetime_due);
+    endDate = new DateExt(orderList[orderList.length - 1].datetime_due);
+  }
 
   const dayListEl = document.createElement('ul');
   dayListEl.id = 'day-list';
+  options.compactStyle ? (dayListEl.dataset.compactStyle = '') : '';
 
   const dateDiff = startDate.diffInDaysTo(endDate);
   let i = 0;
@@ -367,15 +434,19 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
 
     const dayEl = document.createElement('li');
     dayEl.classList.add('day-list__day');
+    dayEl.dataset.date = dateString;
     date.getDay() == 1 ? (dayEl.dataset.weekStart = '') : '';
 
     const today = new DateExt();
     let weekday;
     date < today.setHours(0, 0, 0, 0) ? (dayEl.dataset.past = '') : '';
-    if (today.getDateString() === date.getDateString()) {
-      weekday = 'Today';
-      dayEl.dataset.today = '';
-    } else weekday = date.nameOfWeekday();
+    if (options.compactStyle) weekday = `${date.nameOfMonth()} ${date.getFullYear()}`;
+    else {
+      if (today.getDateString() === dateString) {
+        weekday = 'Today';
+        dayEl.dataset.today = '';
+      } else weekday = date.nameOfWeekday();
+    }
 
     const details = document.createElement('details');
     dayEl.appendChild(details);
@@ -394,7 +465,7 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
 
     const ordersOfDate = orderList.filter(function (order) {
       const dueDate = new DateExt(order.datetime_due);
-      return date.getDateString() === dueDate.getDateString();
+      return dateString === dueDate.getDateString();
     });
 
     if (ordersOfDate.length) {
@@ -413,6 +484,7 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
         const orderEl = document.createElement('li');
         orderEl.classList.add('order-list__order');
         orderEl.dataset.orderId = id;
+        orderEl.dataset.date = dueDate.getDateString();
         orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
           <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
           <span class="price">${price} CHF</span>`;
@@ -430,7 +502,7 @@ async function getOrderListEl(startDate = new DateExt(), endDate = new DateExt()
     } else dayEl.dataset.empty = '';
 
     i++;
-  } while (i < dateDiff);
+  } while (i <= dateDiff);
 
   return dayListEl;
 }

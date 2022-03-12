@@ -174,6 +174,14 @@ textarea {
   }
 }
 
+.card {
+  padding: 30px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.17);
+  border-radius: 10px;
+  background: var(--color-font);
+  color: var(--color-background);
+}
+
 // ================================
 // app header
 // ================================
@@ -351,6 +359,10 @@ textarea {
     }
   }
 
+  #calendar-container {
+    margin-bottom: 30px;
+  }
+
   #calendar-wrapper {
     position: absolute;
     z-index: 100;
@@ -358,11 +370,6 @@ textarea {
 
   #order-list-section {
     grid-area: list;
-
-    .month-name {
-      margin: 0;
-      font: var(--font-h1);
-    }
 
     #day-list {
       list-style-type: none;
@@ -383,11 +390,22 @@ textarea {
         }
 
         &:hover .add-order {
-          display: block;
+          // display: block;
         }
       }
 
-      [data-today] .weekday {
+      &[data-compact-style] {
+        
+        [data-empty] {
+          display: none;
+        }
+
+        [data-week-start] {
+          margin-top: 0;
+        }
+      }
+
+      [data-today] .day-list__summary {
         background: var(--color-grey-04);
         border-radius: 4px;
       }
@@ -400,7 +418,7 @@ textarea {
         color: var(--color-grey-03);
       }
 
-      [data-week-start]:not(:first-child) {
+      [data-week-start] {
         margin-top: 1.5em;
       }
 
@@ -436,7 +454,7 @@ textarea {
     .order-list {
       .styled-list;
       padding: 0;
-      margin: 0.5em 0 1em 35px;
+      margin: 0.2em 0 1.5em 35px;
 
       li {
         display: flex;
@@ -467,6 +485,7 @@ textarea {
     grid-area: detail;
 
     .order-details__info {
+      .card;
       font: var(--font-h1);
 
       a {
