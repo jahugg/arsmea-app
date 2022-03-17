@@ -2,8 +2,16 @@ import * as request from './serverRequests';
 import { Calendar, DateExt } from './calendar';
 
 const calendar = new Calendar();
+defaultView;
 
 export default async function render() {
+  // set default date range
+  let startDate = new DateExt();
+  startDate.setDate(startDate.getDate() - 2);
+  let endDate = new DateExt(startDate);
+  endDate.setDate(startDate.getDate() + 17);
+  defaultView = { start: startDate, end: endDate };
+
   const module = document.createElement('div');
   module.classList.add('module');
   module.id = 'order';
@@ -56,24 +64,36 @@ export default async function render() {
     contactIdInput.value = contactId;
   });
 
-  // set default date range
-  let startDate = new DateExt();
-  startDate.setDate(startDate.getDate() - 3);
-  let endDate = new DateExt(startDate);
-  endDate.setDate(startDate.getDate() + 17);
-
   // prepare calendar
   const calendarEl = document.createElement('div');
   calendarEl.id = 'calendar-container';
   calendarEl.innerHTML = `<button id="calendar-toggle" type="button" class="button-small">
-      ${new DateExt().nameOfMonth()} ${startDate.getDate()}. – ${endDate.getDate()}.
+      ${new DateExt().nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.getDate()}.
     </button>
-    <div id="calendar-wrapper" hidden></div>`;
+    <div id="calendar-wrapper" hidden></div>
+    <button id="calendar-reset" type="button" class="button-small" hidden>Reset</button>`;
 
+  // this could be handled with html details tag
   const calendarBtn = calendarEl.querySelector('#calendar-toggle');
   calendarBtn.addEventListener('click', (event) => {
     const calendar = event.target.nextElementSibling;
     calendar.hidden ? (calendar.hidden = false) : (calendar.hidden = true);
+    event.target.hasAttribute('data-open') ? event.target.removeAttribute('data-open') : (event.target.dataset.open = '');
+  });
+
+  // change calendar dates
+  // - change calendar button text
+  // - hide or show reset calendar button
+  // - hide or show calendar wrapper
+  // - get order list
+
+  const calendarResetBtn = calendarEl.querySelector('#calendar-reset');
+  calendarResetBtn.addEventListener('click', async (event) => {
+    event.target.hidden = true;
+    const orderListWrapper = module.querySelector('#order-list-wrapper');
+    const orderList = await request.ordersWithinRange(defaultView.start, defaultView.end);
+    const orderListEl = getOrderListEl(orderList, { customView: { start: defaultView.start, end: defaultView.end } });
+    orderListWrapper.replaceChild(orderListEl, document.getElementById('day-list'));
   });
 
   const calendarWrapper = calendarEl.querySelector('#calendar-wrapper');
@@ -82,8 +102,8 @@ export default async function render() {
   const orderListWrapper = module.querySelector('#order-list-wrapper');
   orderListWrapper.appendChild(calendarEl);
 
-  const orderList = await request.ordersWithinRange(startDate, endDate);
-  const orderListEl = getOrderListEl(orderList, { customView: { startView: startDate, endView: endDate } });
+  const orderList = await request.ordersWithinRange(defaultView.start, defaultView.end);
+  const orderListEl = getOrderListEl(orderList, { customView: { start: defaultView.start, end: defaultView.end } });
   orderListWrapper.appendChild(orderListEl);
 
   return module;
@@ -119,8 +139,17 @@ async function onClickCalendarDay(event) {
   const selectedDate = new DateExt(target.dataset.date);
   const orderListWrapper = document.getElementById('order-list-wrapper');
 
-  const orderList = await getOrderListEl(selectedDate, selectedDate);
-  orderListWrapper.replaceChildren(orderList);
+  const calendarToggle = document.getElementById('calendar-toggle');
+  calendarToggle.innerHTML = `${selectedDate.nameOfMonth()} ${selectedDate.getDate()}. ${selectedDate.getFullYear()}`;
+
+  const orderList = await request.ordersWithinRange(selectedDate, selectedDate);
+  let orderListEl;
+  if (orderList.length) orderListEl = getOrderListEl(orderList, { open: true });
+  else orderListEl = getOrderListEl(orderList, { open: true, customView: { start: selectedDate, end: selectedDate } });
+  orderListWrapper.replaceChild(orderListEl, document.getElementById('day-list'));
+
+  const calendarReset = document.getElementById('calendar-reset');
+  calendarReset.hidden = false;
 }
 
 async function updateCalendar() {
@@ -146,32 +175,10 @@ async function updateCalendar() {
 }
 
 async function selectOrder(id) {
-  const orderList = document.querySelectorAll('.order-list__order');
-  let orderDetails = '';
-
   try {
     // get order details
-    orderDetails = await getOrderDetailsEl(id);
-  } catch (error) {
-    // select first order item in the future if any
-    if (orderList.length) {
-      const today = new DateExt();
-      let date = new DateExt();
-      let i = 0;
-
-      do {
-        let tempDate = new DateExt(orderList.item(i).dataset.date);
-        date.setDate(tempDate.getDate());
-        i++;
-      } while (date < today);
-
-      const firstOrder = orderList.item(i - 1);
-      id = firstOrder.dataset.orderId;
-      orderDetails = await getOrderDetailsEl(id);
-    }
-  }
-
-  if (orderDetails) {
+    const orderDetails = await getOrderDetailsEl(id);
+    const orderList = document.querySelectorAll('.order-list__order');
     const detailsWrapper = document.querySelector('#order-detail-section');
     detailsWrapper.replaceChildren(orderDetails);
 
@@ -184,6 +191,8 @@ async function selectOrder(id) {
     url.searchParams.set('id', id);
     const state = { order_id: id };
     window.history.replaceState(state, '', url);
+  } catch (error) {
+    // select first order item in the future if any
   }
 }
 
@@ -263,11 +272,10 @@ async function onCreateNewOrder(event) {
   const response = await request.newOrder(data);
   const id = response.id;
 
-  console.log(data);
-
-  const orderListWrapper = document.getElementById('order-list-wrapper');
-  const orderList = await getOrderListEl();
-  orderListWrapper.replaceChildren(orderList);
+  // add order to current list
+  const date = new DateExt(data.get('due'));
+  const dayEl = document.querySelector(`.day-list__day[data-date="${date.getDateString()}"]`);
+  // adding orders to days should be outsourced into separate function to avoid duplicate code
 
   selectOrder(id);
 }
@@ -285,13 +293,6 @@ async function onUpdateOrder(event) {
   const orderId = data.get('id');
   let response = await request.updateOrder(orderId, data);
 
-  const orderListWrapper = document.getElementById('order-list-wrapper');
-  const orderList = await getOrderListEl();
-  orderListWrapper.replaceChildren(orderList);
-
-  const item = document.querySelector(`#order-list li[data-order-id="${orderId}"`);
-  item.dataset.selected = '';
-
   const orderDetailsWrapper = document.getElementById('order-detail-section');
   const orderDetails = await getOrderDetailsEl(orderId);
   orderDetailsWrapper.replaceChildren(orderDetails);
@@ -302,29 +303,12 @@ async function onDeleteOrder(event) {
 
   if (window.confirm('Delete Order?')) {
     const result = await request.deleteOrder(orderId);
-
-    const orderList = document.getElementById('order-list');
-    const orderItem = orderList.querySelector(`li[data-order-id="${orderId}"]`);
+    const orderItem = document.querySelector(`.order-list__order[data-order-id="${orderId}"]`);
     const previousSibling = orderItem.previousSibling;
     orderItem.remove();
 
-    // select previous, first or no order
-    if (orderList.childNodes.length) {
-      let selectOrderId;
-      if (previousSibling) {
-        selectOrderId = previousSibling.dataset.orderId;
-        previousSibling.dataset.selected = '';
-      } else if (orderList.firstChild) {
-        selectOrderId = orderList.firstChild.dataset.orderId;
-        orderList.firstChild.dataset.selected = '';
-      }
-      const orderDetailsWrapper = document.getElementById('order-detail-section');
-      const orderDetails = await getOrderDetailsEl(selectOrderId);
-      orderDetailsWrapper.replaceChildren(orderDetails);
-    } else {
-      const orderDetailsWrapper = document.getElementById('order-detail-section');
-      orderDetailsWrapper.innerHTML = '';
-    }
+    const orderDetailsWrapper = document.getElementById('order-detail-section');
+    orderDetailsWrapper.innerHTML = '';
   }
 }
 
@@ -408,12 +392,18 @@ async function getOrderFormEl(id) {
   return wrapper;
 }
 
-function getOrderListEl(orderList, options = { compactStyle: false }) {
+function getOrderListEl(orderList, options) {
+  // available options: compactStyle, open, customView
+  // maybe better to introduce new function?
+  // async function getDayListEl(startDate, endDate, options) {
+  //   const orderList = await request.ordersWithinRange(startDate, endDate);
+  // }
+
   let startDate, endDate;
 
   if (options.customView) {
-    startDate = options.customView.startView;
-    endDate = options.customView.endView;
+    startDate = options.customView.start;
+    endDate = options.customView.end;
   } else {
     startDate = new DateExt(orderList[0].datetime_due);
     endDate = new DateExt(orderList[orderList.length - 1].datetime_due);
@@ -449,6 +439,7 @@ function getOrderListEl(orderList, options = { compactStyle: false }) {
     }
 
     const details = document.createElement('details');
+    options.open ? details.setAttribute('open', '') : '';
     dayEl.appendChild(details);
     details.innerHTML = `<summary class="day-list__summary">
         <span class="dots"></span>

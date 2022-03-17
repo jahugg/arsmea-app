@@ -361,6 +361,11 @@ textarea {
 
   #calendar-container {
     margin-bottom: 30px;
+
+    [data-open] {
+      background: var(--color-font);
+      color: var(--color-background);
+    }
   }
 
   #calendar-wrapper {
@@ -395,7 +400,6 @@ textarea {
       }
 
       &[data-compact-style] {
-        
         [data-empty] {
           display: none;
         }
@@ -504,6 +508,7 @@ textarea {
   }
 }
 
+// stand alone container
 .calendar {
   width: 270px;
   color: white;
