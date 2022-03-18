@@ -145,6 +145,18 @@ textarea {
   }
 }
 
+.button-add {
+  --size: 80px;
+  background: var(--color-font);
+  border: none;
+  display: block;
+  height: var(--size);
+  width: var(--size);
+  border-radius: var(--size);
+  color: var(--color-background);
+  cursor: pointer;
+}
+
 .styled-list {
   list-style: none;
   padding: 0;
@@ -241,18 +253,6 @@ textarea {
     justify-content: space-between;
     align-items: center;
 
-    #add-contact-btn {
-      --size: 80px;
-      background: var(--color-font);
-      border: none;
-      display: block;
-      height: var(--size);
-      width: var(--size);
-      border-radius: var(--size);
-      color: var(--color-background);
-      cursor: pointer;
-    }
-
     #search-contact {
       max-width: var(--list-width);
     }
@@ -345,18 +345,6 @@ textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    #add-order-btn {
-      --size: 80px;
-      background: var(--color-font);
-      border: none;
-      display: block;
-      height: var(--size);
-      width: var(--size);
-      border-radius: var(--size);
-      color: var(--color-background);
-      cursor: pointer;
-    }
   }
 
   #calendar-container {
@@ -506,6 +494,39 @@ textarea {
       color: red;
     }
   }
+}
+
+// ================================
+// subscription (SERVES AS TEMPLATE FOR OTHER NEW GENERAL STYLES)
+// ================================
+.list-module {
+  --list-width: 400px;
+
+  display: grid;
+  grid-template-columns: var(--list-width) 1fr;
+  grid-template-rows: 120px auto;
+  gap: var(--page-padding);
+  grid-template-areas:
+    'control control'
+    'list detail';
+}
+
+#list-module__controls {
+  grid-area: control;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#list-module__list {}
+
+#list-module__details {}
+
+#list-module__details__controls {}
+
+.form label {
+  display: block;
+  margin-top: 2em;
 }
 
 // stand alone container

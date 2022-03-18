@@ -1,5 +1,4 @@
-import { DateExt } from "./calendar";
-
+// contacts
 export async function contacts(archived = false) {
   let response;
   if (archived) response = await fetch(`${process.env.SERVER}/api/contactListArchived`);
@@ -15,7 +14,7 @@ export async function contactDetails(id) {
 export async function deleteContact(id) {
   try {
     const response = await fetch(`${process.env.SERVER}/api/contact/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   } catch (err) {
     console.log(err);
@@ -25,7 +24,7 @@ export async function deleteContact(id) {
 export async function newContact(data) {
   let searchParams = new URLSearchParams(data);
   const response = await fetch(`${process.env.SERVER}/api/contact`, {
-    method: "POST",
+    method: 'POST',
     body: searchParams,
   });
   return await response.json();
@@ -33,16 +32,17 @@ export async function newContact(data) {
 
 export async function updateContact(id, data) {
   const response = await fetch(`${process.env.SERVER}/api/updateContact/${id}`, {
-    method: "POST",
+    method: 'POST',
     body: data,
   });
   return await response.json();
 }
 
+// orders
 export async function newOrder(data) {
   let searchParams = new URLSearchParams(data);
   const response = await fetch(`${process.env.SERVER}/api/order`, {
-    method: "POST",
+    method: 'POST',
     body: searchParams,
   });
   return await response.json();
@@ -60,7 +60,7 @@ export async function orderDetails(id) {
 
 export async function updateOrder(id, data) {
   const response = await fetch(`${process.env.SERVER}/api/updateOrder/${id}`, {
-    method: "POST",
+    method: 'POST',
     body: data,
   });
   return await response.json();
@@ -69,7 +69,7 @@ export async function updateOrder(id, data) {
 export async function deleteOrder(id) {
   try {
     const response = await fetch(`${process.env.SERVER}/api/order/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   } catch (err) {
     console.log(err);
@@ -78,8 +78,8 @@ export async function deleteOrder(id) {
 
 export async function ordersWithinRange(start, end) {
   // get String and set Time
-  const startDateString = start.getDateString() + "T00:00";
-  const endDateString = end.getDateString() + "T23:59";
+  const startDateString = start.getDateString() + 'T00:00';
+  const endDateString = end.getDateString() + 'T23:59';
 
   try {
     let response;
@@ -88,4 +88,10 @@ export async function ordersWithinRange(start, end) {
   } catch (err) {
     console.log(err);
   }
+}
+
+// subscriptions
+export async function subscriptions() {
+  let response = await fetch(`${process.env.SERVER}/api/subscriptionList`);
+  return await response.json();
 }

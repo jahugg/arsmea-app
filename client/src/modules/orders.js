@@ -23,7 +23,7 @@ export default async function render() {
         <datalist id="contact-list-main"></datalist>
         <input type="hidden" name="contactId" class="contact-id" value="0">
       </form>
-      <button id="add-order-btn" type="button">Add Order</button>
+      <button id="add-order-btn" type="button" class="button-add">Add Order</button>
     </div>
     <div id="order-list-section">
         <div id="order-list-wrapper"></div>
@@ -210,21 +210,21 @@ async function onPrepareNewOrder(event) {
       <input type="submit" class="button-small" value="Create Order"/>
       <button type="button" class="button-small" id="discard-order-btn">Discard</button>
     </section>
-    <div id="new-order__input">
+    <div id="new-order__input" class="form__input-group">
       <label for="new-order__contact">Client</label>
-      <input list="contact-list" name="contactName" id="new-order__contact" autocomplete="off" required />
+      <input list="contact-list" name="contactName" id="new-order__contact" autocomplete="off" placeholder="Hans Muster" required />
       <datalist id="contact-list"></datalist>
       <input type="hidden" name="contactId" id="contact-id" value="0">
     </div>
-    <div>
+    <div class="form__input-group">
       <label for="new-order__due">Due Date</label>
       <input type="datetime-local" name="due" id="new-order__due" required />
     </div>
-    <div>
+    <div class="form__input-group">
         <label for="new-order__price">Price</label>
         <input id="new-order__price" name="price" type="number" min="0.00" max="10000.00" step="0.1" required />CHF
     </div>
-    <div>
+    <div class="form__input-group">
       <label for="new-order__description">Description</label>
       <textarea name="description" id="new-order__description" placeholder="Notes"></textarea>
     </div>`;

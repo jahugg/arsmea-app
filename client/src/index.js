@@ -14,6 +14,11 @@ const pages = {
     title: "Orders",
     slug: "/orders",
     module: import("./modules/orders.js"),
+  },
+  subscriptions: {
+    title: "Subscriptions",
+    slug: "/subscriptions",
+    module: import("./modules/subscriptions.js"),
   }
 };
 
@@ -39,7 +44,7 @@ function navigateToCurrentURL() {
 async function buildPage(stateObj, addToHistory) {
   let pageKey = stateObj.pageKey;
   let page = pages[pageKey];
-  document.title = "Vlowers | " + page.title;
+  document.title = "Blumen | " + page.title;
 
   // push page to browser history
   // if (addToHistory) window.history.pushState(stateObj, page.title, page.slug);

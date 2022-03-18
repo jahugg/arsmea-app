@@ -196,4 +196,19 @@ export default class DBService {
       console.log(error);
     }
   }
+
+  // subscriptions
+  async selectAllSubscriptions() {
+    try {
+      const query = this.db.prepare(`SELECT subscriptions.id, subscriptions.datetime_start, contacts.firstname, contacts.lastname
+        FROM subscriptions
+        INNER JOIN contacts 
+        ON subscriptions.contact_id = contacts.id 
+        ORDER BY subscriptions.datetime_start`);
+      const list = query.all();
+      return list;
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

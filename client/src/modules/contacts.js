@@ -21,7 +21,7 @@ export default async function render() {
         </div>
       </div>
 
-      <button id="add-contact-btn" type="button">Add Contact</button>
+      <button id="add-contact-btn" class="button-add" type="button">Add Contact</button>
     </div>
     <div id="contact-list-section">
       <div id="contact-list-wrapper">

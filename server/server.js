@@ -10,6 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// contacts
 app.post("/api/contact", async (request, response) => {
   const data = request.body;
   const contactId = await db.insertContact(data);
@@ -57,6 +58,7 @@ app.get("/api/searchContacts/:string", async (request, response) => {
   response.json(contactList);
 });
 
+// orders
 app.post("/api/order", async (request, response) => {
   const data = request.body;
   console.log(data);
@@ -104,6 +106,12 @@ app.get("/api/ordersWithinRange/", async (request, response) => {
   const end = request.query.end;
   const ordersList = await db.selectOrdersWithinRange(start, end);
   response.json(ordersList);
+});
+
+// subscriptions
+app.get("/api/subscriptionList", async (request, response) => {
+  const list = await db.selectAllSubscriptions();
+  response.json(list);
 });
 
 app.listen(process.env.PORT);
