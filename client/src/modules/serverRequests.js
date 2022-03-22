@@ -95,3 +95,13 @@ export async function subscriptions() {
   let response = await fetch(`${process.env.SERVER}/api/subscriptionList`);
   return await response.json();
 }
+
+export async function newSubscription(data) {
+  let searchParams = new URLSearchParams(data);
+  const response = await fetch(`${process.env.SERVER}/api/subscription`, {
+    method: 'POST',
+    body: searchParams,
+  });
+  return await response.json();
+}
+

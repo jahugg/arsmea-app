@@ -198,6 +198,19 @@ export default class DBService {
   }
 
   // subscriptions
+  async insertSubscription(data) {
+    console.log(data);
+    // try {
+    //   const { contact, contactId, due, price, description } = data;
+    //   const query = this.db.prepare(`INSERT INTO orders (contact_id, datetime_placed, datetime_due, price, description, status)
+    //   VALUES (?, datetime('now'), ?, ?, ?, 'open')`);
+    //   const result = query.run(contactId, due, price, description);
+    //   return result.lastInsertRowid;
+    // } catch (error) {
+    //   console.log(error);
+    // }
+  }
+
   async selectAllSubscriptions() {
     try {
       const query = this.db.prepare(`SELECT subscriptions.id, subscriptions.datetime_start, contacts.firstname, contacts.lastname

@@ -260,9 +260,7 @@ async function onPrepareNewOrder(event) {
     contactIdInput.value = contactId;
     if (contactIdInput.value == 0 && contactInput.value !== '') {
       contactInput.parentNode.dataset.newContact = '';
-    } else {
-      delete contactInput.parentNode.dataset.newContact;
-    }
+    } else delete contactInput.parentNode.dataset.newContact;
   });
 }
 

@@ -102,10 +102,41 @@ async function onPrepareNewSubscription() {
     <textarea name="description" id="new-subscription__description" placeholder="Notes"></textarea>`;
 
   listSection.replaceChildren(form);
+
+  // populate contact datalist
+  const datalist = form.querySelector('#contact-list');
+  const contacts = await request.contacts();
+  for (const contact of contacts) {
+    const { id, firstname, lastname } = contact;
+    const option = document.createElement('option');
+    option.dataset.contactId = id;
+    option.value = `${firstname} ${lastname}`;
+    datalist.appendChild(option);
+  }
+
+  // check if given contact is new
+  const contactInput = form.querySelector('#new-subscription__contact');
+  const contactIdInput = form.querySelector('#contact-id');
+  contactInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    let contactId = 0;
+    for (const item of datalist.children) {
+      if (item.value === value) contactId = item.dataset.contactId;
+    }
+    contactIdInput.value = contactId;
+    if (contactIdInput.value == 0 && contactInput.value !== '') {
+      contactInput.parentNode.dataset.newContact = '';
+    } else delete contactInput.parentNode.dataset.newContact;
+  });
 }
 
 async function onSearchSubscription() {}
 
 async function selectSubscription() {}
 
-async function onSubmitNewSubscription() {}
+async function onSubmitNewSubscription(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const response = await request.newSubscription(data);
+  const id = response.id;
+}
