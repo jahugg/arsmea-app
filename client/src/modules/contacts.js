@@ -348,7 +348,7 @@ async function getContactAddressEl(id) {
     const orderListEl = document.createElement('ul');
     orderListEl.id = 'contact-orders';
     for (let order of orders) {
-      const { id, datetime_due, status, price, firstname, lastname } = order;
+      const { id, datetime_due, status, amount, firstname, lastname } = order;
       let dueDate = new DateExt(datetime_due);
       let dateString = `${String(dueDate.getDate()).padStart(2, '0')}. ${dueDate.nameOfMonth()} ${dueDate.getFullYear()}`;
       let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
@@ -358,7 +358,7 @@ async function getContactAddressEl(id) {
       orderEl.dataset.date = dueDate.getDateString();
       orderEl.innerHTML = `<a href="/orders?id=${id}">
       <time datetime="${dueDate.toLocaleDateString()}">${dateString}, ${timeString}</time>
-      <span class="price">${price} CHF</span>
+      <span class="price">${amount} CHF</span>
     </a>`;
       orderListEl.appendChild(orderEl);
     }

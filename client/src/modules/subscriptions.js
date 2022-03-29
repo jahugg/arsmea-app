@@ -85,17 +85,17 @@ async function onPrepareNewSubscription() {
 
     <label for="new-subscription__repeat">Repeat</label>
     <select id="new-subscription__repeat" name="repeat" required>
-        <option value="1d">Every Day</option>
-        <option value="7d">Every Week</option>
-        <option value="14d">Every 2 Weeks</option>
-        <option value="1m">Every Month</option>
-        <option value="2m">Every Month</option>
+        <option value="1d">Every day</option>
+        <option value="7d">Every week</option>
+        <option value="14d">Every 2 weeks</option>
+        <option value="1m">Every month</option>
+        <option value="2m">Every 2 month</option>
     </select>
 
-    <label for="new-subscription__end">End Date</label>
-    <input type="date" name="end" id="new-subscription__end" required />
+    <label for="new-subscription__end">How many times?</label>
+    <input type="number" name="times" id="new-subscription__times" min="2" max="10000" step="1" placeholder="5" required />
 
-    <label for="new-subscription__price">Price per Order</label>
+    <label for="new-subscription__price">Total Price</label>
     <input id="new-subscription__price" name="price" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />CHF
 
     <label for="new-subscription__description">Description</label>

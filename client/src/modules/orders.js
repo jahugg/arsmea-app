@@ -65,45 +65,45 @@ export default async function render() {
   });
 
   // prepare calendar
-  const calendarEl = document.createElement('div');
-  calendarEl.id = 'calendar-container';
-  calendarEl.innerHTML = `<button id="calendar-toggle" type="button" class="button-small">
-      ${new DateExt().nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.getDate()}.
-    </button>
-    <div id="calendar-wrapper" hidden></div>
-    <button id="calendar-reset" type="button" class="button-small" hidden>Reset</button>`;
+  const calendarEl = document.createElement('details');
+  calendarEl.id = 'orders-calendar';
+  calendarEl.dataset.defaultDate = '';
+  calendarEl.innerHTML = `<summary>
+      <span id="calendar-toggle" class="button-small">${new DateExt().nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.getDate()}.</span
+      ><button id="calendar-reset" type="button" class="button-small">Reset</button>
+    </summary>
+    <div id="calendar-details"></div>`;
 
-  // this could be handled with html details tag
-  const calendarBtn = calendarEl.querySelector('#calendar-toggle');
-  calendarBtn.addEventListener('click', (event) => {
-    const calendar = event.target.nextElementSibling;
-    calendar.hidden ? (calendar.hidden = false) : (calendar.hidden = true);
-    event.target.hasAttribute('data-open') ? event.target.removeAttribute('data-open') : (event.target.dataset.open = '');
-  });
+  // const calendarToggle = calendarEl.querySelector('#calendar-toggle');
+  // calendarToggle.addEventListener('click', (event) => {
+  //   const detailsEl = event.target.closest('details');
+  //   if (!detailsEl.open) {
+  //     document.addEventListener('mouseup', closeCalendarDetails);
+  //   }
+  // });
 
-  // change calendar dates
-  // - change calendar button text
-  // - hide or show reset calendar button
-  // - hide or show calendar wrapper
-  // - get order list
+  // function closeCalendarDetails(event) {
+  //   if (!event.target.closest('#orders-calendar')) {
+  //     calendarEl.removeAttribute('open');
+  //     document.removeEventListener('mouseup', closeCalendarDetails);
+  //   }
+  // }
 
   const calendarResetBtn = calendarEl.querySelector('#calendar-reset');
   calendarResetBtn.addEventListener('click', async (event) => {
-    event.target.hidden = true;
+    event.target.closest('#orders-calendar').dataset.defaultDate = '';
     const orderListWrapper = module.querySelector('#order-list-wrapper');
-    const orderList = await request.ordersWithinRange(defaultView.start, defaultView.end);
-    const orderListEl = getOrderListEl(orderList, { customView: { start: defaultView.start, end: defaultView.end } });
-    orderListWrapper.replaceChild(orderListEl, document.getElementById('day-list'));
+    const orderListEl = await getDayListEl(defaultView.start, defaultView.end);
+    orderListWrapper.replaceChild(orderListEl, document.getElementById('orders-calendar').nextElementSibling);
   });
 
-  const calendarWrapper = calendarEl.querySelector('#calendar-wrapper');
-  calendarWrapper.replaceChildren(calendar.getHTML());
+  const calendarDetails = calendarEl.querySelector('#calendar-details');
+  calendarDetails.replaceChildren(calendar.getHTML());
 
   const orderListWrapper = module.querySelector('#order-list-wrapper');
   orderListWrapper.appendChild(calendarEl);
 
-  const orderList = await request.ordersWithinRange(defaultView.start, defaultView.end);
-  const orderListEl = getOrderListEl(orderList, { customView: { start: defaultView.start, end: defaultView.end } });
+  const orderListEl = await getDayListEl(defaultView.start, defaultView.end);
   orderListWrapper.appendChild(orderListEl);
 
   return module;
@@ -127,11 +127,9 @@ async function onSearchOrder(event) {
   const orderList = await request.ordersByContact(id);
   const orderListWrapper = document.getElementById('order-list-wrapper');
   if (orderList.length) {
-    const orderListEl = getOrderListEl(orderList, { compactStyle: true });
+    const orderListEl = getOrderListEl(orderList);
     orderListWrapper.replaceChildren(orderListEl);
-  } else {
-    orderListWrapper.innerHTML = 'No orders yet. Add Order.';
-  }
+  } else orderListWrapper.innerHTML = 'No orders yet. Add Order.';
 }
 
 async function onClickCalendarDay(event) {
@@ -143,13 +141,20 @@ async function onClickCalendarDay(event) {
   calendarToggle.innerHTML = `${selectedDate.nameOfMonth()} ${selectedDate.getDate()}. ${selectedDate.getFullYear()}`;
 
   const orderList = await request.ordersWithinRange(selectedDate, selectedDate);
-  let orderListEl;
-  if (orderList.length) orderListEl = getOrderListEl(orderList, { open: true });
-  else orderListEl = getOrderListEl(orderList, { open: true, customView: { start: selectedDate, end: selectedDate } });
-  orderListWrapper.replaceChild(orderListEl, document.getElementById('day-list'));
+  const replaceEl = document.getElementById('orders-calendar').nextSibling;
 
-  const calendarReset = document.getElementById('calendar-reset');
-  calendarReset.hidden = false;
+  let newContent;
+
+  if (orderList.length !== 0) newContent = getOrderListEl(orderList);
+  else {
+    newContent = document.createElement('div');
+    newContent.innerHTML = 'No Orders here. Add order...';
+  }
+
+  orderListWrapper.replaceChild(newContent, replaceEl);
+
+  const calendar = document.getElementById('orders-calendar');
+  delete calendar.dataset.defaultDate;
 }
 
 async function updateCalendar() {
@@ -158,15 +163,16 @@ async function updateCalendar() {
   const lastDateOfView = calendar.datesOfView[calendar.datesOfView.length - 1];
   const orderOfView = await request.ordersWithinRange(firstDateOfView, lastDateOfView);
 
-  for (const order of orderOfView) {
-    const thisDate = new DateExt(order.datetime_due);
-    const date = thisDate.getDateString();
+  if (orderOfView)
+    for (const order of orderOfView) {
+      const thisDate = new DateExt(order.datetime_due);
+      const date = thisDate.getDateString();
 
-    // add event to calendar
-    const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
-    const ordersEl = document.querySelector(selector);
-    if (ordersEl) ordersEl.innerHTML += '&middot;';
-  }
+      // add event to calendar
+      const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
+      const ordersEl = document.querySelector(selector);
+      if (ordersEl) ordersEl.innerHTML += '&middot;';
+    }
 
   const calendarDays = document.getElementsByClassName('calendar__day');
   for (const day of calendarDays) {
@@ -221,8 +227,8 @@ async function onPrepareNewOrder(event) {
       <input type="datetime-local" name="due" id="new-order__due" required />
     </div>
     <div class="form__input-group">
-        <label for="new-order__price">Price</label>
-        <input id="new-order__price" name="price" type="number" min="0.00" max="10000.00" step="0.1" required />CHF
+        <label for="new-order__amount">Price</label>
+        <input id="new-order__amount" name="amount" type="number" min="0.00" max="10000.00" step="0.1" required />CHF
     </div>
     <div class="form__input-group">
       <label for="new-order__description">Description</label>
@@ -390,26 +396,43 @@ async function getOrderFormEl(id) {
   return wrapper;
 }
 
-function getOrderListEl(orderList, options) {
-  // available options: compactStyle, open, customView
-  // maybe better to introduce new function?
-  // async function getDayListEl(startDate, endDate, options) {
-  //   const orderList = await request.ordersWithinRange(startDate, endDate);
-  // }
+function getOrderListEl(orderList) {
+  const orderListEl = document.createElement('ul');
+  orderListEl.classList.add('order-list');
 
-  let startDate, endDate;
+  let total = 0;
 
-  if (options.customView) {
-    startDate = options.customView.start;
-    endDate = options.customView.end;
-  } else {
-    startDate = new DateExt(orderList[0].datetime_due);
-    endDate = new DateExt(orderList[orderList.length - 1].datetime_due);
+  for (const order of orderList) {
+    const { id, datetime_due, status, amount, firstname, lastname } = order;
+    let dueDate = new DateExt(datetime_due);
+    let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
+    let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+
+    const orderEl = document.createElement('li');
+    orderEl.classList.add('order-list__order');
+    orderEl.dataset.orderId = id;
+    orderEl.dataset.date = dueDate.getDateString();
+    orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
+            <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
+            <span class="price">${amount} CHF</span>`;
+    orderEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
+    orderListEl.appendChild(orderEl);
+
+    total += amount;
   }
+
+  const totalEl = document.createElement('li');
+  totalEl.innerHTML = `Total ${total} CHF`;
+  orderListEl.appendChild(totalEl);
+
+  return orderListEl;
+}
+
+async function getDayListEl(startDate, endDate) {
+  const orderList = await request.ordersWithinRange(startDate, endDate);
 
   const dayListEl = document.createElement('ul');
   dayListEl.id = 'day-list';
-  options.compactStyle ? (dayListEl.dataset.compactStyle = '') : '';
 
   const dateDiff = startDate.diffInDaysTo(endDate);
   let i = 0;
@@ -428,16 +451,12 @@ function getOrderListEl(orderList, options) {
     const today = new DateExt();
     let weekday;
     date < today.setHours(0, 0, 0, 0) ? (dayEl.dataset.past = '') : '';
-    if (options.compactStyle) weekday = `${date.nameOfMonth()} ${date.getFullYear()}`;
-    else {
-      if (today.getDateString() === dateString) {
-        weekday = 'Today';
-        dayEl.dataset.today = '';
-      } else weekday = date.nameOfWeekday();
-    }
+    if (today.getDateString() === dateString) {
+      weekday = 'Today';
+      dayEl.dataset.today = '';
+    } else weekday = date.nameOfWeekday();
 
     const details = document.createElement('details');
-    options.open ? details.setAttribute('open', '') : '';
     dayEl.appendChild(details);
     details.innerHTML = `<summary class="day-list__summary">
         <span class="dots"></span>
@@ -451,44 +470,45 @@ function getOrderListEl(orderList, options) {
     const addOrderBtn = dayListEl.querySelector('.add-order');
     addOrderBtn.addEventListener('click', (e) => console.log(e));
     // this is not working yet. might be due to details default event.
+    if (orderList) {
+      const ordersOfDate = orderList.filter(function (order) {
+        const dueDate = new DateExt(order.datetime_due);
+        return dateString === dueDate.getDateString();
+      });
 
-    const ordersOfDate = orderList.filter(function (order) {
-      const dueDate = new DateExt(order.datetime_due);
-      return dateString === dueDate.getDateString();
-    });
+      if (ordersOfDate.length) {
+        const orderListEl = document.createElement('ul');
+        orderListEl.classList.add('order-list');
+        details.appendChild(orderListEl);
 
-    if (ordersOfDate.length) {
-      const orderListEl = document.createElement('ul');
-      orderListEl.classList.add('order-list');
-      details.appendChild(orderListEl);
+        let total = 0;
 
-      let total = 0;
+        for (const order of ordersOfDate) {
+          const { id, datetime_due, status, amount, firstname, lastname } = order;
+          let dueDate = new DateExt(datetime_due);
+          let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
+          let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
 
-      for (const order of ordersOfDate) {
-        const { id, datetime_due, status, price, firstname, lastname } = order;
-        let dueDate = new DateExt(datetime_due);
-        let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
-        let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+          const orderEl = document.createElement('li');
+          orderEl.classList.add('order-list__order');
+          orderEl.dataset.orderId = id;
+          orderEl.dataset.date = dueDate.getDateString();
+          orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
+            <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
+            <span class="price">${amount} CHF</span>`;
+          orderEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
+          orderListEl.appendChild(orderEl);
 
-        const orderEl = document.createElement('li');
-        orderEl.classList.add('order-list__order');
-        orderEl.dataset.orderId = id;
-        orderEl.dataset.date = dueDate.getDateString();
-        orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
-          <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
-          <span class="price">${price} CHF</span>`;
-        orderEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
-        orderListEl.appendChild(orderEl);
+          total += amount;
 
-        total += price;
-
-        // add dots to summary
-        const dotEl = details.querySelector('.dots');
-        dotEl.innerHTML += '&middot';
-      }
-      const totalEl = details.querySelector('.total');
-      totalEl.innerHTML = `${total} CHF`;
-    } else dayEl.dataset.empty = '';
+          // add dots to summary
+          const dotEl = details.querySelector('.dots');
+          dotEl.innerHTML += '&middot';
+        }
+        const totalEl = details.querySelector('.total');
+        totalEl.innerHTML = `${total} CHF`;
+      } else dayEl.dataset.empty = '';
+    }
 
     i++;
   } while (i <= dateDiff);

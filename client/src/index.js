@@ -19,6 +19,11 @@ const pages = {
     title: "Subscriptions",
     slug: "/subscriptions",
     module: import("./modules/subscriptions.js"),
+  }, 
+  invoices: {
+    title: "Invoices",
+    slug: "/invoices",
+    module: import("./modules/invoices.js"),
   }
 };
 

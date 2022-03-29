@@ -126,6 +126,7 @@ textarea {
 }
 
 .button-small {
+  display: inline-block;
   background: none;
   border: solid 1px var(--color-font);
   color: inherit;
@@ -347,18 +348,21 @@ textarea {
     align-items: center;
   }
 
-  #calendar-container {
+  #orders-calendar {
     margin-bottom: 30px;
 
-    [data-open] {
+    summary {
+      list-style-type: none;
+    }
+
+    &[open] #calendar-toggle {
       background: var(--color-font);
       color: var(--color-background);
     }
-  }
 
-  #calendar-wrapper {
-    position: absolute;
-    z-index: 100;
+    &[data-default-date] #calendar-reset {
+      display: none;
+    }
   }
 
   #order-list-section {
@@ -518,11 +522,14 @@ textarea {
   align-items: center;
 }
 
-#list-module__list {}
+#list-module__list {
+}
 
-#list-module__details {}
+#list-module__details {
+}
 
-#list-module__details__controls {}
+#list-module__details__controls {
+}
 
 .form label {
   display: block;

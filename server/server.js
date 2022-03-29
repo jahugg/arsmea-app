@@ -129,4 +129,10 @@ app.get('/api/subscriptionList', async (request, response) => {
   response.json(list);
 });
 
+// invoices
+app.get('/api/invoiceList', async (request, response) => {
+  const list = await db.selectAllInvoices();
+  response.json(list);
+});
+
 app.listen(process.env.PORT);

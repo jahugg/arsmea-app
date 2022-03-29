@@ -105,3 +105,9 @@ export async function newSubscription(data) {
   return await response.json();
 }
 
+// invoices
+export async function invoices() {
+  let response = await fetch(`${process.env.SERVER}/api/invoiceList`);
+  return await response.json();
+}
+

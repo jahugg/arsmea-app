@@ -110,10 +110,16 @@ export default class DBService {
 
   async insertOrder(data) {
     try {
-      const { contact, contactId, due, price, description } = data;
-      const query = this.db.prepare(`INSERT INTO orders (contact_id, datetime_placed, datetime_due, price, description, status)
-      VALUES (?, datetime('now'), ?, ?, ?, 'open')`);
-      const result = query.run(contactId, due, price, description);
+      const { contactId, due, amount, description } = data;
+      let query = this.db.prepare(`INSERT INTO invoices (amount, date_due)
+      VALUES (?, date('now','+15 day'))`);
+      let result = query.run(amount);
+      const invoiceId = result.lastInsertRowid;
+
+      query = this.db.prepare(`INSERT INTO 
+        orders (contact_id, invoice_id, datetime_placed, datetime_due, description, status)
+      VALUES (?, ?, datetime('now'), ?, ?, 'open')`);
+      result = query.run(contactId, invoiceId, due, description);
       return result.lastInsertRowid;
     } catch (error) {
       console.log(error);
@@ -169,10 +175,13 @@ export default class DBService {
 
   async selectOrdersByContactId(id) {
     try {
-      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, orders.price, contacts.firstname, contacts.lastname
+      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, 
+          contacts.firstname, contacts.lastname, invoices.amount
         FROM orders 
         INNER JOIN contacts 
-        ON orders.contact_id=contacts.id 
+          ON orders.contact_id = contacts.id 
+        INNER JOIN invoices
+          ON orders.invoice_id = invoices.id
         WHERE contacts.id = ?
         ORDER BY orders.datetime_due, orders.status`);
       const orderList = query.all(id);
@@ -184,10 +193,13 @@ export default class DBService {
 
   async selectOrdersWithinRange(startDate, endDate) {
     try {
-      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, orders.price, contacts.firstname, contacts.lastname
+      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, 
+        contacts.firstname, contacts.lastname, invoices.amount
         FROM orders 
         INNER JOIN contacts 
-        ON orders.contact_id=contacts.id 
+          ON orders.contact_id = contacts.id 
+        INNER JOIN invoices
+          ON orders.invoice_id = invoices.id
         WHERE orders.datetime_due BETWEEN ? AND ?
         ORDER BY orders.datetime_due, orders.status`);
       const ordersList = query.all(startDate, endDate);
@@ -218,6 +230,27 @@ export default class DBService {
         INNER JOIN contacts 
         ON subscriptions.contact_id = contacts.id 
         ORDER BY subscriptions.datetime_start`);
+      const list = query.all();
+      return list;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // invoices
+  async selectAllInvoices() {
+
+    // Looking for a way to have conditional join cases?
+    // SQL CASE probably is not doing the trick...
+    try {
+      const query = this.db.prepare(`SELECT invoices.id, invoices.amount, invoices.date_paid, invoices.date_due,
+          contacts.firstname, contacts.lastname
+        FROM invoices
+        INNER JOIN orders
+          ON orders.invoice_id = invoices.id
+        INNER JOIN contacts
+          ON orders.contact_id = contacts.id
+        ORDER BY invoices.date_due`);
       const list = query.all();
       return list;
     } catch (error) {
