@@ -92,6 +92,10 @@ export default async function render() {
   const calendarResetBtn = calendarEl.querySelector('#calendar-reset');
   calendarResetBtn.addEventListener('click', async (event) => {
     event.target.closest('#orders-calendar').dataset.defaultDate = '';
+
+    const calendarToggle = document.getElementById('calendar-toggle');
+    calendarToggle.innerHTML = `${new DateExt().nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.getDate()}`;
+
     const orderListWrapper = module.querySelector('#order-list-wrapper');
     const orderListEl = await getDayListEl(defaultView.start, defaultView.end);
     orderListWrapper.replaceChild(orderListEl, document.getElementById('orders-calendar').nextElementSibling);
@@ -317,7 +321,7 @@ async function onDeleteOrder(event) {
 }
 
 async function getOrderDetailsEl(id) {
-  const { datetime_placed, datetime_due, price, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
+  const { datetime_placed, datetime_due, amount, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
 
   const datePlaced = new DateExt(datetime_placed);
   const dateDue = new DateExt(datetime_due);
@@ -334,7 +338,7 @@ async function getOrderDetailsEl(id) {
   <div class="order-details__info">
     <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
     <time datetime="${dateDue.getDateString()} ${timeString}">${dueString}</time>
-    <div> ${price ? price + ' CHF' : ''}</div>
+    <div> ${amount ? amount + ' CHF' : ''}</div>
     ${description ? `<div>${description}</div>` : ''}
     <div>${status}</div>
   </div>`;
@@ -347,7 +351,7 @@ async function getOrderDetailsEl(id) {
 
 async function getOrderFormEl(id) {
   const data = await request.orderDetails(id);
-  const { datetime_due, status, price, description } = data;
+  const { datetime_due, status, amount, description, invoice_id } = data;
 
   const wrapper = document.createElement('div');
   wrapper.id = 'order-details';
@@ -375,8 +379,9 @@ async function getOrderFormEl(id) {
         </select>
     </div>
     <div>
-        <label for="edit-order__price">Price</label>
-        <input id="edit-order__price" name="price" type="number" min="0.00" max="10000.00" step="0.1" value="${price}"/>CHF
+        <label for="edit-order__amount">Price</label>
+        <input id="edit-order__amount" name="amount" type="number" min="0.00" max="10000.00" step="0.1" value="${amount}"/>CHF
+        <input type="hidden" id="edit-invoice__id" name="invoiceId" value="${invoice_id}">
     </div>
     <div>
       <label for="edit-order__description">Description</label>
