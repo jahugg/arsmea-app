@@ -4,6 +4,13 @@ import { Calendar, DateExt } from './calendar';
 const calendar = new Calendar();
 defaultView;
 
+/**
+ * Add two numbers together
+ * @param  {Number} num1 The first number
+ * @param  {Number} num2 The second number
+ * @return {Number}      The total of the two numbers
+ * @todo Write the documentation.
+ */
 export default async function render() {
   // set default date range
   let startDate = new DateExt();
