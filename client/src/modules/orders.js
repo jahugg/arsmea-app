@@ -2,7 +2,7 @@ import * as request from './serverRequests';
 import { Calendar, DateExt } from './calendar';
 
 const calendar = new Calendar();
-defaultView;
+defaultView = {};
 
 /**
  * Add two numbers together
