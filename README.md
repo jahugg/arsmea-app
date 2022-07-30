@@ -26,20 +26,20 @@ Client, order and subscription management software.
 ### invoices
 
 - [X] diplay list of invoices
-- [] search invoice
-- [] view invoice details
-- [] create new invoice directly
+- [ ] search invoice
+- [ ] view invoice details
+- [ ] create new invoice directly
 - [X] create new invoice via order
-- [] delete invoice directly
+- [ ] delete invoice directly
 - [X] delete invoice via order
-- [] archive invoice
-- [] edit invoice directly
+- [ ] archive invoice
+- [ ] edit invoice directly
 - [X] edit invoice via order
 
 ### subscriptions
 
-- [] create new subscription
-- [] search subscription
-- [] delete subscription
-- [] archive subscription
-- [] edit subscription
+- [ ] create new subscription
+- [ ] search subscription
+- [ ] delete subscription
+- [ ] archive subscription
+- [ ] edit subscription
