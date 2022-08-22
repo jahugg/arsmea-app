@@ -135,4 +135,15 @@ app.get('/api/invoiceList', async (request, response) => {
   response.json(list);
 });
 
+app.get('/api/invoiceListOpen', async (request, response) => {
+  const list = await db.selectOpenInvoices();
+  response.json(list);
+});
+
+app.get('/api/invoice/:id', async (request, response) => {
+  const { id } = request.params;
+  const invoice = await db.selectInvoiceById(id);
+  response.json(invoice);
+});
+
 app.listen(process.env.PORT);

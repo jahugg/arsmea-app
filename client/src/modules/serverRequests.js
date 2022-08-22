@@ -53,6 +53,20 @@ export async function ordersByContact(contactId) {
   return await response.json();
 }
 
+export async function ordersWithinRange(start, end) {
+  // get String and set Time
+  const startDateString = start.getDateString() + 'T00:00';
+  const endDateString = end.getDateString() + 'T23:59';
+
+  try {
+    let response;
+    response = await fetch(`${process.env.SERVER}/api/ordersWithinRange/?start=${startDateString}&end=${endDateString}`);
+    return await response.json();
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export async function orderDetails(id) {
   const response = await fetch(`${process.env.SERVER}/api/order/${id}`);
   return await response.json();
@@ -76,20 +90,6 @@ export async function deleteOrder(id) {
   }
 }
 
-export async function ordersWithinRange(start, end) {
-  // get String and set Time
-  const startDateString = start.getDateString() + 'T00:00';
-  const endDateString = end.getDateString() + 'T23:59';
-
-  try {
-    let response;
-    response = await fetch(`${process.env.SERVER}/api/ordersWithinRange/?start=${startDateString}&end=${endDateString}`);
-    return await response.json();
-  } catch (err) {
-    console.log(err);
-  }
-}
-
 // subscriptions
 export async function subscriptions() {
   let response = await fetch(`${process.env.SERVER}/api/subscriptionList`);
@@ -107,7 +107,16 @@ export async function newSubscription(data) {
 
 // invoices
 export async function invoices() {
-  let response = await fetch(`${process.env.SERVER}/api/invoiceList`);
+  const response = await fetch(`${process.env.SERVER}/api/invoiceList`);
   return await response.json();
 }
 
+export async function invoicesOpen() {
+  const response = await fetch(`${process.env.SERVER}/api/invoiceListOpen`);
+  return await response.json();
+}
+
+export async function invoiceDetails(id) {
+  const response = await fetch(`${process.env.SERVER}/api/invoice/${id}`);
+  return await response.json();
+}

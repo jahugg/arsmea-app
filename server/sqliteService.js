@@ -134,8 +134,8 @@ export default class DBService {
         INNER JOIN invoices
           ON orders.invoice_id = invoices.id
         WHERE orders.id = ?`);
-      const contact = query.get(id);
-      return contact;
+      const order = query.get(id);
+      return order;
     } catch (error) {
       console.log(error);
     }
@@ -258,7 +258,7 @@ export default class DBService {
     // Looking for a way to have conditional join cases?
     // SQL CASE probably is not doing the trick...
     try {
-      const query = this.db.prepare(`SELECT invoices.id, invoices.amount, invoices.date_paid, invoices.date_due,
+      const query = this.db.prepare(`SELECT invoices.id, invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
           contacts.firstname, contacts.lastname
         FROM invoices
         INNER JOIN orders
@@ -268,6 +268,44 @@ export default class DBService {
         ORDER BY invoices.date_due`);
       const list = query.all();
       return list;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async selectOpenInvoices() {
+    // Looking for a way to have conditional join cases?
+    // SQL CASE probably is not doing the trick...
+    try {
+      const query = this.db.prepare(`SELECT invoices.id, invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
+          contacts.firstname, contacts.lastname
+        FROM invoices
+        INNER JOIN orders
+          ON orders.invoice_id = invoices.id
+        INNER JOIN contacts
+          ON orders.contact_id = contacts.id
+        WHERE invoices.status = 'open'
+        ORDER BY invoices.date_due`);
+      const list = query.all();
+      return list;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async selectInvoiceById(id) {
+    try {
+      const query = this.db.prepare(`SELECT invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
+          contacts.id AS contact_id, contacts.firstname, contacts.lastname
+        FROM invoices
+        INNER JOIN orders
+          ON orders.invoice_id = invoices.id
+        INNER JOIN contacts
+          ON orders.contact_id = contacts.id
+        WHERE invoices.id = ?
+        ORDER BY invoices.date_due`);
+      const invoice = query.get(id);
+      return invoice;
     } catch (error) {
       console.log(error);
     }

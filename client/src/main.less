@@ -173,7 +173,7 @@ textarea {
 
     &:hover,
     &[data-selected] {
-      transform: translateX(-5px);
+      transform: translateX(-4px);
     }
   }
 
@@ -184,6 +184,44 @@ textarea {
 
   li[data-filtered] {
     display: none;
+  }
+
+  time {
+    flex-shrink: 0;
+    width: 6ch;
+  }
+
+  .status {
+    flex-shrink: 0;
+    width: 13ch;
+    margin-right: 1em;
+    font: var(--font-tiny);
+    text-align: center;
+    line-height: 1.7em;
+    border-radius: 20px;
+
+    &[data-status="late"] {
+      background: black;
+      color: white;
+    }
+
+    &[data-status="open"] {
+      border: solid 1px black;
+    }
+  }
+
+  .contact {
+    flex: 1 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .price {
+    margin-left: auto;
+    min-width: 7ch;
+    white-space: nowrap;
+    text-align: right;
   }
 }
 
@@ -455,25 +493,6 @@ textarea {
       li {
         display: flex;
       }
-
-      time {
-        flex-shrink: 0;
-        width: 6ch;
-      }
-
-      .contact {
-        flex: 1 1 auto;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .price {
-        margin-left: auto;
-        min-width: 7ch;
-        white-space: nowrap;
-        text-align: right;
-      }
     }
   }
 
@@ -501,10 +520,41 @@ textarea {
 }
 
 // ================================
+// invoice
+// ================================
+#invoice-list {
+  .styled-list;
+
+  li {
+    display: flex;
+  }
+}
+
+#filter-invoice {
+  display: flex;
+  margin-top: .5em;
+
+  & input {
+    margin: 0 .3em;
+  }
+
+  & label {
+    padding-right: .5em;
+    display: flex;
+    align-items: center;
+    border: solid 1px black;
+
+    &:first-child {
+      border-right: none;
+    }
+  }
+}
+
+// ================================
 // subscription (SERVES AS TEMPLATE FOR OTHER NEW GENERAL STYLES)
 // ================================
 .list-module {
-  --list-width: 400px;
+  --list-width: 450px;
 
   display: grid;
   grid-template-columns: var(--list-width) 1fr;
@@ -512,7 +562,7 @@ textarea {
   gap: var(--page-padding);
   grid-template-areas:
     'control control'
-    'list detail';
+    'list details';
 }
 
 #list-module__controls {
@@ -523,9 +573,11 @@ textarea {
 }
 
 #list-module__list {
+  grid-area: list;
 }
 
 #list-module__details {
+  grid-area: details;
 }
 
 #list-module__details__controls {
