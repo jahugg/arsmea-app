@@ -53,6 +53,11 @@ export async function ordersByContact(contactId) {
   return await response.json();
 }
 
+export async function ordersByInvoice(invoiceId) {
+  let response = await fetch(`${process.env.SERVER}/api/ordersByInvoice/${invoiceId}`);
+  return await response.json();
+}
+
 export async function ordersWithinRange(start, end) {
   // get String and set Time
   const startDateString = start.getDateString() + 'T00:00';
@@ -119,4 +124,17 @@ export async function invoicesOpen() {
 export async function invoiceDetails(id) {
   const response = await fetch(`${process.env.SERVER}/api/invoice/${id}`);
   return await response.json();
+}
+
+export async function setInvoicePaid(id) {
+  const response = await fetch(`${process.env.SERVER}/api/invoiceSetPaid/${id}`, {
+    method: 'POST',
+  });
+  return await response.json();
+}
+
+export async function setInvoiceOpen(id) {
+  console.log("set open");
+  // const response = await fetch(`${process.env.SERVER}/api/invoiceSetOpen/${id}`);
+  // return await response.json();
 }

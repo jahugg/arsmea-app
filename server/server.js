@@ -96,8 +96,14 @@ app.delete('/api/order/:id', async (request, response) => {
 
 app.get('/api/ordersByContact/:id', async (request, response) => {
   const { id } = request.params;
-  const contactList = await db.selectOrdersByContactId(id);
-  response.json(contactList);
+  const orderList = await db.selectOrdersByContactId(id);
+  response.json(orderList);
+});
+
+app.get('/api/ordersByInvoice/:id', async (request, response) => {
+  const { id } = request.params;
+  const orderList = await db.selectOrdersByInvoiceId(id);
+  response.json(orderList);
 });
 
 app.get('/api/ordersWithinRange/', async (request, response) => {
@@ -144,6 +150,13 @@ app.get('/api/invoice/:id', async (request, response) => {
   const { id } = request.params;
   const invoice = await db.selectInvoiceById(id);
   response.json(invoice);
+});
+
+app.post('/api/invoiceSetPaid/:id', async (request, response) => {
+  const { id } = request.params;
+  console.log(id);
+  const result = await db.updateInvoicePaidStatus(id);
+  response.json(result);
 });
 
 app.listen(process.env.PORT);

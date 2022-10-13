@@ -80,6 +80,7 @@ async function getInvoiceListEl(openOnly = false) {
 
   const listEl = document.createElement('ul');
   listEl.id = 'invoice-list';
+  openOnly ? (listEl.dataset.filter = 'open') : (listEl.dataset.filter = 'all');
 
   for (let item of invoices) {
     let { id, amount, status, date_due, firstname, lastname } = item;
@@ -118,22 +119,6 @@ async function selectInvoice(id) {
   }
 }
 
-function getStatusObject(dueDate, status) {
-  let dayDiff = new DateExt().diffInDaysTo(dueDate);
-  let statusObj = {
-    name: status,
-    message: '',
-  };
-
-  if (status === 'paid') statusObj.message = 'paid';
-  else if (status === 'open' && dayDiff >= 0) statusObj.message = `due in ${dayDiff} days`;
-  else {
-    statusObj.name = 'late';
-    statusObj.message = `${Math.abs(dayDiff)} days late`;
-  }
-  return statusObj;
-}
-
 async function getInvoiceDetailsEl(id) {
   const { date_issue, date_due, date_paid, amount, status, contact_id, firstname, lastname } = await request.invoiceDetails(id);
   const dateIssue = new DateExt(date_issue);
@@ -150,21 +135,104 @@ async function getInvoiceDetailsEl(id) {
   wrapper.innerHTML = `
   <section id="list-module__details__controls">
     <button type="button" id="edit-btn" class="button-small" data-invoice-id="${id}">Edit</button>
-    <button type="button" id="mark-sent-btn" class="button-small" data-invoice-id="${id}">Mark as Sent</button>
-    <button type="button" id="mark-paid-btn" class="button-small" data-invoice-id="${id}">Mark as Paid</button>
+    <button type="button" id="toggle-status-btn" class="button-small" data-status="${status === 'open' ? 'open' : 'paid'}" data-invoice-id="${id}">
+      ${status === 'open' ? 'Mark as Paid' : 'Mark as Open'}
+    </button>
   </section>
-  <div class="list-details__info">
-    <div>${statusObj.message}</div>
+  <div id="list-module__details__info">
     <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
-    <div>Issued on <time datetime="${dateIssue.getDateString()}">${issueString}</time></div>
-    ${statusObj.name === "paid"
-    ? '<div>Paid on <time datetime="'+datePaid.getDateString()+'">'+paidString+'</time></div>'
-    : '<div>Due on <time datetime="'+dateDue.getDateString()+'">'+dueString+'</time></div>'}
     <div>${amount} CHF</div>
+    <div>Issued on <time datetime="${dateIssue.getDateString()}">${issueString}</time></div>
+    ${
+      statusObj.name === 'paid'
+        ? '<div>Paid on <time datetime="' + datePaid.getDateString() + '">' + paidString + '</time></div>'
+        : '<div>Due on <time datetime="' + dateDue.getDateString() + '">' + dueString + '</time></div>'
+    }
+    <div data-status="${statusObj.name}">${statusObj.message}</div>
+    Linked Orders
   </div>`;
+
+  // create list of linked orders
+  const orders = await request.ordersByInvoice(id);
+  let orderListEl = document.createElement('ul');
+
+  for (let order of orders) {
+    const datePlaced = new DateExt(order.datetime_placed);
+    const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
+
+    let orderEl = document.createElement('li');
+    orderEl.innerHTML = `<a href="/orders?id=${order.id}">${placedString}</a> ${order.status}`;
+    orderListEl.appendChild(orderEl);
+  }
+
+  let infoEl = wrapper.querySelector('#list-module__details__info');
+  infoEl.appendChild(orderListEl);
 
   const editBtn = wrapper.querySelector('#edit-btn');
   // editBtn.addEventListener('click', onEditInvoice);
 
+  const toggleStatusBtn = wrapper.querySelector('#toggle-status-btn');
+  toggleStatusBtn.addEventListener('click', async (event) => {
+    const id = event.target.dataset.invoiceId;
+    const status = event.target.dataset.status;
+
+    if (status === 'open') setInvoicePaid(id);
+    else if (status === 'paid') setInvoiceOpen(id);
+  });
+
   return wrapper;
+}
+
+/**
+ * mark invoice as paid with the current date
+ * @param {String} id invoice id
+ * @todo let user select date of payment instead of using current date
+ */
+async function setInvoicePaid(id) {
+  try {
+    // const response = await request.setInvoicePaid(id);
+
+    // remove item from list
+    const listEl = document.getElementById('invoice-list');
+    const invoiceEl = listEl.querySelector(`.invoice-list__invoice[data-invoice-id="${id}"]`);
+    const invoiceStatusEl = invoiceEl.querySelector(`.status`);
+    console.log(invoiceStatusEl);
+    if (invoiceEl) {
+      if (listEl.dataset.filter === 'open') invoiceEl.remove();
+      else if (listEl.dataset.filter === 'all') invoiceStatusEl.dataset.status = 'paid';
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+/**
+ * mark invoice as unpaid
+ * @param {String} id invoice id
+ */
+async function setInvoiceOpen(id) {
+  try {
+    const response = await request.setInvoiceOpen(id);
+  } catch {}
+}
+
+/**
+ * determine status of invoice and write status message
+ * @param {DateExt} dueDate due date of the invoice
+ * @param {String} status current state of the invoice
+ */
+function getStatusObject(dueDate, status) {
+  let dayDiff = new DateExt().diffInDaysTo(dueDate);
+  let statusObj = {
+    name: status,
+    message: '',
+  };
+
+  if (status === 'paid') statusObj.message = 'paid';
+  else if (status === 'open' && dayDiff >= 0) statusObj.message = `due in ${dayDiff} days`;
+  else {
+    statusObj.name = 'late';
+    statusObj.message = `${Math.abs(dayDiff)} days late`;
+  }
+  return statusObj;
 }

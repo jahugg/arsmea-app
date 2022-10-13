@@ -146,7 +146,7 @@ export default class DBService {
       const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, contacts.firstname, contacts.lastname
         FROM orders 
         INNER JOIN contacts 
-        ON orders.contact_id=contacts.id 
+        ON orders.contact_id = contacts.id 
         ORDER BY orders.datetime_due, orders.status`);
       const orderList = query.all();
       return orderList;
@@ -199,6 +199,20 @@ export default class DBService {
         INNER JOIN invoices
           ON orders.invoice_id = invoices.id
         WHERE contacts.id = ?
+        ORDER BY orders.datetime_due, orders.status`);
+      const orderList = query.all(id);
+      return orderList;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async selectOrdersByInvoiceId(id) {
+    try {
+      const query = this.db.prepare(`SELECT * 
+        FROM orders
+        WHERE invoice_id = ?
+
         ORDER BY orders.datetime_due, orders.status`);
       const orderList = query.all(id);
       return orderList;
@@ -306,6 +320,20 @@ export default class DBService {
         ORDER BY invoices.date_due`);
       const invoice = query.get(id);
       return invoice;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async updateInvoicePaidStatus(id) {
+    try {
+      // update invoice status
+      let query = this.db.prepare(`UPDATE invoices
+        SET status = 'paid',  date_paid = date('now')
+        WHERE id = ?`);
+      let result = query.run(id);
+
+      return result;
     } catch (error) {
       console.log(error);
     }
