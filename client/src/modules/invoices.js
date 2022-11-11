@@ -114,6 +114,13 @@ async function selectInvoice(id) {
     for (let invoice of invoiceList)
       if (invoice.dataset.invoiceId == id) invoice.dataset.selected = '';
       else delete invoice.dataset.selected;
+
+    // add invoice id to url
+    const url = new URL(window.location);
+    url.searchParams.set('id', id);
+    const state = { invoice_id: id };
+    window.history.replaceState(state, '', url);
+    
   } catch (error) {
     console.log(error);
   }

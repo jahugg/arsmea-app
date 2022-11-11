@@ -328,7 +328,7 @@ async function onDeleteOrder(event) {
 }
 
 async function getOrderDetailsEl(id) {
-  const { datetime_placed, datetime_due, amount, description, status, contact_id, firstname, lastname } = await request.orderDetails(id);
+  const { datetime_placed, datetime_due, amount, description, status, contact_id, firstname, lastname, invoice_id } = await request.orderDetails(id);
 
   const datePlaced = new DateExt(datetime_placed);
   const dateDue = new DateExt(datetime_due);
@@ -345,7 +345,7 @@ async function getOrderDetailsEl(id) {
   <div class="order-details__info">
     <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
     <time datetime="${dateDue.getDateString()} ${timeString}">${dueString}</time>
-    <div> ${amount ? amount + ' CHF' : ''}</div>
+    <div> ${amount ? amount + ' CHF' : ''} <a href="/invoices?id=${invoice_id}">go to invoice</a></div>
     ${description ? `<div>${description}</div>` : ''}
     <div>${status}</div>
   </div>`;

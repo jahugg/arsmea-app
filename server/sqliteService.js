@@ -130,7 +130,7 @@ export default class DBService {
     try {
       const query = this.db.prepare(`SELECT * FROM orders 
         INNER JOIN contacts 
-          ON orders.contact_id=contacts.id
+          ON orders.contact_id = contacts.id
         INNER JOIN invoices
           ON orders.invoice_id = invoices.id
         WHERE orders.id = ?`);

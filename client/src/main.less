@@ -570,6 +570,7 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: top;
+
 }
 
 #list-module__list {
@@ -581,6 +582,19 @@ textarea {
 }
 
 #list-module__details__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: var(--page-padding);
+}
+
+#list-module__details__info {
+  .card;
+  font: var(--font-h1);
+
+  a {
+    color: inherit;
+  }
 }
 
 .form label {
