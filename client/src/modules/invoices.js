@@ -10,7 +10,9 @@ export default async function render() {
         <div>
           <form id="search-invoice" role="search">
             <label id="search-invoice__label" for="search-invoice__input">Search</label>
-            <input type="text" pattern="[^0-9]*" name="input" id="search-invoice__input" placeholder="Contact Name..." autocomplete="off" required/>
+            <input list="contact-list-main" type="text" pattern="[^0-9]*" name="input" id="search-invoice__input" placeholder="Contact Name..." autocomplete="off" required/>
+            <datalist id="contact-list-main"></datalist>
+            <input type="hidden" name="contactId" class="contact-id" value="0">
           </form>
           <div id="filter-invoice">
             <label>
@@ -27,14 +29,36 @@ export default async function render() {
       <section id="list-module__list"></section>
       <section id="list-module__details"></section>`;
 
+  const contactIdInput = module.querySelector('#search-invoice .contact-id');
   const searchInput = module.querySelector('#search-invoice__input');
-  searchInput.addEventListener('input', onSearchInvoice);
+  searchInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    let contactId = 0;
 
-  const searchForm = module.querySelector('#search-invoice');
-  searchForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    console.log('reset search and select contact');
+    // check if input matches a current client
+    for (const item of datalist.children) {
+      item.value === value ? (contactId = item.dataset.contactId) : '';
+    }
+    // write value to form (hidden)
+    contactIdInput.value = contactId;
   });
+
+  // search invoices by contact
+  const searchForm = module.querySelector('#search-invoice');
+  searchForm.addEventListener('submit', onSearchInvoice);
+
+  const datalist = module.querySelector('#contact-list-main');
+  const contacts = await request.contacts();
+  let patternString = '';
+  for (const contact of contacts) {
+    const { id, firstname, lastname } = contact;
+    const option = document.createElement('option');
+    option.dataset.contactId = id;
+    option.value = `${firstname} ${lastname}`;
+    datalist.appendChild(option);
+
+    patternString += `${firstname} ${lastname}|`;
+  }
 
   // add filter button functions
   const filters = module.querySelectorAll('#filter-invoice input');
@@ -100,7 +124,25 @@ async function getInvoiceListEl(openOnly = false) {
   return listEl;
 }
 
-async function onSearchInvoice() {}
+async function onSearchInvoice(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  id = data.get('contactId');
+
+  // display invoices of contact
+  const invoiceList = await request.invoicesByContact(id);
+  console.log(invoiceList);
+  
+  // const listSectionEl = document.querySelector('#list-module__list');
+  // if (invoiceList.length) { 
+  //   const orderListEl = getOrderListEl(orderList);
+  //   orderListWrapper.replaceChildren(orderListEl);
+  // } else orderListWrapper.innerHTML = 'No invoices yet. Please add invoice first.';
+
+  // const listSectionEl = module.querySelector('#list-module__list');
+  // const invoiceListEl = await getInvoiceListEl(true);
+  // listSectionEl.replaceChildren(invoiceListEl);
+}
 
 async function selectInvoice(id) {
   try {
@@ -120,7 +162,6 @@ async function selectInvoice(id) {
     url.searchParams.set('id', id);
     const state = { invoice_id: id };
     window.history.replaceState(state, '', url);
-    
   } catch (error) {
     console.log(error);
   }

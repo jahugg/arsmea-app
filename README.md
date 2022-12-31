@@ -23,12 +23,12 @@ status report
 - [X] create new order
 - [X] delete order
 - [X] edit order
-- [ ] display linked invoices
+- [X] display linked invoices
 
 ### invoices
 
 - [X] diplay list of invoices
-- [ ] search invoice
+- [ ] search invoice by contact
 - [X] view invoice details
 - [ ] create new invoice directly
 - [X] create new invoice via order

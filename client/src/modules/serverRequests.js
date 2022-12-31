@@ -116,6 +116,11 @@ export async function invoices() {
   return await response.json();
 }
 
+export async function invoicesByContact(contactId) {
+  let response = await fetch(`${process.env.SERVER}/api/invoicesByContact/${contactId}`);
+  return await response.json();
+}
+
 export async function invoicesOpen() {
   const response = await fetch(`${process.env.SERVER}/api/invoiceListOpen`);
   return await response.json();

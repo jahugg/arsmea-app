@@ -137,7 +137,7 @@ async function onSearchOrder(event) {
   // display orders of contact
   const orderList = await request.ordersByContact(id);
   const orderListWrapper = document.getElementById('order-list-wrapper');
-  if (orderList.length) {
+  if (orderList.length) { 
     const orderListEl = getOrderListEl(orderList);
     orderListWrapper.replaceChildren(orderListEl);
   } else orderListWrapper.innerHTML = 'No orders yet. Add Order.';
