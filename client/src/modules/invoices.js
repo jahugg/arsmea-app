@@ -25,9 +25,13 @@ export default async function render() {
             </label>
           </div>
         </div>
+        <button id="add-invoice-btn" type="button" class="button-add">New Invoice</button>
       </section>
       <section id="list-module__list"></section>
       <section id="list-module__details"></section>`;
+
+  const addButton = module.querySelector('#add-invoice-btn');
+  addButton.addEventListener('click', onPrepareNewInvoice);
 
   const contactIdInput = module.querySelector('#search-invoice .contact-id');
   const searchInput = module.querySelector('#search-invoice__input');
@@ -67,13 +71,13 @@ export default async function render() {
   }
 
   const listSectionEl = module.querySelector('#list-module__list');
-  const invoiceListEl = await getInvoiceListEl(true);
+  const invoiceListEl = getInvoiceListEl(await request.invoicesOpen());
   listSectionEl.replaceChildren(invoiceListEl);
 
   return module;
 }
 
-export async function init() {
+export function init() {
   const searchInput = document.querySelector('#search-invoice__input');
   searchInput.focus();
 
@@ -82,43 +86,128 @@ export async function init() {
   if (url.searchParams.has('id')) selectInvoice(url.searchParams.get('id'));
 }
 
+async function onPrepareNewInvoice(event) {
+  const detailsSection = document.getElementById('list-module__details');
+  const wrapper = document.createElement('div');
+  wrapper.id = 'invoice-details';
+  const form = document.createElement('form');
+  form.action = `${process.env.SERVER}/api/invoice`;
+  form.method = 'POST';
+  form.id = 'new-invoice';
+  form.addEventListener('submit', onCreateNewInvoice);
+  form.innerHTML = `
+    <section class="content-controls">
+      <input type="submit" class="button-small" value="Save"/>
+      <button type="button" class="button-small" id="discard-invoice-btn">Discard</button>
+    </section>
+    <div id="new-invoice__input" class="form__input-group">
+      <label for="new-invoice__contact">Client</label>
+      <input list="contact-list" name="contactName" id="new-invoice__contact" autocomplete="off" placeholder="Hans Muster" required />
+      <datalist id="contact-list"></datalist>
+      <input type="hidden" name="contactId" id="contact-id" value="0">
+    </div>
+    <div class="form__input-group">
+        <label for="new-invoice__amount">Amount</label>
+        <div class="form__input-unit">
+          <input id="new-invoice__amount" name="amount" type="number" min="0.00" step="0.1" placeholder="100" required />
+          CHF
+        </div>
+    </div>
+    <div class="form__input-group">
+      <label for="new-invoice__issue">Issue Date</label>
+      <input type="date" name="issue" id="new-invoice__issue" required />
+    </div>
+    <div class="form__input-group">
+      <label for="new-invoice__due">Due Date</label>
+      <input type="date" name="due" id="new-invoice__due" required />
+    </div>
+    <div class="form__input-group">
+      <label for="new-invoice__description">Description</label>
+      <textarea name="description" id="new-invoice__description" placeholder="Notes"></textarea>
+    </div>`;
+
+  wrapper.appendChild(form);
+  detailsSection.replaceChildren(wrapper);
+
+  // set dates
+  let issueDate = new Date();
+  let dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 7);
+  document.getElementById('new-invoice__issue').valueAsDate = issueDate;
+  document.getElementById('new-invoice__due').valueAsDate = dueDate;
+
+  const discardBtn = document.getElementById('discard-invoice-btn');
+  discardBtn.addEventListener('click', () => selectInvoice(0));
+
+  const invoiceListItems = document.querySelectorAll('#invoice-list li');
+  for (const item of invoiceListItems) delete item.dataset.selected;
+
+  const datalist = wrapper.querySelector('#contact-list');
+  const contacts = await request.contacts();
+  for (const contact of contacts) {
+    const { id, firstname, lastname } = contact;
+    const option = document.createElement('option');
+    option.dataset.contactId = id;
+    option.value = `${firstname} ${lastname}`;
+    datalist.appendChild(option);
+  }
+
+  // check if given contact is new
+  const contactInput = wrapper.querySelector('#new-invoice__contact');
+  const contactIdInput = wrapper.querySelector('#contact-id');
+  contactInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    let contactId = 0;
+    for (const item of datalist.children) {
+      if (item.value === value) contactId = item.dataset.contactId;
+    }
+    contactIdInput.value = contactId;
+    if (contactIdInput.value == 0 && contactInput.value !== '') {
+      contactInput.parentNode.dataset.newContact = '';
+    } else delete contactInput.parentNode.dataset.newContact;
+  });
+}
+
+async function onCreateNewInvoice() {
+  console.log('new invoice');
+}
+
 async function onChangeListFilter(event) {
   let value = event.target.value;
-  let invoiceListEl;
+  let invoiceList;
 
   // replace invoice list
-  if (value == 'open') invoiceListEl = await getInvoiceListEl(true);
-  else if (value == 'all') invoiceListEl = await getInvoiceListEl();
+  if (value == 'open') invoiceList = await request.invoicesOpen();
+  else if (value == 'all') invoiceList = await request.invoices();
+
+  let invoiceListEl = getInvoiceListEl(invoiceList);
 
   const listSectionEl = document.querySelector('#list-module__list');
   listSectionEl.replaceChildren(invoiceListEl);
 }
 
-async function getInvoiceListEl(openOnly = false) {
-  let invoices;
-
-  if (openOnly) invoices = await request.invoicesOpen();
-  else invoices = await request.invoices();
-
-  // const invoices = await request.invoices();
-
+function getInvoiceListEl(invoiceList) {
   const listEl = document.createElement('ul');
   listEl.id = 'invoice-list';
-  openOnly ? (listEl.dataset.filter = 'open') : (listEl.dataset.filter = 'all');
+  // openOnly ? (listEl.dataset.filter = 'open') : (listEl.dataset.filter = 'all');
 
-  for (let item of invoices) {
-    let { id, amount, status, date_due, firstname, lastname } = item;
-    let dueDate = new DateExt(date_due);
-    let statusObj = getStatusObject(dueDate, status);
+  if (invoiceList.length) {
+    for (let item of invoiceList) {
+      let { id, amount, status, date_due, firstname, lastname } = item;
+      let dueDate = new DateExt(date_due);
+      let statusObj = getStatusObject(dueDate, status);
 
-    const itemEl = document.createElement('li');
-    itemEl.dataset.invoiceId = id;
-    itemEl.classList.add('invoice-list__invoice');
-    itemEl.innerHTML = `<span class="status" ${'data-status=' + statusObj.name}>${statusObj.message}</span>
-    <span class="contact">${firstname} ${lastname}</span>
-    <span class="price">${amount} CHF</span>`;
-    itemEl.addEventListener('click', (event) => selectInvoice(event.target.closest('li').dataset.invoiceId));
-    listEl.appendChild(itemEl);
+      const itemEl = document.createElement('li');
+      itemEl.dataset.invoiceId = id;
+      itemEl.classList.add('invoice-list__invoice');
+      itemEl.innerHTML = `<span class="status" ${'data-status=' + statusObj.name}>${statusObj.message}</span>
+  <span class="contact">${firstname} ${lastname}</span>
+  <span class="price">${amount} CHF</span>`;
+      itemEl.addEventListener('click', (event) => selectInvoice(event.target.closest('li').dataset.invoiceId));
+      listEl.appendChild(itemEl);
+    }
+  } else {
+    listEl.innerHTML = 'No Invoices Found';
   }
 
   return listEl;
@@ -131,10 +220,13 @@ async function onSearchInvoice(event) {
 
   // display invoices of contact
   const invoiceList = await request.invoicesByContact(id);
-  console.log(invoiceList);
-  
+  const invoiceListEl = getInvoiceListEl(invoiceList);
+
+  const listSectionEl = document.querySelector('#list-module__list');
+  listSectionEl.replaceChildren(invoiceListEl);
+
   // const listSectionEl = document.querySelector('#list-module__list');
-  // if (invoiceList.length) { 
+  // if (invoiceList.length) {
   //   const orderListEl = getOrderListEl(orderList);
   //   orderListWrapper.replaceChildren(orderListEl);
   // } else orderListWrapper.innerHTML = 'No invoices yet. Please add invoice first.';
@@ -244,7 +336,6 @@ async function setInvoicePaid(id) {
     const listEl = document.getElementById('invoice-list');
     const invoiceEl = listEl.querySelector(`.invoice-list__invoice[data-invoice-id="${id}"]`);
     const invoiceStatusEl = invoiceEl.querySelector(`.status`);
-    console.log(invoiceStatusEl);
     if (invoiceEl) {
       if (listEl.dataset.filter === 'open') invoiceEl.remove();
       else if (listEl.dataset.filter === 'all') invoiceStatusEl.dataset.status = 'paid';

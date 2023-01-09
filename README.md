@@ -30,7 +30,7 @@ status report
 - [X] diplay list of invoices
 - [ ] search invoice by contact
 - [X] view invoice details
-- [ ] create new invoice directly
+- [ ] create new invoice without order
 - [X] create new invoice via order
 - [ ] delete invoice directly
 - [X] delete invoice via order

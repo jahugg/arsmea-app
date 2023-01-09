@@ -111,9 +111,9 @@ export default class DBService {
   async insertOrder(data) {
     try {
       const { contactId, due, amount, description } = data;
-      let query = this.db.prepare(`INSERT INTO invoices (amount, date_due)
-      VALUES (?, date('now','+15 day'))`);
-      let result = query.run(amount);
+      let query = this.db.prepare(`INSERT INTO invoices (contact_id, amount, date_issue, date_due)
+      VALUES (?, ?, date('now'), date('now','+15 day'))`);
+      let result = query.run(contactId, amount);
       const invoiceId = result.lastInsertRowid;
 
       query = this.db.prepare(`INSERT INTO 
@@ -278,7 +278,7 @@ export default class DBService {
         INNER JOIN orders
           ON orders.invoice_id = invoices.id
         INNER JOIN contacts
-          ON orders.contact_id = contacts.id
+          ON invoices.contact_id = contacts.id
         ORDER BY invoices.date_due`);
       const list = query.all();
       return list;
@@ -297,7 +297,7 @@ export default class DBService {
         INNER JOIN orders
           ON orders.invoice_id = invoices.id
         INNER JOIN contacts
-          ON orders.contact_id = contacts.id
+          ON invoices.contact_id = contacts.id
         WHERE invoices.status = 'open'
         ORDER BY invoices.date_due`);
       const list = query.all();

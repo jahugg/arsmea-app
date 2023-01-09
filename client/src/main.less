@@ -26,6 +26,24 @@ body {
   --color-grey-03: rgb(201, 201, 201);
   --color-grey-04: rgb(231, 231, 231);
   --color-highlight: red;
+  /* new color formats:
+  rgb(11.06% 47.24% 0% / 48%)
+
+  --red-hue: 0deg;
+  --red-sat: 100%;
+  --red-lit: 50%;
+
+  --red: hsl(
+    var(--red-hue)
+    var(--red-sat)
+    var(--red-lit)
+  );
+
+  --dark-red: hsl(
+    var(--red-hue)
+    var(--red-sat)
+    calc(var(--red-lit) - 20%)
+  );*/
 
   --page-padding: 30px;
 
@@ -57,7 +75,7 @@ main {
 
 input:not([type='submit']):not([type='checkbox']) {
   border: none;
-  padding: 5px 0;
+  padding: 0;
   font: inherit;
   font-size: 1.5em;
   color: inherit;
@@ -70,7 +88,7 @@ input:not([type='submit']):not([type='checkbox']) {
     background: rgba(255, 255, 255, 0.1);
   }
   &::placeholder {
-    color: var(--color-grey-02);
+    color: var(--color-grey-03);
   }
 }
 
@@ -106,6 +124,7 @@ textarea {
   resize: none;
   color: inherit;
   font: var(--font-regular);
+  font-size: 1.5em;
   width: 100%;
 
   &:focus {
@@ -114,7 +133,7 @@ textarea {
   }
 
   &::placeholder {
-    color: var(--color-grey-02);
+    color: var(--color-grey-03);
   }
 }
 
@@ -200,12 +219,12 @@ textarea {
     line-height: 1.7em;
     border-radius: 20px;
 
-    &[data-status="late"] {
+    &[data-status='late'] {
       background: black;
       color: white;
     }
 
-    &[data-status="open"] {
+    &[data-status='open'] {
       border: solid 1px black;
     }
   }
@@ -231,6 +250,27 @@ textarea {
   border-radius: 10px;
   background: var(--color-font);
   color: var(--color-background);
+}
+
+form {
+  max-width: 400px;
+}
+
+.form__input-group {
+  margin-top: 2em;
+
+  &[data-new-contact]::after {
+    content: 'Client not found. New client will be created.';
+    font: var(--font-tiny);
+    color: red;
+    position: absolute;
+  }
+}
+
+.form__input-unit {
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
 }
 
 // ================================
@@ -532,14 +572,14 @@ textarea {
 
 #filter-invoice {
   display: flex;
-  margin-top: .5em;
+  margin-top: 0.5em;
 
   & input {
-    margin: 0 .3em;
+    margin: 0 0.3em;
   }
 
   & label {
-    padding-right: .5em;
+    padding-right: 0.5em;
     display: flex;
     align-items: center;
     border: solid 1px black;
@@ -551,7 +591,7 @@ textarea {
 }
 
 // ================================
-// subscription (SERVES AS TEMPLATE FOR OTHER NEW GENERAL STYLES)
+// subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
 // ================================
 .list-module {
   --list-width: 450px;
@@ -570,7 +610,6 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: top;
-
 }
 
 #list-module__list {
