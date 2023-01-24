@@ -130,14 +130,35 @@ async function onPrepareNewInvoice(event) {
   detailsSection.replaceChildren(wrapper);
 
   // set dates
-  let issueDate = new Date();
-  let dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 7);
-  document.getElementById('new-invoice__issue').valueAsDate = issueDate;
-  document.getElementById('new-invoice__due').valueAsDate = dueDate;
+  let issueDate = new DateExt();
+  let dueDate = new DateExt();
+  dueDate.setDate(dueDate.getDate() + 15);
 
+  // configure issue date element
+  let issueEl = document.getElementById('new-invoice__issue');
+  issueEl.valueAsDate = issueDate;
+  issueEl.max = dueDate.getDateString();
+
+  // adjust due date minimum on issue date change
+  issueEl.addEventListener('input', (event) => {
+    let dueEl = document.getElementById('new-invoice__due');
+    dueEl.min = event.target.value;
+  });
+
+  // configure due date element
+  let dueEl = document.getElementById('new-invoice__due');
+  dueEl.valueAsDate = dueDate;
+  dueEl.min = issueDate.getDateString();
+
+  // adjust issue date maximum on due date change
+  dueEl.addEventListener('input', (event) => {
+    let issueEl = document.getElementById('new-invoice__issue');
+    issueEl.max = event.target.value;
+  });
+
+  // add discard button functionality
   const discardBtn = document.getElementById('discard-invoice-btn');
-  discardBtn.addEventListener('click', () => selectInvoice(0));
+  discardBtn.addEventListener('click', () => document.querySelector('#list-module__details').replaceChildren());
 
   const invoiceListItems = document.querySelectorAll('#invoice-list li');
   for (const item of invoiceListItems) delete item.dataset.selected;
@@ -171,18 +192,30 @@ async function onPrepareNewInvoice(event) {
 async function onCreateNewInvoice(event) {
   event.preventDefault();
 
-  const data = new FormData(event.target);
-  const response = await request.newInvoice(data);
+  const formData = new FormData(event.target);
+  const response = await request.newInvoice(formData);
   const id = response.id;
 
-  console.log('new invoice: ' + id);
+  // insert invoice into current list
+  const dateDue = new DateExt(formData.get('due'));
+  let closestDateEl;
+  let smallestDifference = 0;
+  const listElements = document.getElementsByClassName('invoice-list__invoice');
 
-  // add order to current list
-  // const date = new DateExt(data.get('due'));
-  // const dayEl = document.querySelector(`.day-list__day[data-date="${date.getDateString()}"]`);
-  // adding orders to days should be outsourced into separate function to avoid duplicate code
+  // search element with closest due date
+  for (const el of listElements) {
+    const dateDueTemp = new DateExt(el.dataset.dateDue);
+    const difference = dateDue.diffInDaysTo(dateDueTemp);
+    if (difference <= smallestDifference) closestDateEl = el;
+  }
 
-  // selectOrder(id);
+  // get new database entry
+  const data = await request.invoiceDetails(id);
+  const itemEl = getInvoiceListItemEl(data);
+  closestDateEl.after(itemEl);
+
+  // select new invoice
+  selectInvoice(id);
 }
 
 async function onChangeListFilter(event) {
@@ -205,25 +238,30 @@ function getInvoiceListEl(invoiceList) {
   // openOnly ? (listEl.dataset.filter = 'open') : (listEl.dataset.filter = 'all');
 
   if (invoiceList.length) {
-    for (let item of invoiceList) {
-      let { id, amount, status, date_due, firstname, lastname } = item;
-      let dueDate = new DateExt(date_due);
-      let statusObj = getStatusObject(dueDate, status);
-
-      const itemEl = document.createElement('li');
-      itemEl.dataset.invoiceId = id;
-      itemEl.classList.add('invoice-list__invoice');
-      itemEl.innerHTML = `<span class="status" ${'data-status=' + statusObj.name}>${statusObj.message}</span>
-  <span class="contact">${firstname} ${lastname}</span>
-  <span class="price">${amount} CHF</span>`;
-      itemEl.addEventListener('click', (event) => selectInvoice(event.target.closest('li').dataset.invoiceId));
+    for (let data of invoiceList) {
+      const itemEl = getInvoiceListItemEl(data);
       listEl.appendChild(itemEl);
     }
-  } else {
-    listEl.innerHTML = 'No Invoices Found';
-  }
+  } else listEl.innerHTML = 'No Invoices Found';
 
   return listEl;
+}
+
+// create and return list item element for invoice
+function getInvoiceListItemEl(data) {
+  let { id, amount, status, date_due, firstname, lastname } = data;
+  let dueDate = new DateExt(date_due);
+  let statusObj = getStatusObject(dueDate, status);
+
+  const itemEl = document.createElement('li');
+  itemEl.dataset.invoiceId = id;
+  itemEl.dataset.dateDue = dueDate.getDateString();
+  itemEl.classList.add('invoice-list__invoice');
+  itemEl.innerHTML = `<span class="status" ${'data-status=' + statusObj.name}>${statusObj.message}</span>
+  <span class="contact">${firstname} ${lastname}</span>
+  <span class="price">${amount} CHF</span>`;
+  itemEl.addEventListener('click', (event) => selectInvoice(event.target.closest('li').dataset.invoiceId));
+  return itemEl;
 }
 
 async function onSearchInvoice(event) {
@@ -268,7 +306,9 @@ async function selectInvoice(id) {
     const state = { invoice_id: id };
     window.history.replaceState(state, '', url);
   } catch (error) {
-    console.log(error);
+    const firstChild = document.querySelector('.invoice-list__invoice');
+    if (firstChild) selectInvoice(Number(firstChild.dataset.invoiceId)); // if present select first item
+    else document.querySelector('#list-module__details').replaceChildren(); // if no item present clear details
   }
 }
 

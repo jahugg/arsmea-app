@@ -137,7 +137,7 @@ async function onSearchOrder(event) {
   // display orders of contact
   const orderList = await request.ordersByContact(id);
   const orderListWrapper = document.getElementById('order-list-wrapper');
-  if (orderList.length) { 
+  if (orderList.length) {
     const orderListEl = getOrderListEl(orderList);
     orderListWrapper.replaceChildren(orderListEl);
   } else orderListWrapper.innerHTML = 'No orders yet. Add Order.';
@@ -195,10 +195,11 @@ async function selectOrder(id) {
   try {
     // get order details
     const orderDetails = await getOrderDetailsEl(id);
-    const orderList = document.querySelectorAll('.order-list__order');
     const detailsWrapper = document.querySelector('#order-detail-section');
     detailsWrapper.replaceChildren(orderDetails);
 
+    // mark selected list item
+    const orderList = document.querySelectorAll('.order-list__order');
     for (let order of orderList)
       if (order.dataset.orderId == id) order.dataset.selected = '';
       else delete order.dataset.selected;
@@ -209,7 +210,9 @@ async function selectOrder(id) {
     const state = { order_id: id };
     window.history.replaceState(state, '', url);
   } catch (error) {
-    // select first order item in the future if any
+    const firstChild = document.querySelector('.order-list__order');
+    if (firstChild) selectOrder(Number(firstChild.dataset.invoiceId)); // if present select first item
+    else document.querySelector('#order-detail-section').replaceChildren(); // if no item present clear details
   }
 }
 
@@ -250,7 +253,7 @@ async function onPrepareNewOrder(event) {
   orderDetailsWrapper.replaceChildren(wrapper);
 
   const discardBtn = document.getElementById('discard-order-btn');
-  discardBtn.addEventListener('click', () => selectOrder(0));
+  discardBtn.addEventListener('click', () => document.querySelector('#order-detail-section').replaceChildren());
 
   const orderListItems = document.querySelectorAll('#order-list li');
   for (const item of orderListItems) delete item.dataset.selected;

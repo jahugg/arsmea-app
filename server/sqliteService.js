@@ -6,6 +6,9 @@ export default class DBService {
     this.db = this.db ? this.db : new Database('./database.db');
   }
 
+  // ==========
+  // Contacts
+
   async insertContact(data) {
     // delete empty entries
     Object.keys(data).forEach((key) => !data[key] && data[key] !== undefined && delete data[key]);
@@ -108,6 +111,8 @@ export default class DBService {
     }
   }
 
+  // ==========
+  // Orders
   async insertOrder(data) {
     try {
       const { contactId, due, amount, description } = data;
@@ -239,7 +244,8 @@ export default class DBService {
     }
   }
 
-  // subscriptions
+  // ==========
+  // Subscriptions
   async insertSubscription(data) {
     console.log(data);
     // try {
@@ -267,7 +273,8 @@ export default class DBService {
     }
   }
 
-  // invoices
+  // ==========
+  // Invoices
   async insertInvoice(data) {
     try {
       const { contactId, issue, due, amount, description } = data;
@@ -279,7 +286,7 @@ export default class DBService {
       console.log(error);
     }
   }
-  
+
   async selectAllInvoices() {
     // Looking for a way to have conditional join cases?
     // SQL CASE probably is not doing the trick...
@@ -317,7 +324,7 @@ export default class DBService {
 
   async selectInvoiceById(id) {
     try {
-      const query = this.db.prepare(`SELECT invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
+      const query = this.db.prepare(`SELECT invoices.id, invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
           contacts.id AS contact_id, contacts.firstname, contacts.lastname
         FROM invoices
         INNER JOIN contacts
