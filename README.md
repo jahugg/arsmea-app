@@ -24,6 +24,7 @@ status report
 - [X] delete order
 - [X] edit order
 - [X] display linked invoices
+- [ ] add sketch, image to order
 
 ### invoices
 

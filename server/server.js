@@ -136,6 +136,23 @@ app.get('/api/subscriptionList', async (request, response) => {
 });
 
 // invoices
+app.post('/api/invoice', async (request, response) => {
+  const data = request.body;
+  const { contactName, contactId } = data;
+  // optionally create new contact
+  if (contactId == 0) {
+    let nameParts = contactName.split(' ');
+    let userData = { firstname: nameParts[0] };
+    if (nameParts.length > 1) {
+      userData.lastname = nameParts[1];
+    }
+    const newContactId = await db.insertContact(userData);
+    data.contactId = newContactId;
+  }
+  const invoiceId = await db.insertInvoice(data);
+  response.json({ id: invoiceId });
+});
+
 app.get('/api/invoiceList', async (request, response) => {
   const list = await db.selectAllInvoices();
   response.json(list);

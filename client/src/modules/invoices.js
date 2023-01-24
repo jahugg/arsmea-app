@@ -168,8 +168,21 @@ async function onPrepareNewInvoice(event) {
   });
 }
 
-async function onCreateNewInvoice() {
-  console.log('new invoice');
+async function onCreateNewInvoice(event) {
+  event.preventDefault();
+
+  const data = new FormData(event.target);
+  const response = await request.newInvoice(data);
+  const id = response.id;
+
+  console.log('new invoice: ' + id);
+
+  // add order to current list
+  // const date = new DateExt(data.get('due'));
+  // const dayEl = document.querySelector(`.day-list__day[data-date="${date.getDateString()}"]`);
+  // adding orders to days should be outsourced into separate function to avoid duplicate code
+
+  // selectOrder(id);
 }
 
 async function onChangeListFilter(event) {
@@ -289,24 +302,26 @@ async function getInvoiceDetailsEl(id) {
         : '<div>Due on <time datetime="' + dateDue.getDateString() + '">' + dueString + '</time></div>'
     }
     <div data-status="${statusObj.name}">${statusObj.message}</div>
-    Linked Orders
   </div>`;
-
   // create list of linked orders
   const orders = await request.ordersByInvoice(id);
-  let orderListEl = document.createElement('ul');
 
-  for (let order of orders) {
-    const datePlaced = new DateExt(order.datetime_placed);
-    const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
+  if (orders.length > 0) {
+    let orderListEl = document.createElement('ul');
 
-    let orderEl = document.createElement('li');
-    orderEl.innerHTML = `<a href="/orders?id=${order.id}">${placedString}</a> ${order.status}`;
-    orderListEl.appendChild(orderEl);
+    for (let order of orders) {
+      const datePlaced = new DateExt(order.datetime_placed);
+      const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
+
+      let orderEl = document.createElement('li');
+      orderEl.innerHTML = `<a href="/orders?id=${order.id}">${placedString}</a> ${order.status}`;
+      orderListEl.appendChild(orderEl);
+    }
+
+    let infoEl = wrapper.querySelector('#list-module__details__info');
+    infoEl.innerHTML += 'Linked Orders';
+    infoEl.appendChild(orderListEl);
   }
-
-  let infoEl = wrapper.querySelector('#list-module__details__info');
-  infoEl.appendChild(orderListEl);
 
   const editBtn = wrapper.querySelector('#edit-btn');
   // editBtn.addEventListener('click', onEditInvoice);

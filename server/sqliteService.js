@@ -268,6 +268,18 @@ export default class DBService {
   }
 
   // invoices
+  async insertInvoice(data) {
+    try {
+      const { contactId, issue, due, amount, description } = data;
+      let query = this.db.prepare(`INSERT INTO invoices (contact_id, amount, date_issue, date_due, description)
+      VALUES (?, ?, ?, ?, ?)`);
+      let result = query.run(contactId, amount, issue, due, description);
+      return result.lastInsertRowid;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  
   async selectAllInvoices() {
     // Looking for a way to have conditional join cases?
     // SQL CASE probably is not doing the trick...
@@ -275,8 +287,6 @@ export default class DBService {
       const query = this.db.prepare(`SELECT invoices.id, invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
           contacts.firstname, contacts.lastname
         FROM invoices
-        INNER JOIN orders
-          ON orders.invoice_id = invoices.id
         INNER JOIN contacts
           ON invoices.contact_id = contacts.id
         ORDER BY invoices.date_due`);
@@ -294,8 +304,6 @@ export default class DBService {
       const query = this.db.prepare(`SELECT invoices.id, invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
           contacts.firstname, contacts.lastname
         FROM invoices
-        INNER JOIN orders
-          ON orders.invoice_id = invoices.id
         INNER JOIN contacts
           ON invoices.contact_id = contacts.id
         WHERE invoices.status = 'open'
@@ -312,10 +320,8 @@ export default class DBService {
       const query = this.db.prepare(`SELECT invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
           contacts.id AS contact_id, contacts.firstname, contacts.lastname
         FROM invoices
-        INNER JOIN orders
-          ON orders.invoice_id = invoices.id
         INNER JOIN contacts
-          ON orders.contact_id = contacts.id
+          ON invoices.contact_id = contacts.id
         WHERE invoices.id = ?
         ORDER BY invoices.date_due`);
       const invoice = query.get(id);
