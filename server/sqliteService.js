@@ -1,5 +1,9 @@
 import Database from 'better-sqlite3';
 
+
+/* Notes:
+updates functions could probably be joined into single function */
+
 export default class DBService {
   static db;
   constructor() {
@@ -325,7 +329,7 @@ export default class DBService {
   async selectInvoiceById(id) {
     try {
       const query = this.db.prepare(`SELECT invoices.id, invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
-          contacts.id AS contact_id, contacts.firstname, contacts.lastname
+          invoices.description, contacts.id AS contact_id, contacts.firstname, contacts.lastname
         FROM invoices
         INNER JOIN contacts
           ON invoices.contact_id = contacts.id
@@ -351,6 +355,30 @@ export default class DBService {
         ORDER BY invoices.date_due`);
       const orderList = query.all(id);
       return orderList;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async updateInvoice(data) {
+    const id = data.id;
+    delete data.id;
+
+    const dataKeys = Object.keys(data);
+    const dataValues = Object.values(data);
+
+    // cunstruct query string
+    let queryString = 'UPDATE invoices SET ';
+    dataKeys.forEach((key, i) => {
+      if (i !== 0) queryString += `, `;
+      queryString += `${key} = ?`;
+    });
+    queryString += ` WHERE id = ${id}`;
+
+    try {
+      const query = this.db.prepare(queryString);
+      const result = query.run(dataValues);
+      return result;
     } catch (error) {
       console.log(error);
     }

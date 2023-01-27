@@ -130,6 +130,14 @@ export async function invoicesByContact(contactId) {
   return await response.json();
 }
 
+export async function updateInvoice(id, data) {
+  const response = await fetch(`${process.env.SERVER}/api/updateInvoice/${id}`, {
+    method: 'POST',
+    body: data,
+  });
+  return await response.json();
+}
+
 export async function invoicesOpen() {
   const response = await fetch(`${process.env.SERVER}/api/invoiceListOpen`);
   return await response.json();

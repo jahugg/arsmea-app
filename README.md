@@ -31,13 +31,15 @@ status report
 - [X] diplay list of invoices
 - [ ] search invoice by contact
 - [X] view invoice details
-- [ ] create new invoice without order
+- [X] create new invoice without order
 - [X] create new invoice via order
 - [ ] delete invoice directly
 - [X] delete invoice via order
 - [ ] archive invoice
 - [ ] edit invoice directly
 - [X] edit invoice via order
+- [ ] mark as paid
+- [ ] mark as open
 
 ### subscriptions
 
