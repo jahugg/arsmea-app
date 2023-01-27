@@ -232,6 +232,130 @@ async function onChangeListFilter(event) {
   listSectionEl.replaceChildren(invoiceListEl);
 }
 
+async function onEditInvoice(event) {
+  const id = event.target.dataset.invoiceId;
+  const detailsWrapper = document.getElementById('list-module__details');
+  const form = await getInvoiceFormEl(id);
+  detailsWrapper.replaceChildren(form);
+}
+
+async function getInvoiceFormEl(id) {
+  const data = await request.invoiceDetails(id);
+  const { status, amount, date_issue, date_paid, date_due, description, contact_id, firstname, lastname } = data;
+
+  const dateIssue = new DateExt(date_issue);
+  const dateDue = new DateExt(date_due);
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'invoice-details';
+  const form = document.createElement('form');
+  form.action = `${process.env.SERVER}/api/updateInvoice`;
+  form.method = 'POST';
+  form.id = 'edit-invoice';
+  form.addEventListener('submit', onUpdateInvoice);
+  form.innerHTML = `<section class="content-controls">
+      <input type="submit" class="button-small" value="Done" />
+      <button type="button" id="delete-invoice-btn" class="button-small" data-invoice-id="${id}">Delete Invoice</button>
+    </section>
+    <input type="hidden" id="edit-invoice__id" name="id" value="${id}">
+    <div class="form__input-group">
+        <label for="edit-invoice__status">Status</label>
+        <select id="edit-invoice__status" name="status">
+            <option value="open">Open</option>
+            <option value="paid">Paid</option>
+        </select>
+    </div>
+    <div class="form__input-group">
+        <label for="edit-invoice__amount">Amount</label>
+        <input id="edit-invoice__amount" name="amount" type="number" min="0.00" max="10000.00" step="0.1" value="${amount}" required/>CHF
+    </div>
+    <div class="form__input-group">
+      <label for="edit-invoice__issue">Issue Date</label>
+      <input type="date" name="date_issue" id="edit-invoice__issue" required/>
+    </div>
+    <div class="form__input-group">
+      <label for="edit-invoice__due">Due Date</label>
+      <input type="date" name="date_due" id="edit-invoice__due" required/>
+    </div>
+    <div class="form__input-group" hidden>
+      <label for="edit-invoice__paid">Paid Date</label>
+      <input type="date" name="date_paid" id="edit-invoice__paid"/>
+    </div>
+    <div class="form__input-group">
+      <label for="edit-invoice__description">Description</label>
+      <textarea name="description" id="edit-invoice__description" placeholder="Notes">${description ? description : ''}</textarea>
+    </div>`;
+
+  // select current status
+  const statusOptions = form.querySelectorAll('#edit-invoice__status option');
+  for (let option of statusOptions) {
+    if (option.value === status) option.setAttribute('selected', 'true');
+  }
+  wrapper.appendChild(form);
+
+  // delete button
+  const deleteBtn = wrapper.querySelector('#delete-invoice-btn');
+  deleteBtn.addEventListener('click', onDeleteInvoice);
+
+  // configure issue date element
+  let issueEl = wrapper.querySelector('#edit-invoice__issue');
+  issueEl.valueAsDate = dateIssue;
+  issueEl.max = dateDue.getDateString();
+
+  // configure due date element
+  let dueEl = wrapper.querySelector('#edit-invoice__due');
+  dueEl.valueAsDate = dateDue;
+  dueEl.min = dateIssue.getDateString();
+
+  // adjust due date minimum on issue date change
+  issueEl.addEventListener('input', (event) => {
+    let dueEl = document.querySelector('#edit-invoice__due');
+    dueEl.min = event.target.value;
+  });
+
+  // adjust issue date maximum on due date change
+  dueEl.addEventListener('input', (event) => {
+    let issueEl = document.querySelector('#edit-invoice__issue');
+    issueEl.max = event.target.value;
+  });
+
+  // toggle paid date field when changing state
+  let statusInputEl = wrapper.querySelector('#edit-invoice__status');
+  statusInputEl.addEventListener('input', (event) => {
+    let value = event.target.value;
+    if (value === 'paid') {
+      let paidEl = document.querySelector('#edit-invoice__paid');
+      paidEl.setAttribute('required', '');
+      paidEl.parentElement.removeAttribute('hidden');
+    } else if (value === 'open') {
+      let paidEl = document.querySelector('#edit-invoice__paid');
+      paidEl.removeAttribute('required');
+      paidEl.value = '';
+      paidEl.parentElement.setAttribute('hidden', '');
+    }
+  });
+
+  // if invoice is marked as paid display paid input
+  if (status === 'paid') {
+    const datePaid = new DateExt(date_paid);
+
+    // configure paid date element
+    let paidEl = wrapper.querySelector('#edit-invoice__paid');
+    paidEl.setAttribute('required', '');
+    paidEl.parentElement.removeAttribute('hidden');
+    paidEl.valueAsDate = datePaid;
+    paidEl.min = dateIssue.getDateString();
+
+    // adjust paid date minimum on issue date change
+    issueEl.addEventListener('input', (event) => {
+      let paidEl = document.querySelector('#edit-invoice__paid');
+      paidEl.min = event.target.value;
+    });
+  }
+
+  return wrapper;
+}
+
 function getInvoiceListEl(invoiceList) {
   const listEl = document.createElement('ul');
   listEl.id = 'invoice-list';
@@ -262,6 +386,32 @@ function getInvoiceListItemEl(data) {
   <span class="price">${amount} CHF</span>`;
   itemEl.addEventListener('click', (event) => selectInvoice(event.target.closest('li').dataset.invoiceId));
   return itemEl;
+}
+
+/**
+ * update invoice entry
+ * @param {Object} event event data
+ */
+async function onUpdateInvoice(event) {
+  event.preventDefault();
+  const data = new URLSearchParams(new FormData(event.target));
+  const id = data.get('id');
+  let response = await request.updateInvoice(id, data);
+
+  // replace item in invoice list
+  // cleaner way to avoid second DB request?
+  const oldEl = document.querySelector(`.invoice-list__invoice[data-invoice-id="${id}"]`);
+  if (oldEl) {
+    const newEl = getInvoiceListItemEl(await request.invoiceDetails(id));
+    newEl.dataset.selected = '';
+    oldEl.replaceWith(newEl);
+  }
+
+  selectInvoice(id);
+}
+
+function onDeleteInvoice(event) {
+  console.log('on delete invoice');
 }
 
 async function onSearchInvoice(event) {
@@ -364,7 +514,7 @@ async function getInvoiceDetailsEl(id) {
   }
 
   const editBtn = wrapper.querySelector('#edit-btn');
-  // editBtn.addEventListener('click', onEditInvoice);
+  editBtn.addEventListener('click', onEditInvoice);
 
   const toggleStatusBtn = wrapper.querySelector('#toggle-status-btn');
   toggleStatusBtn.addEventListener('click', async (event) => {
