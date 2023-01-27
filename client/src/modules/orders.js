@@ -322,7 +322,6 @@ async function onDeleteOrder(event) {
   if (window.confirm('Delete Order?')) {
     const result = await request.deleteOrder(orderId);
     const orderItem = document.querySelector(`.order-list__order[data-order-id="${orderId}"]`);
-    const previousSibling = orderItem.previousSibling;
     orderItem.remove();
 
     const orderDetailsWrapper = document.getElementById('order-detail-section');

@@ -158,6 +158,13 @@ app.get('/api/invoiceList', async (request, response) => {
   response.json(list);
 });
 
+app.delete('/api/invoice/:id', async (request, response) => {
+  const { id } = request.params;
+  const result = await db.deleteInvoice(id);
+  // const result = await db.deleteEntry('invoices', id);
+  response.json({ success: result });
+});
+
 app.get('/api/invoiceListOpen', async (request, response) => {
   const list = await db.selectOpenInvoices();
   response.json(list);

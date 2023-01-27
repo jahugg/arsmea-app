@@ -254,7 +254,7 @@ async function getInvoiceFormEl(id) {
   form.id = 'edit-invoice';
   form.addEventListener('submit', onUpdateInvoice);
   form.innerHTML = `<section class="content-controls">
-      <input type="submit" class="button-small" value="Done" />
+      <input type="submit" class="button-small" value="Save Changes" />
       <button type="button" id="delete-invoice-btn" class="button-small" data-invoice-id="${id}">Delete Invoice</button>
     </section>
     <input type="hidden" id="edit-invoice__id" name="id" value="${id}">
@@ -296,6 +296,10 @@ async function getInvoiceFormEl(id) {
   // delete button
   const deleteBtn = wrapper.querySelector('#delete-invoice-btn');
   deleteBtn.addEventListener('click', onDeleteInvoice);
+
+  // disable delete button if orders with invoice exist
+  const orders = await request.ordersByInvoice(id);
+  if (orders.length > 0) deleteBtn.setAttribute('disabled', '');
 
   // configure issue date element
   let issueEl = wrapper.querySelector('#edit-invoice__issue');
@@ -410,8 +414,16 @@ async function onUpdateInvoice(event) {
   selectInvoice(id);
 }
 
-function onDeleteInvoice(event) {
-  console.log('on delete invoice');
+async function onDeleteInvoice(event) {
+  const invoiceId = event.target.dataset.invoiceId;
+
+  if (window.confirm('Delete Invoice?')) {
+    const result = await request.deleteInvoice(invoiceId);
+    const invoiceEl = document.querySelector(`.invoice-list__invoice[data-invoice-id="${invoiceId}"]`);
+    invoiceEl.remove();
+    const invoiceDetailsWrapper = document.getElementById('list-module__details');
+    invoiceDetailsWrapper.innerHTML = '';
+  }
 }
 
 async function onSearchInvoice(event) {

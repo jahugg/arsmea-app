@@ -143,6 +143,16 @@ export async function invoicesOpen() {
   return await response.json();
 }
 
+export async function deleteInvoice(id) {
+  try {
+    const response = await fetch(`${process.env.SERVER}/api/invoice/${id}`, {
+      method: 'DELETE',
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export async function invoiceDetails(id) {
   const response = await fetch(`${process.env.SERVER}/api/invoice/${id}`);
   return await response.json();

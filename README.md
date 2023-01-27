@@ -3,6 +3,7 @@
 Client, order and subscription management software.
 
 ## project status
+
 status report
 
 ### contacts
@@ -14,6 +15,7 @@ status report
 - [X] delete contact
 - [X] archive contact
 - [X] edit contact
+- [ ] list contact invoices
 
 ### orders
 
@@ -33,13 +35,13 @@ status report
 - [X] view invoice details
 - [X] create new invoice without order
 - [X] create new invoice via order
-- [ ] delete invoice directly
+- [X] delete invoice directly
 - [X] delete invoice via order
 - [ ] archive invoice
-- [ ] edit invoice directly
+- [X] edit invoice directly
 - [X] edit invoice via order
-- [ ] mark as paid
-- [ ] mark as open
+- [ ] quick mark as paid
+- [ ] quick mark as open
 
 ### subscriptions
 

@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3';
 
-
 /* Notes:
 updates functions could probably be joined into single function */
 
@@ -187,10 +186,14 @@ export default class DBService {
 
   async deleteOrder(id) {
     try {
+      const orderData = await this.selectOrderById(id);
+
+      // delete order entry
       const query = this.db.prepare('DELETE FROM orders WHERE id = ?');
       const result = query.run(id);
 
-      await this.deleteUnusedInvoices();
+      // delete invoice entry
+      await this.deleteInvoice(orderData.invoice_id);
 
       return result;
     } catch (error) {
@@ -277,8 +280,7 @@ export default class DBService {
     }
   }
 
-  // ==========
-  // Invoices
+v
   async insertInvoice(data) {
     try {
       const { contactId, issue, due, amount, description } = data;
@@ -398,12 +400,35 @@ export default class DBService {
     }
   }
 
-  async deleteUnusedInvoices() {
+  async deleteInvoice(id) {
+    try {
+      const query = this.db.prepare('DELETE FROM invoices WHERE id = ?');
+      const result = query.run(id);
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // currently unused
+  async deleteStandAloneInvoices() {
     try {
       const query = this.db.prepare(`DELETE FROM invoices
         WHERE NOT EXISTS (SELECT 1 FROM orders WHERE orders.invoice_id = invoices.id)
         AND NOT EXISTS (SELECT 1 FROM subscriptions WHERE subscriptions.invoice_id = invoices.id);`);
 
+      const result = query.run();
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // ==========
+  // MORE GENERAL APPROACH
+  async deleteEntryById(table, id) {
+    try {
+      const query = this.db.prepare(`DELETE FROM ${table} WHERE id = ${id}`);
       const result = query.run();
       return result;
     } catch (error) {
