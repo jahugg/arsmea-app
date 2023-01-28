@@ -505,9 +505,9 @@ async function getInvoiceDetailsEl(id) {
     }
     <div data-status="${statusObj.name}">${statusObj.message}</div>
   </div>`;
+
   // create list of linked orders
   const orders = await request.ordersByInvoice(id);
-
   if (orders.length > 0) {
     let orderListEl = document.createElement('ul');
 
@@ -528,13 +528,53 @@ async function getInvoiceDetailsEl(id) {
   const editBtn = wrapper.querySelector('#edit-btn');
   editBtn.addEventListener('click', onEditInvoice);
 
+  // use dialog element for status change
+  const dialogEl = document.createElement('dialog');
+  dialogEl.innerHTML = `<form method="dialog">
+      <input type="hidden" id="edit-invoice__id" name="id" value="${id}">
+      <input type="hidden" id="edit-invoice__status" name="status" value="paid">
+      <div class="form__input-group">
+        <label for="edit-invoice__paid">Paid On</label>
+        <input type="date" name="date_paid" id="edit-invoice__paid"/>
+      </div>
+      <div>
+        <button id="cancel-dialog" type="reset">Cancel</button>
+        <button type="submit">Confirm</button>
+      </div>
+    </form>`;
+  wrapper.appendChild(dialogEl);
+
   const toggleStatusBtn = wrapper.querySelector('#toggle-status-btn');
   toggleStatusBtn.addEventListener('click', async (event) => {
     const id = event.target.dataset.invoiceId;
     const status = event.target.dataset.status;
 
-    if (status === 'open') setInvoicePaid(id);
-    else if (status === 'paid') setInvoiceOpen(id);
+    // set status to paid
+    if (status === 'open') {
+      const newDatePaid = dialogEl.querySelector('#edit-invoice__paid');
+      newDatePaid.valueAsDate = new Date();
+      newDatePaid.min = dateIssue.getDateString();
+
+      const cancelDialogBtn = dialogEl.querySelector('#cancel-dialog');
+      cancelDialogBtn.addEventListener('click', () => dialogEl.close());
+
+      const form = dialogEl.querySelector('form');
+      form.addEventListener('submit', async (event) => {
+        const data = new URLSearchParams(new FormData(event.target));
+        const id = data.get('id');
+        let response = await request.updateInvoice(id, data);
+      });
+
+      dialogEl.showModal();
+
+      // set status to open
+    } else if (status === 'paid') {
+      if (window.confirm('Set Invoice to Open?')) {
+        const obj = { id: id, status: 'open', date_paid: '' };
+        const data = new URLSearchParams(obj);
+        let response = await request.updateInvoice(id, data);
+      }
+    }
   });
 
   return wrapper;
