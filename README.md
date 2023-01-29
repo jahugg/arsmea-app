@@ -15,7 +15,7 @@ status report
 - [X] delete contact
 - [X] archive contact
 - [X] edit contact
-- [ ] list contact invoices
+- [X] list contact invoices
 
 ### orders
 
@@ -25,7 +25,7 @@ status report
 - [X] create new order
 - [X] delete order
 - [X] edit order
-- [X] display linked invoices
+- [X] display linked invoice
 - [ ] add sketch, image to order
 
 ### invoices
@@ -37,11 +37,10 @@ status report
 - [X] create new invoice via order
 - [X] delete invoice directly
 - [X] delete invoice via order
-- [ ] archive invoice
 - [X] edit invoice directly
 - [X] edit invoice via order
-- [ ] quick mark as paid
-- [ ] quick mark as open
+- [X] quick mark as paid
+- [X] quick mark as open
 
 ### subscriptions
 
@@ -50,3 +49,5 @@ status report
 - [ ] delete subscription
 - [ ] archive subscription
 - [ ] edit subscription
+
+### vouchers

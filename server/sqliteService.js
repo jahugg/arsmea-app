@@ -349,10 +349,8 @@ v
       const query = this.db.prepare(`SELECT invoices.id, invoices.status, invoices.amount, invoices.date_issue, invoices.date_paid, invoices.date_due,
       contacts.firstname, contacts.lastname
         FROM invoices
-        INNER JOIN orders
-          ON orders.invoice_id = invoices.id
         INNER JOIN contacts
-          ON orders.contact_id = contacts.id
+          ON invoices.contact_id = contacts.id
         WHERE contacts.id = ?
         ORDER BY invoices.date_due`);
       const orderList = query.all(id);

@@ -255,6 +255,7 @@ async function getInvoiceFormEl(id) {
   form.addEventListener('submit', onUpdateInvoice);
   form.innerHTML = `<section class="content-controls">
       <input type="submit" class="button-small" value="Save Changes" />
+      <button type="button" id="discard-invoice-btn" class="button-small">Discard Changes</button>
       <button type="button" id="delete-invoice-btn" class="button-small" data-invoice-id="${id}">Delete Invoice</button>
     </section>
     <input type="hidden" id="edit-invoice__id" name="id" value="${id}">
@@ -292,6 +293,10 @@ async function getInvoiceFormEl(id) {
     if (option.value === status) option.setAttribute('selected', 'true');
   }
   wrapper.appendChild(form);
+
+  // discard button
+  const discardBtn = form.querySelector('#discard-invoice-btn');
+  discardBtn.addEventListener('click', () => selectInvoice(id));
 
   // delete button
   const deleteBtn = wrapper.querySelector('#delete-invoice-btn');
@@ -475,7 +480,7 @@ async function selectInvoice(id) {
 }
 
 async function getInvoiceDetailsEl(id) {
-  const { date_issue, date_due, date_paid, amount, status, contact_id, firstname, lastname } = await request.invoiceDetails(id);
+  const { date_issue, date_due, date_paid, amount, status, description, contact_id, firstname, lastname } = await request.invoiceDetails(id);
   const dateIssue = new DateExt(date_issue);
   const dateDue = new DateExt(date_due);
   const datePaid = new DateExt(date_paid);
@@ -504,6 +509,7 @@ async function getInvoiceDetailsEl(id) {
         : '<div>Due on <time datetime="' + dateDue.getDateString() + '">' + dueString + '</time></div>'
     }
     <div data-status="${statusObj.name}">${statusObj.message}</div>
+    ${description != '' ||  description != null ? '<div>' + description + '</div>' : ''}
   </div>`;
 
   // create list of linked orders

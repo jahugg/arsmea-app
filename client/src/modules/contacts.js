@@ -98,12 +98,12 @@ async function selectContact(id) {
 
   try {
     // get contact details
-    contactDetails = await getContactAddressEl(id);
+    contactDetails = await getContactDetailsEl(id);
   } catch (error) {
     // select first child
     const firstChild = contactList.firstElementChild;
     if (firstChild) {
-      contactDetails = await getContactAddressEl(firstChild.dataset.contactId);
+      contactDetails = await getContactDetailsEl(firstChild.dataset.contactId);
       id = firstChild.dataset.contactId;
     }
   }
@@ -294,7 +294,7 @@ async function getContactListEl(archived = false) {
   return contactList;
 }
 
-async function getContactAddressEl(id) {
+async function getContactDetailsEl(id) {
   let data = await request.contactDetails(id);
   const { firstname, lastname, company, address, email, phone, notes, archived } = data;
 
@@ -364,6 +364,34 @@ async function getContactAddressEl(id) {
     }
 
     wrapper.appendChild(orderListEl);
+  }
+
+  // display invoices of contact
+  const invoices = await request.invoicesByContact(id);
+  if (invoices.length) {
+    const invoiceTitle = document.createElement('h2');
+    invoiceTitle.innerHTML = 'Invoices';
+    wrapper.appendChild(invoiceTitle);
+
+    const invoiceListEl = document.createElement('ul');
+    invoiceListEl.id = 'contact-invoices';
+    for (let invoice of invoices) {
+      const { id, date_issue, date_due, date_paid, status, amount } = invoice;
+      let dueDate = new DateExt(date_due);
+      let dateString = `${String(dueDate.getDate()).padStart(2, '0')}. ${dueDate.nameOfMonth()} ${dueDate.getFullYear()}`;
+
+      const invoiceEl = document.createElement('li');
+      invoiceEl.dataset.invoiceId = id;
+      invoiceEl.dataset.date = dueDate.getDateString();
+      invoiceEl.innerHTML = `<a href="/invoices?id=${id}">
+      <span class="status">${status}</span>
+      <time datetime="${dueDate.toLocaleDateString()}">${dateString}</time>
+      <span class="price">${amount} CHF</span>
+    </a>`;
+      invoiceListEl.appendChild(invoiceEl);
+    }
+
+    wrapper.appendChild(invoiceListEl);
   }
 
   return wrapper;
