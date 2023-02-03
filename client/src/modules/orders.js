@@ -123,7 +123,7 @@ export default async function render() {
 export function init() {
   const url = new URL(window.location);
   let orderId = url.searchParams.get('id');
-  selectOrder(orderId);
+  if (orderId) selectOrder(orderId);
   calendar.populateCalendar();
   updateCalendar(); // why is this necessary for eventlistener to fire?
   document.addEventListener('monthloaded', updateCalendar);
@@ -207,12 +207,15 @@ async function selectOrder(id) {
     // add order id to url
     const url = new URL(window.location);
     url.searchParams.set('id', id);
-    const state = { order_id: id };
+    const state = { pageKey: "orders", id: id };
     window.history.replaceState(state, '', url);
   } catch (error) {
-    const firstChild = document.querySelector('.order-list__order');
-    if (firstChild) selectOrder(Number(firstChild.dataset.invoiceId)); // if present select first item
-    else document.querySelector('#order-detail-section').replaceChildren(); // if no item present clear details
+    console.log(error);
+    // const firstChild = document.querySelector('.order-list__order');
+    // if (firstChild) selectOrder(Number(firstChild.dataset.invoiceId)); // if present select first item
+    // else if (document.querySelector('#order-detail-section')) {
+    //   document.querySelector('#order-detail-section').replaceChildren(); // if no item present clear details
+    // }
   }
 }
 

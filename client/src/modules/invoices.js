@@ -443,6 +443,8 @@ async function onSearchInvoice(event) {
   const listSectionEl = document.querySelector('#list-module__list');
   listSectionEl.replaceChildren(invoiceListEl);
 
+  console.log(invoiceList);
+
   // const listSectionEl = document.querySelector('#list-module__list');
   // if (invoiceList.length) {
   //   const orderListEl = getOrderListEl(orderList);
@@ -470,7 +472,7 @@ async function selectInvoice(id) {
     // add invoice id to url
     const url = new URL(window.location);
     url.searchParams.set('id', id);
-    const state = { invoice_id: id };
+    const state = { pageKey: "invoices", id: id };
     window.history.replaceState(state, '', url);
   } catch (error) {
     const firstChild = document.querySelector('.invoice-list__invoice');
@@ -509,25 +511,27 @@ async function getInvoiceDetailsEl(id) {
         : '<div>Due on <time datetime="' + dateDue.getDateString() + '">' + dueString + '</time></div>'
     }
     <div data-status="${statusObj.name}">${statusObj.message}</div>
-    ${description != '' ||  description != null ? '<div>' + description + '</div>' : ''}
-  </div>`;
+    ${description != '' &&  description != null ? '<div>' + description + '</div>' : ''}
+  </div>
+  <div id="list-module__details__extra"></div>`;
 
   // create list of linked orders
   const orders = await request.ordersByInvoice(id);
   if (orders.length > 0) {
     let orderListEl = document.createElement('ul');
+    orderListEl.classList.add("list-condensed");
 
     for (let order of orders) {
       const datePlaced = new DateExt(order.datetime_placed);
-      const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
+      const placedString = `${datePlaced.getDate()}.${datePlaced.getMonth()}.${datePlaced.getFullYear()}`;
 
       let orderEl = document.createElement('li');
-      orderEl.innerHTML = `<a href="/orders?id=${order.id}">${placedString}</a> ${order.status}`;
+      orderEl.innerHTML = `<a href="/orders?id=${order.id}">${placedString}</a>, ${order.status}`;
       orderListEl.appendChild(orderEl);
     }
 
-    let infoEl = wrapper.querySelector('#list-module__details__info');
-    infoEl.innerHTML += 'Linked Orders';
+    let infoEl = wrapper.querySelector('#list-module__details__extra');
+    infoEl.innerHTML += '<h2>Linked Orders</h2>';
     infoEl.appendChild(orderListEl);
   }
 

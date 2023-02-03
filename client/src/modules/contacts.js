@@ -56,8 +56,8 @@ export async function init() {
 
   // get url parameters
   const url = new URL(window.location);
-  let contactId = url.searchParams.get('id');
-  selectContact(contactId);
+  const contactId = url.searchParams.get('id');
+  if (contactId) selectContact(contactId);
 
   // handle key controls
   window.addEventListener('keydown', function (event) {
@@ -119,7 +119,7 @@ async function selectContact(id) {
     // add contact id to url
     const url = new URL(window.location);
     url.searchParams.set('id', id);
-    const state = { contact_id: id };
+    const state = { pageKey: "contacts", id: id };
     window.history.replaceState(state, '', url);
   }
 }
@@ -346,18 +346,18 @@ async function getContactDetailsEl(id) {
     wrapper.appendChild(orderTitle);
 
     const orderListEl = document.createElement('ul');
-    orderListEl.id = 'contact-orders';
+    orderListEl.classList.add('list-condensed');
     for (let order of orders) {
-      const { id, datetime_due, status, amount, firstname, lastname } = order;
+      const { id, datetime_due, amount } = order;
       let dueDate = new DateExt(datetime_due);
-      let dateString = `${String(dueDate.getDate()).padStart(2, '0')}. ${dueDate.nameOfMonth()} ${dueDate.getFullYear()}`;
+      let dateString = `${String(dueDate.getDate()).padStart(2, '0')}.${dueDate.getMonth()}.${dueDate.getFullYear()}`;
       let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
 
       const orderEl = document.createElement('li');
       orderEl.dataset.orderId = id;
       orderEl.dataset.date = dueDate.getDateString();
       orderEl.innerHTML = `<a href="/orders?id=${id}">
-      <time datetime="${dueDate.toLocaleDateString()}">${dateString}, ${timeString}</time>
+      <time datetime="${dueDate.toLocaleDateString()}">${dateString}, ${timeString} h,</time>
       <span class="price">${amount} CHF</span>
     </a>`;
       orderListEl.appendChild(orderEl);
@@ -374,19 +374,19 @@ async function getContactDetailsEl(id) {
     wrapper.appendChild(invoiceTitle);
 
     const invoiceListEl = document.createElement('ul');
-    invoiceListEl.id = 'contact-invoices';
+    invoiceListEl.classList.add('list-condensed');
     for (let invoice of invoices) {
-      const { id, date_issue, date_due, date_paid, status, amount } = invoice;
+      const { id, date_due, status, amount } = invoice;
       let dueDate = new DateExt(date_due);
-      let dateString = `${String(dueDate.getDate()).padStart(2, '0')}. ${dueDate.nameOfMonth()} ${dueDate.getFullYear()}`;
+      let dateString = `${String(dueDate.getDate()).padStart(2, '0')}.${dueDate.getMonth()}.${dueDate.getFullYear()}`;
 
       const invoiceEl = document.createElement('li');
       invoiceEl.dataset.invoiceId = id;
       invoiceEl.dataset.date = dueDate.getDateString();
       invoiceEl.innerHTML = `<a href="/invoices?id=${id}">
+      <time datetime="${dueDate.toLocaleDateString()}">${dateString},</time>
+      <span class="price">${amount} CHF,</span>
       <span class="status">${status}</span>
-      <time datetime="${dueDate.toLocaleDateString()}">${dateString}</time>
-      <span class="price">${amount} CHF</span>
     </a>`;
       invoiceListEl.appendChild(invoiceEl);
     }
@@ -450,7 +450,11 @@ async function getContactFormEl(id) {
   const deleteBtn = form.querySelector('#delete-contact-btn');
   deleteBtn.addEventListener('click', onDeleteContact);
   const orders = await request.ordersByContact(id);
-  if (orders.length) deleteBtn.setAttribute('disabled', 'true');
+  const invoices = await request.invoicesByContact(id);
+  if (orders.length || invoices.length) {
+    deleteBtn.title = "Contacts with orders or invoices can't be deleted.";
+    deleteBtn.setAttribute('disabled', 'true');
+  }
 
   const archiveBtn = form.querySelector('#archive-contact-btn');
   archiveBtn.addEventListener('click', onArchiveContact);
