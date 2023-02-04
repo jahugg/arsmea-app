@@ -59,7 +59,7 @@ function init() {
 async function buildPage(stateObj, addToHistory = true) {
   let pageKey = stateObj.pageKey;
   let page = pages[pageKey];
-  document.title = 'Blumen | ' + page.title;
+  document.title = 'Flourish | ' + page.title;
 
   // update navigation
   const linkList = document.querySelectorAll('#app-navigation li a');

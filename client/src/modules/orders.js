@@ -20,17 +20,17 @@ export default async function render() {
   defaultView = { start: startDate, end: endDate };
 
   const module = document.createElement('div');
-  module.classList.add('module');
+  module.classList.add('list-module');
   module.id = 'order';
   module.innerHTML = `
-    <div id="order-control-section">
+    <div id="list-module__controls">
       <form id="search-order" role="search">
         <label id="search-order__label" for="search-order__input">Search</label>
         <input list="contact-list-main" name="contactName" id="search-order__input" placeholder="Contact Name..." autocomplete="off" required pattern=""/>
         <datalist id="contact-list-main"></datalist>
         <input type="hidden" name="contactId" class="contact-id" value="0">
       </form>
-      <button id="add-order-btn" type="button" class="button-add">Add Order</button>
+      <button id="add-order-btn" type="button" class="button-add">New Order</button>
     </div>
     <div id="order-list-section">
         <div id="order-list-wrapper"></div>

@@ -13,7 +13,7 @@ export default async function render() {
             <input type="text" pattern="[^0-9]*" name="input" id="search-subscription__input" placeholder="Contact Name..." autocomplete="off" required/>
           </form>
         </div>
-        <button id="add-subscription-btn" class="button-add" type="button">Add Subscription</button>
+        <button id="add-subscription-btn" class="button-add" type="button">New Subscription</button>
       </section>
       <section id="list-module__list"></section>
       <section id="list-module__details"></section>`;

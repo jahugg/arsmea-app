@@ -5,10 +5,10 @@ let contacts;
 
 export default async function render() {
   const module = document.createElement('div');
-  module.classList.add('module');
+  module.classList.add('list-module');
   module.id = 'contact';
   module.innerHTML = `
-    <div id="contact-control-section">
+    <div id="list-module__controls">
       <div>
         <form id="search-contact" role="search">
           <label id="search-contact__label" for="search-contact__input">Search</label>
@@ -21,7 +21,7 @@ export default async function render() {
         </div>
       </div>
 
-      <button id="add-contact-btn" class="button-add" type="button">Add Contact</button>
+      <button id="add-contact-btn" class="button-add" type="button">New Contact</button>
     </div>
     <div id="contact-list-section">
       <div id="contact-list-wrapper">
