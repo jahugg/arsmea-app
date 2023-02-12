@@ -116,18 +116,47 @@ app.get('/api/ordersWithinRange/', async (request, response) => {
 // subscriptions
 app.post('/api/subscription', async (request, response) => {
   const data = request.body;
-  const { contactName, contactId } = data;
-  console.log(data);
-  // optionally create new contact
-  if (contactId == 0) {
-    let nameParts = contactName.split(' ');
+
+  // create new contact if not exists
+  if (data.contactId == 0) {
+    let nameParts = data.contactName.split(' ');
     let userData = { firstname: nameParts[0] };
     if (nameParts.length > 1) userData.lastname = nameParts[1];
     const newContactId = await db.insertContact(userData);
     data.contactId = newContactId;
   }
-  const orderId = await db.insertSubscription(data);
-  response.json({ id: orderId });
+
+  data.price = data.pricePerOrder * data.frequency; // calculate full price
+  const subscription = await db.insertSubscription(data); // insert subscription
+
+  // generate orders for subscription
+  let frequency = Number(data.frequency);
+  let startDate = new Date(data.dateStart);
+  let timeParts = data.deliveryTime.split(':'); // split time string into [HH, MM]
+  let orders = [];
+
+  // create Orders
+  for (let i = 0; i < frequency; i++) {
+    // calculate order date
+    let date = new Date();
+    date.setDate(startDate.getDate() + i * Number(data.interval));
+    date.setUTCHours(timeParts[0], timeParts[1], 0, 0); // add delivery time to date
+
+    let orderObj = {
+      contact_id: data.contactId,
+      invoice_id: subscription.invoiceId,
+      datetime_due: date.toISOString(),
+      description: data.description,
+    };
+
+    orders.push(orderObj);
+  }
+
+  // insert orders
+  const ordersCount = await db.insertMultipleOrders(orders); // insert subscription
+  subscription.ordersCount = ordersCount;
+
+  response.json(subscription);
 });
 
 app.get('/api/subscriptionList', async (request, response) => {

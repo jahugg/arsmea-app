@@ -69,7 +69,7 @@ async function onPrepareNewSubscription() {
   form.method = 'POST';
   form.id = 'new-subscription';
   form.classList.add('form');
-  form.addEventListener('submit', onSubmitNewSubscription);
+  form.addEventListener('submit', onCreateNewSubscription);
   form.innerHTML = `<section class="list-module__details__controls">
         <input type="submit" class="button-small" value="Create"/>
         <button type="button" class="button-small discard-btn">Discard</button>
@@ -80,26 +80,29 @@ async function onPrepareNewSubscription() {
     <datalist id="contact-list"></datalist>
     <input type="hidden" name="contactId" id="contact-id" value="0">
 
-    <label for="new-subscription__start">First Order</label>
-    <input type="datetime-local" name="start" id="new-subscription__start" required />
+    <label for="new-subscription__datestart">First Order Date</label>
+    <input type="date" name="dateStart" id="new-subscription__datestart" required />
 
-    <label for="new-subscription__repeat">Repeat</label>
-    <select id="new-subscription__repeat" name="repeat" required>
-        <option value="1d">Every day</option>
-        <option value="7d">Every week</option>
-        <option value="14d">Every 2 weeks</option>
-        <option value="1m">Every month</option>
-        <option value="2m">Every 2 month</option>
+    <label for="new-subscription__time">Delivery Time</label>
+    <input type="time" name="deliveryTime" id="new-subscription__time" required />
+
+    <label for="new-subscription__interval">Repeat</label>
+    <select id="new-subscription__interval" name="interval" required>
+        <option value="7">Every week</option>
+        <option value="14">Every 2 weeks</option>
+        <option value="28">Every month</option>
+        <option disabled>──────────</option>
+        <option value="custom">Custom</option>
     </select>
 
-    <label for="new-subscription__end">How many times?</label>
-    <input type="number" name="times" id="new-subscription__times" min="2" max="10000" step="1" placeholder="5" required />
+    <label for="new-subscription__frequency">How many times?</label>
+    <input type="number" name="frequency" id="new-subscription__frequency" min="2" max="10000" step="1" placeholder="5" required />
 
-    <label for="new-subscription__price">Total Price</label>
-    <input id="new-subscription__price" name="price" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />CHF
+    <label for="new-subscription__price">Price per Order</label>
+    <input id="new-subscription__price" name="pricePerOrder" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />CHF
 
     <label for="new-subscription__description">Description</label>
-    <textarea name="description" id="new-subscription__description" placeholder="Notes"></textarea>`;
+    <textarea name="description" id="new-subscription__description" placeholder="Write something here"></textarea>`;
 
   listSection.replaceChildren(form);
 
@@ -134,9 +137,13 @@ async function onSearchSubscription() {}
 
 async function selectSubscription() {}
 
-async function onSubmitNewSubscription(event) {
+async function onCreateNewSubscription(event) {
   event.preventDefault();
   const data = new FormData(event.target);
   const response = await request.newSubscription(data);
-  const id = response.id;
+  console.log(response);
+
+  // insert new entry into list
+
+  // select new entry
 }

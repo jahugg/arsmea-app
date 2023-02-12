@@ -326,6 +326,9 @@ async function getContactDetailsEl(id) {
     controls.appendChild(editBtn);
   }
 
+  let infoEl = document.createElement('div');
+  infoEl.id = "list-module__details__info";
+
   let addressNode = document.createElement('address');
   addressNode.dataset.contactId = id;
   addressNode.innerHTML = `<div class="address__name">${firstname ? firstname : ''} ${lastname ? lastname : ''}</div>`;
@@ -335,7 +338,8 @@ async function getContactDetailsEl(id) {
   if (address) addressNode.innerHTML += `<div class="address__address">${address}</div>`;
   if (notes) addressNode.innerHTML += `<div class="address__notes">${notes}</div>`;
 
-  contactDetails.appendChild(addressNode);
+  infoEl.appendChild(addressNode);
+  contactDetails.appendChild(infoEl);
   wrapper.appendChild(contactDetails);
 
   // display orders of contact

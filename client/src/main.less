@@ -375,14 +375,7 @@ form {
 
   #contact-detail-section {
     grid-area: detail;
-
-    address {
-      font: var(--font-big);
-      white-space: pre-line;
-      a {
-        color: inherit;
-      }
-    }
+    max-width: 750px;
 
     h2 {
       font: var(--font-h2);
@@ -543,6 +536,7 @@ form {
 
   #order-detail-section {
     grid-area: detail;
+    max-width: 750px;
 
     .order-details__info {
       .card;
@@ -623,6 +617,7 @@ form {
 
 #list-module__details {
   grid-area: details;
+  max-width: 750px;
 }
 
 #list-module__details__controls {
@@ -635,9 +630,14 @@ form {
 #list-module__details__info {
   .card;
   font: var(--font-h1);
+  // white-space: pre-line;
 
   a {
     color: inherit;
+  }
+
+  address {
+    font-style: inherit;
   }
 }
 

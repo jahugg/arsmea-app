@@ -134,6 +134,19 @@ export default class DBService {
     }
   }
 
+  async insertMultipleOrders(data) {
+    // data format: [{},{},{}]
+    try {
+      let orders = data.map((order) => [order.contact_id, order.invoice_id, order.datetime_due, order.description]);
+      let placeholders = orders.map(() => '(?, ?, ?, ?)').join(', ');
+      let query = this.db.prepare(`INSERT INTO orders (contact_id, invoice_id, datetime_due, description) VALUES ${placeholders}`);
+      let result = query.run(...orders);
+      return result.changes;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async selectOrderById(id) {
     try {
       const query = this.db.prepare(`SELECT * FROM orders 
@@ -254,25 +267,36 @@ export default class DBService {
   // ==========
   // Subscriptions
   async insertSubscription(data) {
-    console.log(data);
-    // try {
-    //   const { contact, contactId, due, price, description } = data;
-    //   const query = this.db.prepare(`INSERT INTO orders (contact_id, datetime_placed, datetime_due, price, description, status)
-    //   VALUES (?, datetime('now'), ?, ?, ?, 'open')`);
-    //   const result = query.run(contactId, due, price, description);
-    //   return result.lastInsertRowid;
-    // } catch (error) {
-    //   console.log(error);
-    // }
+    try {
+      // insert new invoice for subscription
+      const { contactId, price } = data;
+      let query = this.db.prepare(`INSERT INTO invoices (contact_id, amount, date_issue, date_due)
+        VALUES (?, ?, date('now'), date('now','+15 day'))`);
+      let result = query.run(contactId, price);
+      const invoiceId = result.lastInsertRowid;
+
+      // insert subscription
+      const { dateStart, deliveryTime, interval, description } = data;
+      query = this.db.prepare(`INSERT INTO subscriptions (invoice_id, datetime_placed, date_start, delivery_time, interval, description)
+      VALUES (?, datetime('now'), ?, ?, ?, ?)`);
+      result = query.run(invoiceId, dateStart, deliveryTime, interval, description);
+      const subscriptionId = result.lastInsertRowid;
+
+      return { id: subscriptionId, invoiceId: invoiceId };
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async selectAllSubscriptions() {
     try {
-      const query = this.db.prepare(`SELECT subscriptions.id, subscriptions.datetime_start, contacts.firstname, contacts.lastname
+      const query = this.db.prepare(`SELECT subscriptions.id, subscriptions.date_start, contacts.firstname, contacts.lastname
         FROM subscriptions
+        INNER JOIN invoices
+        ON subscriptions.invoice_id = invoices.id
         INNER JOIN contacts 
-        ON subscriptions.contact_id = contacts.id 
-        ORDER BY subscriptions.datetime_start`);
+        ON invoices.contact_id = contacts.id 
+        ORDER BY subscriptions.date_start`);
       const list = query.all();
       return list;
     } catch (error) {
@@ -280,7 +304,6 @@ export default class DBService {
     }
   }
 
-v
   async insertInvoice(data) {
     try {
       const { contactId, issue, due, amount, description } = data;

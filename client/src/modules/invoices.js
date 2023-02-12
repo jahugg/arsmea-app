@@ -209,7 +209,7 @@ async function onCreateNewInvoice(event) {
     if (difference <= smallestDifference) closestDateEl = el;
   }
 
-  // get new database entry
+  // get new database entry and insert
   const data = await request.invoiceDetails(id);
   const itemEl = getInvoiceListItemEl(data);
   closestDateEl.after(itemEl);
