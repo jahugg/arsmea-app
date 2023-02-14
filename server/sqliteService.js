@@ -290,12 +290,12 @@ export default class DBService {
 
   async selectAllSubscriptions() {
     try {
-      const query = this.db.prepare(`SELECT subscriptions.id, subscriptions.date_start, contacts.firstname, contacts.lastname
+      const query = this.db.prepare(`SELECT subscriptions.id, subscriptions.date_start, subscriptions.frequency, subscriptions.interval, subscriptions.delivery_time, contacts.firstname, contacts.lastname
         FROM subscriptions
         INNER JOIN invoices
-        ON subscriptions.invoice_id = invoices.id
+          ON subscriptions.invoice_id = invoices.id
         INNER JOIN contacts 
-        ON invoices.contact_id = contacts.id 
+          ON invoices.contact_id = contacts.id 
         ORDER BY subscriptions.date_start`);
       const list = query.all();
       return list;
@@ -304,6 +304,25 @@ export default class DBService {
     }
   }
 
+  async selectSubscriptionById(id) {
+    try {
+      const query = this.db.prepare(`SELECT subscriptions.*, contacts.id AS contact_id, contacts.firstname, contacts.lastname
+        FROM subscriptions
+        INNER JOIN invoices
+          ON subscriptions.invoice_id = invoices.id
+        INNER JOIN contacts 
+          ON invoices.contact_id = contacts.id 
+        WHERE subscriptions.id = ?
+        ORDER BY subscriptions.date_start`);
+      const subscription = query.get(id);
+      return subscription;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // ==========
+  // Invoices
   async insertInvoice(data) {
     try {
       const { contactId, issue, due, amount, description } = data;

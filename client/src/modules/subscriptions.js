@@ -44,7 +44,7 @@ export async function init() {
   // get url parameters
   const url = new URL(window.location);
   let subscriptionId = url.searchParams.get('id');
-  selectSubscription(subscriptionId);
+  if (subscriptionId) selectSubscription(subscriptionId);
 }
 
 async function getSubscriptionListEl() {
@@ -53,10 +53,24 @@ async function getSubscriptionListEl() {
   listEl.id = 'subscription-list';
 
   for (let item of subscriptions) {
-    const { id, firstname, lastname, datetime_start } = item;
+    const { id, firstname, lastname, date_start, delivery_time, frequency, interval } = item;
+    const dateToday = new DateExt();
+    const dateStart = new DateExt(date_start + 'T' + delivery_time);
+    const dateEnd = new DateExt(dateStart);
+    dateEnd.setDate(dateEnd.getDate() + (frequency - 1) * interval);
+
+    // write status message
+    let status = '';
+    if (dateToday < dateStart) status = `starting on ${dateStart.toLocaleDateString()}`;
+    else if (dateToday < dateEnd) status = `valid until ${dateEnd.toLocaleDateString()}`;
+    else if (dateToday > dateEnd) status = 'completed';
+
     const itemEl = document.createElement('li');
-    itemEl.innerHTML = `${firstname} ${lastname} ${datetime_start}`;
+    itemEl.innerHTML = `${firstname} ${lastname} ${status}`;
+    itemEl.dataset.subscriptionId = id;
     listEl.appendChild(itemEl);
+
+    itemEl.addEventListener('click', (event) => selectSubscription(event.target.closest('li').dataset.subscriptionId));
   }
 
   return listEl;
@@ -135,7 +149,129 @@ async function onPrepareNewSubscription() {
 
 async function onSearchSubscription() {}
 
-async function selectSubscription() {}
+async function selectSubscription(id) {
+  try {
+    // get subscription details
+    const itemDetails = await getSubscriptionDetailsEl(id);
+    const detailsWrapper = document.querySelector('#list-module__details');
+    detailsWrapper.replaceChildren(itemDetails);
+
+    // mark selected list item
+    // const invoiceList = document.querySelectorAll('.invoice-list__invoice');
+    // for (let invoice of invoiceList)
+    //   if (invoice.dataset.invoiceId == id) invoice.dataset.selected = '';
+    //   else delete invoice.dataset.selected;
+
+    // add invoice id to url
+    const url = new URL(window.location);
+    url.searchParams.set('id', id);
+    const state = { pageKey: "subscriptions", id: id };
+    window.history.replaceState(state, '', url);
+  } catch (error) {
+    console.log(error);
+    // const firstChild = document.querySelector('.invoice-list__invoice');
+    // if (firstChild) selectInvoice(Number(firstChild.dataset.invoiceId)); // if present select first item
+    // else document.querySelector('#list-module__details').replaceChildren(); // if no item present clear details
+  }
+}
+
+async function getSubscriptionDetailsEl(id) {
+  const data = await request.subscriptionDetails(id);
+  const { date_start, delivery_time, frequency, interval, description, contact_id, firstname, lastname } = data;
+  const dateToday = new DateExt();
+  const dateStart = new DateExt(date_start + 'T' + delivery_time);
+  const dateEnd = new DateExt(dateStart);
+  dateEnd.setDate(dateEnd.getDate() + (frequency - 1) * interval);
+
+  // let statusObj = getStatusObject(dateDue, status);
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'subscription-details';
+  wrapper.innerHTML = `
+  <section id="list-module__details__controls">
+    <button type="button" id="edit-btn" class="button-small" data-subscription-id="${id}">Edit</button>
+  </section>
+  <div id="list-module__details__info">
+    <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
+    <div>Starts on <time datetime="${dateStart.getDateString()}">${dateStart.getDateString()}</time></div>
+    ${description != '' &&  description != null ? '<div>' + description + '</div>' : ''}
+  </div>
+  <div id="list-module__details__extra"></div>`;
+
+  // // create list of linked orders
+  // const orders = await request.ordersByInvoice(id);
+  // if (orders.length > 0) {
+  //   let orderListEl = document.createElement('ul');
+  //   orderListEl.classList.add("list-condensed");
+
+  //   for (let order of orders) {
+  //     const datePlaced = new DateExt(order.datetime_placed);
+  //     const placedString = `${datePlaced.getDate()}.${datePlaced.getMonth()}.${datePlaced.getFullYear()}`;
+
+  //     let orderEl = document.createElement('li');
+  //     orderEl.innerHTML = `<a href="/orders?id=${order.id}">${placedString}</a>, ${order.status}`;
+  //     orderListEl.appendChild(orderEl);
+  //   }
+
+  //   let infoEl = wrapper.querySelector('#list-module__details__extra');
+  //   infoEl.innerHTML += '<h2>Linked Orders</h2>';
+  //   infoEl.appendChild(orderListEl);
+  // }
+
+  // const editBtn = wrapper.querySelector('#edit-btn');
+  // editBtn.addEventListener('click', onEditInvoice);
+
+  // // use dialog element for status change
+  // const dialogEl = document.createElement('dialog');
+  // dialogEl.innerHTML = `<form method="dialog">
+  //     <input type="hidden" id="edit-invoice__id" name="id" value="${id}">
+  //     <input type="hidden" id="edit-invoice__status" name="status" value="paid">
+  //     <div class="form__input-group">
+  //       <label for="edit-invoice__paid">Paid On</label>
+  //       <input type="date" name="date_paid" id="edit-invoice__paid"/>
+  //     </div>
+  //     <div>
+  //       <button id="cancel-dialog" type="reset">Cancel</button>
+  //       <button type="submit">Confirm</button>
+  //     </div>
+  //   </form>`;
+  // wrapper.appendChild(dialogEl);
+
+  // const toggleStatusBtn = wrapper.querySelector('#toggle-status-btn');
+  // toggleStatusBtn.addEventListener('click', async (event) => {
+  //   const id = event.target.dataset.invoiceId;
+  //   const status = event.target.dataset.status;
+
+  //   // set status to paid
+  //   if (status === 'open') {
+  //     const newDatePaid = dialogEl.querySelector('#edit-invoice__paid');
+  //     newDatePaid.valueAsDate = new Date();
+  //     newDatePaid.min = dateIssue.getDateString();
+
+  //     const cancelDialogBtn = dialogEl.querySelector('#cancel-dialog');
+  //     cancelDialogBtn.addEventListener('click', () => dialogEl.close());
+
+  //     const form = dialogEl.querySelector('form');
+  //     form.addEventListener('submit', async (event) => {
+  //       const data = new URLSearchParams(new FormData(event.target));
+  //       const id = data.get('id');
+  //       let response = await request.updateInvoice(id, data);
+  //     });
+
+  //     dialogEl.showModal();
+
+  //     // set status to open
+  //   } else if (status === 'paid') {
+  //     if (window.confirm('Set Invoice to Open?')) {
+  //       const obj = { id: id, status: 'open', date_paid: '' };
+  //       const data = new URLSearchParams(obj);
+  //       let response = await request.updateInvoice(id, data);
+  //     }
+  //   }
+  // });
+
+  return wrapper;
+}
 
 async function onCreateNewSubscription(event) {
   event.preventDefault();

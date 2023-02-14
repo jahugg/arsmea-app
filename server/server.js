@@ -164,6 +164,12 @@ app.get('/api/subscriptionList', async (request, response) => {
   response.json(list);
 });
 
+app.get('/api/subscription/:id', async (request, response) => {
+  const { id } = request.params;
+  const invoice = await db.selectSubscriptionById(id);
+  response.json(invoice);
+});
+
 // invoices
 app.post('/api/invoice', async (request, response) => {
   const data = request.body;

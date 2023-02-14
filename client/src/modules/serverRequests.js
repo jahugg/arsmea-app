@@ -110,6 +110,11 @@ export async function newSubscription(data) {
   return await response.json();
 }
 
+export async function subscriptionDetails(id) {
+  const response = await fetch(`${process.env.SERVER}/api/subscription/${id}`);
+  return await response.json();
+}
+
 // invoices
 export async function invoices() {
   const response = await fetch(`${process.env.SERVER}/api/invoiceList`);
