@@ -306,7 +306,7 @@ export default class DBService {
 
   async selectSubscriptionById(id) {
     try {
-      const query = this.db.prepare(`SELECT subscriptions.*, contacts.id AS contact_id, contacts.firstname, contacts.lastname
+      const query = this.db.prepare(`SELECT subscriptions.*, contacts.id AS contact_id, contacts.firstname, contacts.lastname, invoices.amount
         FROM subscriptions
         INNER JOIN invoices
           ON subscriptions.invoice_id = invoices.id

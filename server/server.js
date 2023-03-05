@@ -145,7 +145,7 @@ app.post('/api/subscription', async (request, response) => {
     let orderObj = {
       contact_id: data.contactId,
       invoice_id: subscription.invoiceId,
-      datetime_due: date.toISOString(),
+      datetime_due: date.toISOString().split('.')[0], //remove milliseconds and "Z" for UTC
       description: data.description,
     };
 
