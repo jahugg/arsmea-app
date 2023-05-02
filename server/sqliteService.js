@@ -277,8 +277,8 @@ export default class DBService {
 
       // insert subscription
       const { dateStart, deliveryTime, interval, description } = data;
-      query = this.db.prepare(`INSERT INTO subscriptions (invoice_id, datetime_placed, date_start, delivery_time, interval, description)
-      VALUES (?, datetime('now'), ?, ?, ?, ?)`);
+      query = this.db.prepare(`INSERT INTO subscriptions (invoice_id, datetime_placed, date_start, delivery_time, frequency, interval, description)
+      VALUES (?, datetime('now'), ?, ?, ?, ?, ?)`);
       result = query.run(invoiceId, dateStart, deliveryTime, interval, description);
       const subscriptionId = result.lastInsertRowid;
 
@@ -333,6 +333,33 @@ export default class DBService {
         WHERE contacts.id = ?
         ORDER BY subscriptions.date_start`);
       const result = query.all(id);
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async deleteSubscription(id) {
+    try {
+      // get invoice id
+      let query = this.db.prepare(`SELECT invoice_id
+        FROM subscriptions
+        WHERE subscriptions.id = ?`);
+      let result = query.get(id);
+      const invoiceId = result.invoice_id;
+
+      // delete orders
+      query = this.db.prepare('DELETE FROM orders WHERE invoice_id = ?');
+      query.run(invoiceId);
+
+      // delete subscription
+      query = this.db.prepare('DELETE FROM subscriptions WHERE id = ?');
+      result = query.run(id);
+
+      // delete invoices
+      query = this.db.prepare('DELETE FROM invoices WHERE id = ?');
+      query.run(invoiceId); 
+
       return result;
     } catch (error) {
       console.log(error);
