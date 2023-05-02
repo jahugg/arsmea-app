@@ -170,6 +170,12 @@ app.get('/api/subscription/:id', async (request, response) => {
   response.json(invoice);
 });
 
+app.get('/api/subscriptionsByContact/:id', async (request, response) => {
+  const { id } = request.params;
+  const list = await db.selectSubscriptionsByContactId(id);
+  response.json(list);
+});
+
 // invoices
 app.post('/api/invoice', async (request, response) => {
   const data = request.body;

@@ -9,8 +9,10 @@ export default async function render() {
       <section id="list-module__controls">
         <div>
           <form id="search-subscription" role="search">
-            <label id="search-subscription__label" for="search-subscription__input">Search</label>
-            <input type="text" pattern="[^0-9]*" name="input" id="search-subscription__input" placeholder="Contact Name..." autocomplete="off" required/>
+            <label id="search-subscription__label" for="search-subscription__input">Search by contact</label>
+            <input list="contact-list-main" type="text" pattern="[^0-9]*" name="input" id="search-subscription__input" placeholder="Contact Name..." autocomplete="off" required/>
+            <datalist id="contact-list-main"></datalist>
+            <input type="hidden" name="contactId" class="contact-id" value="0">
           </form>
         </div>
         <button id="add-subscription-btn" class="button-add" type="button">New Subscription</button>
@@ -21,18 +23,41 @@ export default async function render() {
   const addButton = module.querySelector('#add-subscription-btn');
   addButton.addEventListener('click', onPrepareNewSubscription);
 
+  const contactIdInput = module.querySelector('#search-subscription .contact-id');
   const searchInput = module.querySelector('#search-subscription__input');
-  searchInput.addEventListener('input', onSearchSubscription);
+  searchInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    let contactId = 0;
 
-  const searchForm = module.querySelector('#search-subscription');
-  searchForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    console.log('reset search and select contact');
+    // check if input matches a current client
+    for (const item of datalist.children) {
+      item.value === value ? (contactId = item.dataset.contactId) : '';
+    }
+    // write value to form (hidden)
+    contactIdInput.value = contactId;
   });
 
+  // search subscriptions by contact
+  const searchForm = module.querySelector('#search-subscription');
+  searchForm.addEventListener('submit', onSearchSubscription);
+
   const listSectionEl = module.querySelector('#list-module__list');
-  const subscriptionList = await getSubscriptionListEl();
+  const subscriptionList = getSubscriptionListEl(await request.subscriptions());
   listSectionEl.replaceChildren(subscriptionList);
+
+  // populate datalist with clients
+  const datalist = module.querySelector('#contact-list-main');
+  const contacts = await request.contacts();
+  let patternString = '';
+  for (const contact of contacts) {
+    const { id, firstname, lastname } = contact;
+    const option = document.createElement('option');
+    option.dataset.contactId = id;
+    option.value = `${firstname} ${lastname}`;
+    datalist.appendChild(option);
+
+    patternString += `${firstname} ${lastname}|`;
+  }
 
   return module;
 }
@@ -47,33 +72,47 @@ export async function init() {
   if (subscriptionId) selectSubscription(subscriptionId);
 }
 
-async function getSubscriptionListEl() {
-  const subscriptions = await request.subscriptions();
+/**
+ * build list element
+ * @param {Object} subscriptions subscriptions data list
+ */
+function getSubscriptionListEl(subscriptions) {
   const listEl = document.createElement('ul');
   listEl.id = 'subscription-list';
 
-  for (let item of subscriptions) {
-    const { id, firstname, lastname, date_start, delivery_time, frequency, interval } = item;
-    const dateToday = new DateExt();
-    const dateStart = new DateExt(date_start + 'T' + delivery_time);
-    const dateEnd = new DateExt(dateStart);
-    dateEnd.setDate(dateEnd.getDate() + (frequency - 1) * interval);
-
-    // write status message
-    let status = '';
-    if (dateToday < dateStart) status = `starting on ${dateStart.toLocaleDateString()}`;
-    else if (dateToday < dateEnd) status = `valid until ${dateEnd.toLocaleDateString()}`;
-    else if (dateToday > dateEnd) status = 'completed';
-
-    const itemEl = document.createElement('li');
-    itemEl.innerHTML = `${firstname} ${lastname} ${status}`;
-    itemEl.dataset.subscriptionId = id;
-    listEl.appendChild(itemEl);
-
-    itemEl.addEventListener('click', (event) => selectSubscription(event.target.closest('li').dataset.subscriptionId));
-  }
+  if (subscriptions.length) {
+    for (let item of subscriptions) {
+      const itemEl = getSubscriptionListItemEl(item);
+      listEl.appendChild(itemEl);
+    }
+  } else listEl.innerHTML = 'No Subscriptions Found';
 
   return listEl;
+}
+
+/**
+ * build list item element
+ * @param {Object} data item data
+ */
+function getSubscriptionListItemEl(data) {
+  const { id, firstname, lastname, date_start, delivery_time, frequency, interval } = data;
+  const dateToday = new DateExt();
+  const dateStart = new DateExt(date_start + 'T' + delivery_time);
+  const dateEnd = new DateExt(dateStart);
+  dateEnd.setDate(dateEnd.getDate() + (frequency - 1) * interval);
+
+  // write status message
+  let status = '';
+  if (dateToday < dateStart) status = `starting on ${dateStart.toLocaleDateString()}`;
+  else if (dateToday < dateEnd) status = `valid until ${dateEnd.toLocaleDateString()}`;
+  else if (dateToday > dateEnd) status = 'completed';
+
+  const itemEl = document.createElement('li');
+  itemEl.innerHTML = `${firstname} ${lastname} ${status}`;
+  itemEl.dataset.subscriptionId = id;
+
+  itemEl.addEventListener('click', (event) => selectSubscription(event.target.closest('li').dataset.subscriptionId));
+  return itemEl;
 }
 
 async function onPrepareNewSubscription() {
@@ -89,34 +128,48 @@ async function onPrepareNewSubscription() {
         <button type="button" class="button-small discard-btn">Discard</button>
     </section>
 
-    <label for="new-subscription__contact">Client</label>
-    <input list="contact-list" name="contactName" id="new-subscription__contact" placeholder="Hans Muster" autocomplete="off" required />
-    <datalist id="contact-list"></datalist>
-    <input type="hidden" name="contactId" id="contact-id" value="0">
+    <div class="form__input-group">
+      <label for="new-subscription__contact">Client</label>
+      <input list="contact-list" name="contactName" id="new-subscription__contact" placeholder="Hans Muster" autocomplete="off" required />
+      <datalist id="contact-list"></datalist>
+      <input type="hidden" name="contactId" id="contact-id" value="0">
+    </div>
 
-    <label for="new-subscription__datestart">First Order Date</label>
-    <input type="date" name="dateStart" id="new-subscription__datestart" required />
+    <div class="form__input-group">
+      <label for="new-subscription__datestart">First Order Date</label>
+      <input type="date" name="dateStart" id="new-subscription__datestart" required />
+    </div>
 
-    <label for="new-subscription__time">Delivery Time</label>
-    <input type="time" name="deliveryTime" id="new-subscription__time" required />
+    <div class="form__input-group">
+      <label for="new-subscription__time">Delivery Time</label>
+      <input type="time" name="deliveryTime" id="new-subscription__time" required />
+    </div>
 
-    <label for="new-subscription__interval">Repeat</label>
-    <select id="new-subscription__interval" name="interval" required>
-        <option value="7">Every week</option>
-        <option value="14">Every 2 weeks</option>
-        <option value="28">Every month</option>
-        <option disabled>──────────</option>
-        <option value="custom">Custom</option>
-    </select>
+    <div class="form__input-group">
+      <label for="new-subscription__interval">Repeat</label>
+      <select id="new-subscription__interval" name="interval" required>
+          <option value="7">Every week</option>
+          <option value="14">Every 2 weeks</option>
+          <option value="28">Every month</option>
+          <option disabled>──────────</option>
+          <option value="custom">Custom</option>
+      </select>
+    </div>
 
-    <label for="new-subscription__frequency">How many times?</label>
-    <input type="number" name="frequency" id="new-subscription__frequency" min="2" max="10000" step="1" placeholder="5" required />
+    <div class="form__input-group">
+      <label for="new-subscription__frequency">How many times?</label>
+      <input type="number" name="frequency" id="new-subscription__frequency" min="2" max="10000" step="1" placeholder="5" required />
+    </div>
 
-    <label for="new-subscription__price">Price per Order</label>
-    <input id="new-subscription__price" name="pricePerOrder" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />CHF
+    <div class="form__input-group">
+      <label for="new-subscription__price">Price per Order</label>
+      <input id="new-subscription__price" name="pricePerOrder" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />CHF
+    </div>
 
-    <label for="new-subscription__description">Description</label>
-    <textarea name="description" id="new-subscription__description" placeholder="Write something here"></textarea>`;
+    <div class="form__input-group">
+      <label for="new-subscription__description">Description</label>
+      <textarea name="description" id="new-subscription__description" placeholder="Write something here"></textarea>
+    </div>`;
 
   listSection.replaceChildren(form);
 
@@ -147,8 +200,22 @@ async function onPrepareNewSubscription() {
   });
 }
 
-async function onSearchSubscription() {}
+async function onSearchSubscription(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  id = data.get('contactId');
 
+  // display subscriptions for contact
+  const subscriptions = await request.subscriptionsByContact(id);
+  const listEl = getSubscriptionListEl(subscriptions);
+  const listSectionEl = document.querySelector('#list-module__list');
+  listSectionEl.replaceChildren(listEl);
+}
+
+/**
+ * select and open a subscription element
+ * @param {Number} id identifier of the subscription to select
+ */
 async function selectSubscription(id) {
   try {
     // get subscription details
@@ -157,10 +224,10 @@ async function selectSubscription(id) {
     detailsWrapper.replaceChildren(itemDetails);
 
     // mark selected list item
-    // const invoiceList = document.querySelectorAll('.invoice-list__invoice');
-    // for (let invoice of invoiceList)
-    //   if (invoice.dataset.invoiceId == id) invoice.dataset.selected = '';
-    //   else delete invoice.dataset.selected;
+    const subscriptionList = document.querySelectorAll('#subscription-list li');
+    for (let subscription of subscriptionList)
+      if (subscription.dataset.subscriptionId == id) subscription.dataset.selected = '';
+      else delete subscription.dataset.selected;
 
     // add invoice id to url
     const url = new URL(window.location);
@@ -178,6 +245,7 @@ async function selectSubscription(id) {
 async function getSubscriptionDetailsEl(id) {
   const data = await request.subscriptionDetails(id);
   const { invoice_id, amount, date_start, delivery_time, frequency, interval, description, contact_id, firstname, lastname } = data;
+
   const dateToday = new DateExt();
   const dateStart = new DateExt(date_start + 'T' + delivery_time);
   const dateEnd = new DateExt(dateStart);
@@ -236,8 +304,140 @@ async function onCreateNewSubscription(event) {
 
 async function onEditSubscription(event) {
   const id = event.target.dataset.subscriptionId;
-  console.log('edit ' + id);
-  // const contactDetailsWrapper = document.getElementById('order-detail-section');
-  // const form = await getOrderFormEl(id);
-  // contactDetailsWrapper.replaceChildren(form);
+  const detailsWrapper = document.getElementById('list-module__details');
+  console.log(detailsWrapper);
+  const form = await getSubscriptionFormEl(id);
+  detailsWrapper.replaceChildren(form);
+}
+
+async function getSubscriptionFormEl(id) {
+  const data = await request.subscriptionDetails(id);
+  const { invoice_id, amount, date_start, delivery_time, frequency, interval, description, contact_id, firstname, lastname } = data;
+
+  const dateToday = new DateExt();
+  const dateStart = new DateExt(date_start + 'T' + delivery_time);
+  const dateEnd = new DateExt(dateStart);
+  dateEnd.setDate(dateEnd.getDate() + (frequency - 1) * interval);
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'subscription-details';
+  const form = document.createElement('form');
+  form.action = `${process.env.SERVER}/api/updateSubscription`;
+  form.method = 'POST';
+  form.id = 'edit-subscription';
+  form.addEventListener('submit', onUpdateSubscription);
+  form.innerHTML = `<section class="content-controls">
+      <input type="submit" class="button-small" value="Save Changes" />
+      <button type="button" id="discard-subscription-btn" class="button-small">Discard Changes</button>
+      <button type="button" id="delete-subscription-btn" class="button-small" data-subscription-id="${id}">Delete Invoice</button>
+    </section>
+    <input type="hidden" id="edit-subscription__id" name="id" value="${id}">
+
+    <div class="form__input-group">
+      <label for="new-subscription__contact">Client</label>
+      <input list="contact-list" name="contactName" id="new-subscription__contact" 
+      value="${firstname ? firstname : ''} ${lastname ? lastname : ''}" autocomplete="off" required />
+      <datalist id="contact-list"></datalist>
+      <input type="hidden" name="contactId" id="contact-id" value="${contact_id}">
+    </div>
+
+    <div class="form__input-group">
+      <label for="new-subscription__datestart">First Order Date</label>
+      <input type="date" name="dateStart" id="new-subscription__datestart" value="${date_start}" required />
+    </div>
+
+    <div class="form__input-group">
+      <label for="new-subscription__time">Delivery Time</label>
+      <input type="time" name="deliveryTime" id="new-subscription__time" value="${delivery_time}" required />
+    </div>
+
+    <div class="form__input-group">
+      <label for="new-subscription__interval">Repeat</label>
+      <select id="new-subscription__interval" name="interval" required>
+          <option value="7">Every week</option>
+          <option value="14">Every 2 weeks</option>
+          <option value="28">Every month</option>
+          <option disabled>──────────</option>
+          <option value="custom">Custom</option>
+      </select>
+    </div>
+
+    <div class="form__input-group">
+      <label for="new-subscription__frequency">How many times?</label>
+      <input type="number" name="frequency" id="new-subscription__frequency" min="2" max="10000" step="1" placeholder="5" required />
+    </div>
+
+    <div class="form__input-group">
+      <label for="new-subscription__price">Price per Order</label>
+      <input id="new-subscription__price" name="pricePerOrder" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />CHF
+    </div>
+
+    <div class="form__input-group">
+      <label for="new-subscription__description">Description</label>
+      <textarea name="description" id="new-subscription__description" placeholder="Write something here"></textarea>
+    </div>`;
+
+  wrapper.appendChild(form);
+
+  // discard button
+  const discardBtn = form.querySelector('#discard-subscription-btn');
+  discardBtn.addEventListener('click', () => selectSubscription(id));
+
+  // delete button
+  const deleteBtn = wrapper.querySelector('#delete-subscription-btn');
+  deleteBtn.addEventListener('click', onDeleteSubscription);
+
+  // configure issue date element
+  let issueEl = wrapper.querySelector('#edit-invoice__issue');
+  issueEl.valueAsDate = dateIssue;
+  issueEl.max = dateDue.getDateString();
+
+  // configure due date element
+  let dueEl = wrapper.querySelector('#edit-invoice__due');
+  dueEl.valueAsDate = dateDue;
+  dueEl.min = dateIssue.getDateString();
+
+  // adjust due date minimum on issue date change
+  issueEl.addEventListener('input', (event) => {
+    let dueEl = document.querySelector('#edit-invoice__due');
+    dueEl.min = event.target.value;
+  });
+
+  // adjust issue date maximum on due date change
+  dueEl.addEventListener('input', (event) => {
+    let issueEl = document.querySelector('#edit-invoice__issue');
+    issueEl.max = event.target.value;
+  });
+
+  return wrapper;
+}
+
+/**
+ * update invoice entry
+ * @param {Object} event event data
+ */
+async function onUpdateSubscription(event) {
+  event.preventDefault();
+  const data = new URLSearchParams(new FormData(event.target));
+  const id = data.get('id');
+  console.log(id);
+  // let response = await request.updateSubscription(id, data);
+
+  // update item in subscription list
+
+  // select item
+  // selectSubscription(id);
+}
+
+async function onDeleteSubscription(event) {
+  const subscriptionId = event.target.dataset.subscriptionId;
+  console.log('delete ' + subscriptionId);
+
+  // if (window.confirm('Delete Subscription?')) {
+  //   const result = await request.deleteSubscription(subscriptionId);
+  //   const subscriptionEl = document.querySelector(`.subscription-list__invoice[data-subscription-id="${subscriptionId}"]`);
+  //   subscriptionEl.remove();
+  //   const detailsWrapper = document.getElementById('list-module__details');
+  //   detailsWrapper.innerHTML = '';
+  // }
 }

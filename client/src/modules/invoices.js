@@ -51,6 +51,7 @@ export default async function render() {
   const searchForm = module.querySelector('#search-invoice');
   searchForm.addEventListener('submit', onSearchInvoice);
 
+  // populate datalist with clients
   const datalist = module.querySelector('#contact-list-main');
   const contacts = await request.contacts();
   let patternString = '';

@@ -45,7 +45,7 @@ status report
 ### subscriptions
 
 - [X] create new subscription
-- [ ] search subscription
+- [X] search subscription
 - [ ] delete subscription
 - [ ] archive subscription
 - [ ] edit subscription
