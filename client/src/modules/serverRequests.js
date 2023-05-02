@@ -120,6 +120,16 @@ export async function subscriptionsByContact(contactId) {
   return await response.json();
 }
 
+export async function deleteSubscription(id) {
+  try {
+    const response = await fetch(`${process.env.SERVER}/api/subscription/${id}`, {
+      method: 'DELETE',
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 // invoices
 export async function invoices() {
   const response = await fetch(`${process.env.SERVER}/api/invoiceList`);

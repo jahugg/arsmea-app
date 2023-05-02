@@ -159,6 +159,14 @@ app.post('/api/subscription', async (request, response) => {
   response.json(subscription);
 });
 
+app.delete('/api/subscription/:id', async (request, response) => {
+  const { id } = request.params;
+  // delete subscription, orders and invoice
+  const result = await db.deleteSubscription(id);
+  // const result = await db.deleteEntry('invoices', id);
+  response.json({ success: result });
+});
+
 app.get('/api/subscriptionList', async (request, response) => {
   const list = await db.selectAllSubscriptions();
   response.json(list);

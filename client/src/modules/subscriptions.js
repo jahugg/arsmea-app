@@ -305,7 +305,6 @@ async function onCreateNewSubscription(event) {
 async function onEditSubscription(event) {
   const id = event.target.dataset.subscriptionId;
   const detailsWrapper = document.getElementById('list-module__details');
-  console.log(detailsWrapper);
   const form = await getSubscriptionFormEl(id);
   detailsWrapper.replaceChildren(form);
 }
@@ -314,7 +313,6 @@ async function getSubscriptionFormEl(id) {
   const data = await request.subscriptionDetails(id);
   const { invoice_id, amount, date_start, delivery_time, frequency, interval, description, contact_id, firstname, lastname } = data;
 
-  const dateToday = new DateExt();
   const dateStart = new DateExt(date_start + 'T' + delivery_time);
   const dateEnd = new DateExt(dateStart);
   dateEnd.setDate(dateEnd.getDate() + (frequency - 1) * interval);
@@ -329,7 +327,7 @@ async function getSubscriptionFormEl(id) {
   form.innerHTML = `<section class="content-controls">
       <input type="submit" class="button-small" value="Save Changes" />
       <button type="button" id="discard-subscription-btn" class="button-small">Discard Changes</button>
-      <button type="button" id="delete-subscription-btn" class="button-small" data-subscription-id="${id}">Delete Invoice</button>
+      <button type="button" id="delete-subscription-btn" class="button-small" data-subscription-id="${id}">Delete Subscription</button>
     </section>
     <input type="hidden" id="edit-subscription__id" name="id" value="${id}">
 
@@ -364,17 +362,19 @@ async function getSubscriptionFormEl(id) {
 
     <div class="form__input-group">
       <label for="new-subscription__frequency">How many times?</label>
-      <input type="number" name="frequency" id="new-subscription__frequency" min="2" max="10000" step="1" placeholder="5" required />
+      <input type="number" name="frequency" id="new-subscription__frequency" min="2" max="10000" step="1" placeholder="5" value="${frequency}" required />
     </div>
 
     <div class="form__input-group">
       <label for="new-subscription__price">Price per Order</label>
-      <input id="new-subscription__price" name="pricePerOrder" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />CHF
+      <input id="new-subscription__price" name="pricePerOrder" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" value="${
+        amount / frequency
+      }" required />CHF
     </div>
 
     <div class="form__input-group">
       <label for="new-subscription__description">Description</label>
-      <textarea name="description" id="new-subscription__description" placeholder="Write something here"></textarea>
+      <textarea name="description" id="new-subscription__description" placeholder="Write something here">${description}</textarea>
     </div>`;
 
   wrapper.appendChild(form);
@@ -387,28 +387,6 @@ async function getSubscriptionFormEl(id) {
   const deleteBtn = wrapper.querySelector('#delete-subscription-btn');
   deleteBtn.addEventListener('click', onDeleteSubscription);
 
-  // configure issue date element
-  let issueEl = wrapper.querySelector('#edit-invoice__issue');
-  issueEl.valueAsDate = dateIssue;
-  issueEl.max = dateDue.getDateString();
-
-  // configure due date element
-  let dueEl = wrapper.querySelector('#edit-invoice__due');
-  dueEl.valueAsDate = dateDue;
-  dueEl.min = dateIssue.getDateString();
-
-  // adjust due date minimum on issue date change
-  issueEl.addEventListener('input', (event) => {
-    let dueEl = document.querySelector('#edit-invoice__due');
-    dueEl.min = event.target.value;
-  });
-
-  // adjust issue date maximum on due date change
-  dueEl.addEventListener('input', (event) => {
-    let issueEl = document.querySelector('#edit-invoice__issue');
-    issueEl.max = event.target.value;
-  });
-
   return wrapper;
 }
 
@@ -420,7 +398,7 @@ async function onUpdateSubscription(event) {
   event.preventDefault();
   const data = new URLSearchParams(new FormData(event.target));
   const id = data.get('id');
-  console.log(id);
+  console.log(data);
   // let response = await request.updateSubscription(id, data);
 
   // update item in subscription list
@@ -431,13 +409,12 @@ async function onUpdateSubscription(event) {
 
 async function onDeleteSubscription(event) {
   const subscriptionId = event.target.dataset.subscriptionId;
-  console.log('delete ' + subscriptionId);
 
-  // if (window.confirm('Delete Subscription?')) {
-  //   const result = await request.deleteSubscription(subscriptionId);
-  //   const subscriptionEl = document.querySelector(`.subscription-list__invoice[data-subscription-id="${subscriptionId}"]`);
-  //   subscriptionEl.remove();
-  //   const detailsWrapper = document.getElementById('list-module__details');
-  //   detailsWrapper.innerHTML = '';
-  // }
+  if (window.confirm('Delete Subscription?')) {
+    const result = await request.deleteSubscription(subscriptionId);
+    // const subscriptionEl = document.querySelector(`.subscription-list__invoice[data-subscription-id="${subscriptionId}"]`);
+    // subscriptionEl.remove();
+    // const detailsWrapper = document.getElementById('list-module__details');
+    // detailsWrapper.innerHTML = '';
+  }
 }
