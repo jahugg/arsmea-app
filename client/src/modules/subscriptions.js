@@ -399,6 +399,13 @@ async function onUpdateSubscription(event) {
   const data = new URLSearchParams(new FormData(event.target));
   const id = data.get('id');
   console.log(data);
+
+  // update invoice
+
+  // update orders (in the future)
+
+  // upate subscription
+  
   // let response = await request.updateSubscription(id, data);
 
   // update item in subscription list

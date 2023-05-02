@@ -31,7 +31,7 @@ status report
 ### invoices
 
 - [X] diplay list of invoices
-- [ ] search invoice by contact
+- [X] search invoice by contact
 - [X] view invoice details
 - [X] create new invoice without order
 - [X] create new invoice via order
@@ -47,7 +47,7 @@ status report
 - [X] create new subscription
 - [X] search subscription
 - [X] delete subscription
-- [ ] archive subscription
 - [ ] edit subscription
+- [ ] archive subscription
 
 ### vouchers
