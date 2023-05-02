@@ -276,10 +276,10 @@ export default class DBService {
       const invoiceId = result.lastInsertRowid;
 
       // insert subscription
-      const { dateStart, deliveryTime, interval, description } = data;
+      const { dateStart, deliveryTime, frequency, interval, description } = data;
       query = this.db.prepare(`INSERT INTO subscriptions (invoice_id, datetime_placed, date_start, delivery_time, frequency, interval, description)
       VALUES (?, datetime('now'), ?, ?, ?, ?, ?)`);
-      result = query.run(invoiceId, dateStart, deliveryTime, interval, description);
+      result = query.run(invoiceId, dateStart, deliveryTime, frequency, interval, description);
       const subscriptionId = result.lastInsertRowid;
 
       return { id: subscriptionId, invoiceId: invoiceId };
