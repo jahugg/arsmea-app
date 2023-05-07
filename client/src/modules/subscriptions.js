@@ -108,8 +108,10 @@ function getSubscriptionListItemEl(data) {
   else if (dateToday > dateEnd) status = 'completed';
 
   const itemEl = document.createElement('li');
+  itemEl.classList.add('subscription-list__subscription');
   itemEl.innerHTML = `${firstname} ${lastname} ${status}`;
   itemEl.dataset.subscriptionId = id;
+  itemEl.dataset.dateStart = date_start;
 
   itemEl.addEventListener('click', (event) => selectSubscription(event.target.closest('li').dataset.subscriptionId));
   return itemEl;
@@ -184,6 +186,10 @@ async function onPrepareNewSubscription() {
     datalist.appendChild(option);
   }
 
+  // add discard button functionality
+  const discardBtn = document.querySelector('.discard-btn');
+  discardBtn.addEventListener('click', () => document.querySelector('#list-module__details').replaceChildren());
+
   // check if given contact is new
   const contactInput = form.querySelector('#new-subscription__contact');
   const contactIdInput = form.querySelector('#contact-id');
@@ -235,10 +241,10 @@ async function selectSubscription(id) {
     const state = { pageKey: 'subscriptions', id: id };
     window.history.replaceState(state, '', url);
   } catch (error) {
-    console.log(error);
-    // const firstChild = document.querySelector('.invoice-list__invoice');
-    // if (firstChild) selectInvoice(Number(firstChild.dataset.invoiceId)); // if present select first item
-    // else document.querySelector('#list-module__details').replaceChildren(); // if no item present clear details
+    console.error('subscription ID not found in DB: ' + error);
+    const firstChild = document.querySelector('.subscription-list__subscription');
+    if (firstChild) selectInvoice(Number(firstChild.dataset.subscriptionId)); // if present select first item
+    else document.querySelector('#list-module__details').replaceChildren(); // if no item present clear details
   }
 }
 
@@ -293,13 +299,40 @@ async function getSubscriptionDetailsEl(id) {
 
 async function onCreateNewSubscription(event) {
   event.preventDefault();
-  const data = new FormData(event.target);
-  const response = await request.newSubscription(data);
-  console.log(response);
+  const formData = new FormData(event.target);
+  const response = await request.newSubscription(formData);
+  const id = response.id;
+  console.log(formData);
 
-  // insert new entry into list
+  // get new database entry and build html list element
+  const data = await request.subscriptionDetails(id);
+  const itemEl = getSubscriptionListItemEl(data);
 
-  // select new entry
+  // insert list element into current list
+  const dateStart = new DateExt(formData.get('dateStart'));
+  const listElements = document.getElementsByClassName('subscription-list__subscription');
+
+  // if list is not emepty insert at correct position
+  if (listElements.length !== 0) {
+    let closestDateEl;
+    let smallestDifference = 0;
+
+    // search element with closest start date
+    for (const el of listElements) {
+      const dateStartTemp = new DateExt(el.dataset.dateStart);
+      const difference = dateStart.diffInDaysTo(dateStartTemp);
+      if (difference <= smallestDifference) closestDateEl = el;
+    }
+
+    closestDateEl.after(itemEl);
+  } else {
+    // if list is empty insert element
+    let listEl = document.getElementById('subscription-list');
+    listEl.appendChild(itemEl);
+  }
+
+  // select new subscription
+  selectSubscription(id);
 }
 
 async function onEditSubscription(event) {
@@ -405,7 +438,7 @@ async function onUpdateSubscription(event) {
   // update orders (in the future)
 
   // upate subscription
-  
+
   // let response = await request.updateSubscription(id, data);
 
   // update item in subscription list
@@ -415,13 +448,22 @@ async function onUpdateSubscription(event) {
 }
 
 async function onDeleteSubscription(event) {
-  const subscriptionId = event.target.dataset.subscriptionId;
+  const id = event.target.dataset.subscriptionId;
 
   if (window.confirm('Delete Subscription?')) {
-    const result = await request.deleteSubscription(subscriptionId);
-    // const subscriptionEl = document.querySelector(`.subscription-list__invoice[data-subscription-id="${subscriptionId}"]`);
-    // subscriptionEl.remove();
-    // const detailsWrapper = document.getElementById('list-module__details');
-    // detailsWrapper.innerHTML = '';
+    try {
+      // remove entry from database
+      const result = await request.deleteSubscription(id);
+
+      // remove list eleemnt
+      const subscriptionEl = document.querySelector(`.subscription-list__subscription[data-subscription-id="${id}"]`);
+      subscriptionEl.remove();
+
+      // empty details section
+      const detailsWrapper = document.getElementById('list-module__details');
+      detailsWrapper.innerHTML = '';
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
