@@ -76,6 +76,11 @@ app.post('/api/order', async (request, response) => {
   response.json({ id: orderId });
 });
 
+app.get('/api/orderList', async (request, response) => {
+  const list = await db.selectAllOrders();
+  response.json(list);
+});
+
 app.get('/api/order/:id', async (request, response) => {
   const { id } = request.params;
   const order = await db.selectOrderById(id);

@@ -48,6 +48,11 @@ export async function newOrder(data) {
   return await response.json();
 }
 
+export async function orders() {
+  let response = await fetch(`${process.env.SERVER}/api/orderList`);
+  return await response.json();
+}
+
 export async function ordersByContact(contactId) {
   let response = await fetch(`${process.env.SERVER}/api/ordersByContact/${contactId}`);
   return await response.json();
