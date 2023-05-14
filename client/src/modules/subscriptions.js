@@ -187,7 +187,7 @@ async function onPrepareNewSubscription() {
   }
 
   // add discard button functionality
-  const discardBtn = document.querySelector('.discard-btn');
+  const discardBtn = form.querySelector('.discard-btn');
   discardBtn.addEventListener('click', () => document.querySelector('#list-module__details').replaceChildren());
 
   // check if given contact is new
