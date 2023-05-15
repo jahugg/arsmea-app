@@ -129,6 +129,7 @@ textarea {
   background: rgba(255, 255, 255, 0.1);
   border: none;
   resize: none;
+  //resize: vertical;
   color: inherit;
   font: var(--font-regular);
   font-size: 1.5em;
@@ -261,6 +262,10 @@ textarea {
 
 form {
   max-width: 400px;
+}
+
+fieldset {
+  margin-top: 2em;
 }
 
 .form__input-group {
@@ -660,6 +665,14 @@ form {
 .form label {
   display: block;
   margin-top: 2em;
+}
+
+.form select {
+  background: none;
+  width: 100%;
+  font: inherit;
+  padding: 0.2em;
+  border: solid 1px black;
 }
 
 // stand alone container
