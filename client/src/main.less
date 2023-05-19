@@ -264,10 +264,6 @@ form {
   max-width: 400px;
 }
 
-fieldset {
-  margin-top: 2em;
-}
-
 .form__input-group {
   margin-top: 2em;
 
@@ -283,6 +279,9 @@ fieldset {
   display: flex;
   align-items: baseline;
   gap: 1em;
+
+  .unit {
+  }
 }
 
 .list-condensed {
@@ -662,17 +661,56 @@ fieldset {
   }
 }
 
-.form label {
-  display: block;
-  margin-top: 2em;
-}
+.form {
 
-.form select {
-  background: none;
-  width: 100%;
-  font: inherit;
-  padding: 0.2em;
-  border: solid 1px black;
+  > label, > fieldset {
+    margin-top: 1em;
+    background: black;
+    color: white;
+    padding: 1em 1.3em;
+    border-radius: 8px;
+    border: none;
+  }
+
+  label {
+    display: block;
+  }
+
+  label.output {
+    display: flex;
+    justify-content: right;
+  }
+
+  fieldset {
+    display: flex;
+    flex-direction: column;
+
+    label:not(:first-child){
+      margin-top: 1em;
+    }
+  }
+
+  select {
+    background: hsl(0, 0%, 15%);
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    padding: 0.2em;
+    border: none;
+  }
+
+  legend {
+    float: left;
+  }
+
+  table {
+    border-bottom: solid 1px white;
+  }
+
+  .label-text {
+    display: block;
+    margin-bottom: .3em;
+  }
 }
 
 // stand alone container
@@ -765,5 +803,12 @@ fieldset {
       color: var(--color-highlight);
       overflow: hidden;
     }
+  }
+}
+
+.order-items {
+
+  input{
+    border: none;
   }
 }

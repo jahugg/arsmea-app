@@ -15,7 +15,7 @@ export default async function render() {
           <datalist id="contact-list-main"></datalist>
           <input type="hidden" name="contactId" class="contact-id" value="0">
         </form>
-        <button class="add-item-btn" class="button-add" type="button">Add Item</button>
+        <button class="add-item-btn" class="button-add" type="button">Add Order</button>
       </section>
       <section id="list-module__list"></section>
       <section id="list-module__details"></section>`;
@@ -76,67 +76,75 @@ function onPrepareNewItem() {
         <button type="button" class="button-small discard-btn">Discard</button>
     </section>
 
-    <div class="form__input-group">
-      <label>
-        Client
-        <input list="contact-list" name="contactName" placeholder="Hanna Muster" autocomplete="off" required />
-      </label>
-      <datalist id="contact-list"></datalist>
-      <input type="hidden" name="contactId" id="contact-id" value="0">
-    </div>
-    
-    <div class="form__input-group">
-      <label>
-        Due Date
-        <input type="datetime-local" name="dueDatetime" required />
-      </label>
-    </div>
+    <label>
+      <span class="label-text">Client</span>
+      <input list="contact-list" name="contactName" placeholder="Hanna Muster" autocomplete="off" required />
+    </label>
+    <datalist id="contact-list"></datalist>
+    <input type="hidden" name="contactId" id="contact-id" value="0">
 
-    <div class="form__input-group">
-      <label>
-        Price
+    <label>
+    <span class="label-text">Due Date</span>
+      <input type="datetime-local" name="dueDatetime" required />
+    </label>
+
+    <fieldset>
+      <legend>Items</legend>
+      <table class="order-items">
+        <tbody>
+          <tr>
+            <td>
+              <input name="description[]" placeholder="Flowers" value="Flowers" required />
+            </td>
+            <td>
+              <div class="form__input-unit">
+                <input name="price[]" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />
+                <span class="unit">CHF</span>
+              </div>
+            </td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <label class="output">
+        <span class="label-text">Total</span>
         <div class="form__input-unit">
-          <input name="pricePerOrder" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />
+          <output>100</output>
           <span class="unit">CHF</span>
         </div>
       </label>
-    </div>
 
-    <div class="form__input-group">
-      <label>
-        Description
-        <textarea rows="1" name="description" placeholder="Write something here"></textarea>
-      </label>
-    </div>
+      <button type="button" id="add-item">Add Item</button>
+    </fieldset>
+
+    <label>
+    <span class="label-text">Notes</span>
+      <textarea rows="1" name="notes" placeholder="Leave a note"></textarea>
+    </label>
 
     <fieldset>
-      <legend>Delivery</legend>
-      <div class="form__input-group">
-        <label>
-          Type
-          <select name="delivery" required>
-              <option value="pickup">Pick-Up</option>
-              <option value="deliver">Deliver</option>
-          </select>
-        </label>
-      </div>
+      <label>
+      <span class="label-text">Delivery</span>
+        <select name="delivery" required>
+            <option value="pickup">Pick-Up</option>
+            <option value="deliver">Deliver</option>
+        </select>
+      </label>
     </fieldset>
     
     <fieldset>
-      <legend>Subscription</legend>
-      <div class="form__input-group">
-        <label>
-          Repeat
-          <select name="interval" required>
-              <option value="none">None</option>
-              <option value="7">Every week</option>
-              <option value="14">Every 2 weeks</option>
-              <option value="28">Every month</option>
-              <option disabled>──────────</option>
-              <option value="custom">Custom</option>
-          </select>
-        </label>
-      </div>
+      <label>
+      <span class="label-text">Repeat</span>
+        <select name="interval" required>
+            <option value="none">None</option>
+            <option value="7">Every week</option>
+            <option value="14">Every 2 weeks</option>
+            <option value="28">Every month</option>
+            <option disabled>──────────</option>
+            <option value="custom">Custom</option>
+        </select>
+      </label>
     </fieldset>`;
 
   listSection.replaceChildren(form);
@@ -154,8 +162,12 @@ function onPrepareNewItem() {
   deliveryEl.addEventListener('input', onSelectDelivery);
 
   // add autoresize behaviour
-  const textarea = form.querySelector('textarea[name="description"]');
+  const textarea = form.querySelector('textarea[name="notes"]');
   textarea.addEventListener('input', onTextareaInput);
+
+  // add add item eventlistener
+  const addItemBtnEl = form.querySelector('#add-item');
+  addItemBtnEl.addEventListener('click', () => addItem());
 
   // handle on textarea input
   // auto resize textarea
@@ -167,28 +179,32 @@ function onPrepareNewItem() {
   // handle on delivery selection
   function onSelectDelivery(event) {
     const value = event.target.value;
-    const deliveryContainer = event.target.closest('.form__input-group');
+    const deliveryContainer = event.target.closest('label');
 
     if (value === 'pickup') {
       // remove frequency input
       removeInputGroupOf('textarea[name="deliveryAddress"]');
+
+      // remove delivery item
+      let itemEl = form.querySelector('#order-item-delivery');
+      itemEl.remove();
+
     } else if (value === 'deliver') {
       // add delivery address container
       let deliveryAddressEl = document.querySelector('textarea[name="deliveryAddress"]');
       if (!deliveryAddressEl) {
-        const deliveryAddressContainer = document.createElement('div');
-        deliveryAddressContainer.classList.add('form__input-group');
-        deliveryAddressContainer.innerHTML = `
-        <label>
-          Address
-          <textarea name="deliveryAddress" rows="2" placeholder="Hauserstrasse 128\n8400 Winterthur"></textarea>
-        </label>`;
+        const deliveryAddressContainer = document.createElement('label');
+        deliveryAddressContainer.innerHTML = `<span class="label-text">Address</span>
+          <textarea name="deliveryAddress" rows="2" placeholder="Hauserstrasse 128\n8400 Winterthur"></textarea>`;
 
         deliveryContainer.after(deliveryAddressContainer);
 
         // add autoresize behaviour
         const textarea = form.querySelector('textarea[name="deliveryAddress"]');
         textarea.addEventListener('input', onTextareaInput);
+
+        // add order item
+        addItem('Delivery');
       }
     }
   }
@@ -196,7 +212,7 @@ function onPrepareNewItem() {
   // handle on repeat selection
   function onSelectRepeat(event) {
     const value = event.target.value;
-    const repeatContainer = event.target.closest('.form__input-group');
+    const repeatContainer = event.target.closest('label');
 
     // handle end repeat type
     if (value === 'none') {
@@ -212,17 +228,13 @@ function onPrepareNewItem() {
       // add end type
       let endTypeEl = form.querySelector('select[name="endType"]');
       if (!endTypeEl) {
-        const endTypeContainer = document.createElement('div');
-        endTypeContainer.classList.add('form__input-group');
-        endTypeContainer.innerHTML = `
-          <label>
-            End Repeat
-            <select name="endType" required>
-                <option value="never">Never</option>
-                <option value="after">After</option>
-                <option value="date">On Date</option>
-            </select>
-          </label>`;
+        const endTypeContainer = document.createElement('label');
+        endTypeContainer.innerHTML = `<span class="label-text">End</span>
+          <select name="endType" required>
+              <option value="never">Never</option>
+              <option value="after">After</option>
+              <option value="date">On Date</option>
+          </select>`;
 
         repeatContainer.after(endTypeContainer);
         endTypeEl = endTypeContainer.querySelector('select[name="endType"]');
@@ -235,16 +247,12 @@ function onPrepareNewItem() {
       // add custom interval
       let customIntervalEl = form.querySelector('input[name="customInterval"]');
       if (!customIntervalEl) {
-        const customIntervalContainer = document.createElement('div');
-        customIntervalContainer.classList.add('form__input-group');
-        customIntervalContainer.innerHTML = `
-          <label>
-          Repeat every
+        const customIntervalContainer = document.createElement('label');
+        customIntervalContainer.innerHTML = `<span class="label-text">Every</span>
           <div class="form__input-unit">
             <input name="customInterval" type="number" min="0" max="10000" step="1" placeholder="21" required />
             <span class="unit">days</span>
-          </div>
-        </label>`;
+          </div>`;
 
         repeatContainer.after(customIntervalContainer);
       }
@@ -257,23 +265,19 @@ function onPrepareNewItem() {
   // handle on repeat end selection
   function onSelectRepeatEnd(event) {
     const value = event.target.value;
-    const repeatEndContainer = event.target.closest('.form__input-group');
+    const repeatEndContainer = event.target.closest('label');
 
     // handle frequency input
     if (value === 'after') {
       // add frequency container
       let frequencyEl = document.querySelector('input[name="frequency"]');
       if (!frequencyEl) {
-        const frequencyContainer = document.createElement('div');
-        frequencyContainer.classList.add('form__input-group');
-        frequencyContainer.innerHTML = `
-          <label>
-            End after
-            <div class="form__input-unit">
-              <input type="number" name="frequency" min="2" max="10000" step="1" placeholder="5" required />
-              <span class="unit">times</span>
-            </div>
-          </label>`;
+        const frequencyContainer = document.createElement('label');
+        frequencyContainer.innerHTML = `<span class="label-text">End after</span>
+          <div class="form__input-unit">
+            <input type="number" name="frequency" min="2" max="10000" step="1" placeholder="5" required />
+            <span class="unit">times</span>
+          </div>`;
 
         repeatEndContainer.after(frequencyContainer);
       }
@@ -286,13 +290,9 @@ function onPrepareNewItem() {
     if (value === 'date') {
       let endDateEl = document.querySelector('input[name="endDate"]');
       if (!endDateEl) {
-        const endDateEl = document.createElement('div');
-        endDateEl.classList.add('form__input-group');
-        endDateEl.innerHTML = `
-          <label>
-            End On
-            <input type="date" name="endDate" required />
-          </label>`;
+        const endDateEl = document.createElement('label');
+        endDateEl.innerHTML = `<span class="label-text">End On</span>
+          <input type="date" name="endDate" required />`;
 
         repeatEndContainer.after(endDateEl);
       }
@@ -306,9 +306,46 @@ function onPrepareNewItem() {
   function removeInputGroupOf(selector) {
     let el = document.querySelector(selector);
     if (el) {
-      container = el.closest('.form__input-group');
+      container = el.closest('label');
       container.remove();
     }
+  }
+
+  // add new item to form
+  function addItem(text) {
+    let tableBodyEl = form.querySelector('.order-items tbody');
+    let itemEl = document.createElement('tr');
+    let descriptionEl = document.createElement('td');
+
+    if (text) {
+      itemEl.id = `order-item-${text.toLowerCase()}`;
+      descriptionEl.innerHTML = `<input name="description[]" value="${text}" required />`;
+    } else
+      descriptionEl.innerHTML = `<input name="description[]" placeholder="Flowers" required />`;
+
+    itemEl.appendChild(descriptionEl);
+
+    let priceEl = document.createElement('td');
+    priceEl.innerHTML = `<div class="form__input-unit">
+        <input name="price[]" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />
+        <span class="unit">CHF</span>
+      </div>`;
+    itemEl.appendChild(priceEl);
+
+    let actionEl = document.createElement('td');
+    let deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.innerHTML = 'X';
+    deleteBtn.addEventListener('click', removeItem);
+    actionEl.appendChild(deleteBtn);
+    itemEl.appendChild(actionEl);
+
+    tableBodyEl.appendChild(itemEl);
+  }
+
+  function removeItem(event) {
+    let itemEl = event.target.closest('tr');
+    itemEl.remove();
   }
 }
 
