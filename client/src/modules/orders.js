@@ -11,7 +11,6 @@ export default async function render() {
             Search by contact
             <input list="contact-list-main" type="text" pattern="[^0-9]*" name="contactName" placeholder="Hanna Muster" autocomplete="off" required/>
           </label>
-          <!-- <input type="reset" value="Reset"> //-->
           <datalist id="contact-list-main"></datalist>
           <input type="hidden" name="contactId" class="contact-id" value="0">
         </form>
@@ -89,39 +88,20 @@ function onPrepareNewItem() {
     </label>
 
     <fieldset>
-      <legend>Items</legend>
+      <legend><span>Items</span> <button type="button" id="add-item" class="button-small invert">Add</button></legend>
       <table class="order-items">
         <tbody>
-          <tr>
-            <td>
-              <input name="description[]" placeholder="Flowers" value="Flowers" required />
-            </td>
-            <td>
-              <div class="form__input-unit">
-                <input name="price[]" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />
-                <span class="unit">CHF</span>
-              </div>
-            </td>
-            <td></td>
-          </tr>
         </tbody>
       </table>
 
-      <label class="output">
+      <label class="price-total">
         <span class="label-text">Total</span>
         <div class="form__input-unit">
-          <output>100</output>
+          <output>0</output>
           <span class="unit">CHF</span>
         </div>
       </label>
-
-      <button type="button" id="add-item">Add Item</button>
     </fieldset>
-
-    <label>
-    <span class="label-text">Notes</span>
-      <textarea rows="1" name="notes" placeholder="Leave a note"></textarea>
-    </label>
 
     <fieldset>
       <label>
@@ -132,6 +112,11 @@ function onPrepareNewItem() {
         </select>
       </label>
     </fieldset>
+
+    <label>
+    <span class="label-text">Notes</span>
+      <textarea rows="1" name="notes" placeholder="Leave a note"></textarea>
+    </label>
     
     <fieldset>
       <label>
@@ -148,6 +133,9 @@ function onPrepareNewItem() {
     </fieldset>`;
 
   listSection.replaceChildren(form);
+
+  // add first default item
+  addItem();
 
   // handle on discard button
   const discardBtnEl = form.querySelector('.discard-btn');
@@ -187,8 +175,7 @@ function onPrepareNewItem() {
 
       // remove delivery item
       let itemEl = form.querySelector('#order-item-delivery');
-      itemEl.remove();
-
+      if (itemEl) itemEl.remove();
     } else if (value === 'deliver') {
       // add delivery address container
       let deliveryAddressEl = document.querySelector('textarea[name="deliveryAddress"]');
@@ -319,17 +306,19 @@ function onPrepareNewItem() {
 
     if (text) {
       itemEl.id = `order-item-${text.toLowerCase()}`;
-      descriptionEl.innerHTML = `<input name="description[]" value="${text}" required />`;
-    } else
-      descriptionEl.innerHTML = `<input name="description[]" placeholder="Flowers" required />`;
+      descriptionEl.innerHTML = `<input name="description[]" value="${text}" required ${text === 'Delivery' ? 'disabled' : ''}/>`;
+    } else descriptionEl.innerHTML = `<input name="description[]" placeholder="Bouquet" required />`;
 
     itemEl.appendChild(descriptionEl);
 
     let priceEl = document.createElement('td');
     priceEl.innerHTML = `<div class="form__input-unit">
-        <input name="price[]" type="number" min="0.00" max="10000.00" step="0.1" placeholder="100" required />
+        <input name="price[]" type="number" min="0.00" max="10000.00" step="0.1" placeholder="60" required />
         <span class="unit">CHF</span>
       </div>`;
+
+    let inputEl = priceEl.querySelector('input');
+    inputEl.addEventListener('input', () => updateOrderTotal());
     itemEl.appendChild(priceEl);
 
     let actionEl = document.createElement('td');
@@ -337,15 +326,38 @@ function onPrepareNewItem() {
     deleteBtn.type = 'button';
     deleteBtn.innerHTML = 'X';
     deleteBtn.addEventListener('click', removeItem);
+    deleteBtn.classList.add('button-small', 'invert');
+
+    // if delivery item deletion reset delivery to pick-up
+    if (text === 'Delivery')
+      deleteBtn.addEventListener('click', () => {
+        let deliveryTypeEl = form.querySelector('select[name="delivery"]');
+        deliveryTypeEl.value = 'pickup';
+        deliveryTypeEl.dispatchEvent(new Event('input'));
+      });
+
     actionEl.appendChild(deleteBtn);
     itemEl.appendChild(actionEl);
 
     tableBodyEl.appendChild(itemEl);
   }
 
+  function updateOrderTotal() {
+    let outputEl = form.querySelector('label.price-total output');
+    let priceElAll = form.querySelectorAll('table.order-items input[type="number"');
+    let total = 0;
+
+    // sumup all prices
+    for (price of priceElAll) total += Number(price.value);
+
+    // output total
+    outputEl.innerHTML = total;
+  }
+
   function removeItem(event) {
     let itemEl = event.target.closest('tr');
     itemEl.remove();
+    updateOrderTotal();
   }
 }
 

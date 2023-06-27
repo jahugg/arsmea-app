@@ -129,7 +129,6 @@ textarea {
   background: rgba(255, 255, 255, 0.1);
   border: none;
   resize: none;
-  //resize: vertical;
   color: inherit;
   font: var(--font-regular);
   font-size: 1.5em;
@@ -170,6 +169,15 @@ textarea {
   &:disabled {
     color: var(--color-grey-02);
     border-color: var(--color-grey-02);
+  }
+
+  &.invert {
+    border-color: var(--color-background);
+
+    &:hover:not(:disabled) {
+      background: var(--color-background);
+      color: var(--color-font);
+    }
   }
 }
 
@@ -278,9 +286,12 @@ form {
 .form__input-unit {
   display: flex;
   align-items: baseline;
-  gap: 1em;
+  justify-content: end;
+  gap: .4em;
 
-  .unit {
+  input {
+    flex: 0 1 6ch !important;
+    text-align: right;
   }
 }
 
@@ -662,8 +673,8 @@ form {
 }
 
 .form {
-
-  > label, > fieldset {
+  > label,
+  > fieldset {
     margin-top: 1em;
     background: black;
     color: white;
@@ -676,22 +687,22 @@ form {
     display: block;
   }
 
-  label.output {
+  label.price-total {
     display: flex;
-    justify-content: right;
+    justify-content: space-between;
   }
 
   fieldset {
     display: flex;
     flex-direction: column;
 
-    label:not(:first-child){
+    label:not(:first-child):not(.price-total) {
       margin-top: 1em;
     }
   }
 
   select {
-    background: hsl(0, 0%, 15%);
+    background: hsl(0, 0%, 12%);
     width: 100%;
     font: inherit;
     color: inherit;
@@ -701,15 +712,29 @@ form {
 
   legend {
     float: left;
+    display: flex;
+    justify-content: space-between;
+    padding: 0;
   }
 
   table {
+    border: none;
     border-bottom: solid 1px white;
+    border-collapse: collapse;
+    border-spacing: 0px;
+
+    td {
+      padding: 0;
+    }
+
+    td:last-child .button-small {
+      margin-left: .7em;
+    }
   }
 
   .label-text {
     display: block;
-    margin-bottom: .3em;
+    margin-bottom: 0.3em;
   }
 }
 
@@ -808,7 +833,11 @@ form {
 
 .order-items {
 
-  input{
+  tbody tr:first-child td:last-child button {
+    display: none;
+  }
+
+  input {
     border: none;
   }
 }
