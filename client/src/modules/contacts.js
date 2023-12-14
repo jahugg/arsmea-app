@@ -270,6 +270,7 @@ async function getContactListEl(archived = false) {
   const contacts = await request.contacts(archived);
   const contactList = document.createElement('ul');
   contactList.id = 'contact-list';
+  contactList.classList.add('styled-list');
 
   let orderLetter;
 

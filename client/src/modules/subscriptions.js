@@ -79,6 +79,7 @@ export async function init() {
 function getSubscriptionListEl(subscriptions) {
   const listEl = document.createElement('ul');
   listEl.id = 'subscription-list';
+  listEl.classList.add('styled-list');
 
   if (subscriptions.length) {
     for (let item of subscriptions) {
@@ -265,7 +266,7 @@ async function getSubscriptionDetailsEl(id) {
   <section id="list-module__details__controls">
     <button type="button" id="edit-btn" class="button-small" data-subscription-id="${id}">Edit</button>
   </section>
-  <div id="list-module__details__info">
+  <div id="list-module__details__info card">
     <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
     <div>Starts on <time datetime="${dateStart.getDateString()}">${dateStart.toLocaleDateString()}</time></div>
     <div> ${amount ? amount + ' CHF' : ''} <a href="/invoices?id=${invoice_id}">go to invoice</a></div>

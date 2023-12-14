@@ -369,6 +369,7 @@ async function getInvoiceFormEl(id) {
 function getInvoiceListEl(invoiceList) {
   const listEl = document.createElement('ul');
   listEl.id = 'invoice-list';
+  listEl.classList.add('styled-list');
   // openOnly ? (listEl.dataset.filter = 'open') : (listEl.dataset.filter = 'all');
 
   if (invoiceList.length) {

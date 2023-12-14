@@ -347,7 +347,7 @@ async function getOrderDetailsEl(id) {
   <section class="content-controls">
     <button type="button" id="edit-btn" class="button-small" data-order-id="${id}">Edit</button>
   </section>
-  <div class="order-details__info">
+  <div class="order-details__info card">
     <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
     <time datetime="${dateDue.getDateString()} ${timeString}">${dueString}</time>
     <div> ${amount ? amount + ' CHF' : ''} <a href="/invoices?id=${invoice_id}">go to invoice</a></div>
@@ -415,7 +415,7 @@ async function getOrderFormEl(id) {
 
 function getOrderListEl(orderList) {
   const orderListEl = document.createElement('ul');
-  orderListEl.classList.add('order-list');
+  orderListEl.classList.add('order-list', 'styled-list');
 
   let total = 0;
 

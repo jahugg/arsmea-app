@@ -1,6 +1,8 @@
-// ================================
-// preferred defaults
-// ================================
+/*
+================================
+preferred defaults
+================================
+*/
 html {
   box-sizing: border-box;
 }
@@ -15,59 +17,58 @@ body {
   margin: 0;
 }
 
-// ================================
-// custom properties
-// ================================
+/*
+================================
+custom properties
+================================
+*/
 :root {
-  --color-font: black;
-  --color-background: white;
-  --color-grey-01: rgb(77, 77, 77);
-  --color-grey-02: rgb(138, 136, 136);
-  --color-grey-03: rgb(201, 201, 201);
-  --color-grey-04: rgb(231, 231, 231);
-  --color-highlight: red;
-  /* new color formats:
-  rgb(11.06% 47.24% 0% / 48%)
+  /* color palette */
+  --color-grey-00: oklch(0% 0 0);
+  --color-grey-01: oklch(42.03% 0 102.07);
+  --color-grey-02: oklch(63.34% 0 102.07);
+  --color-grey-03: oklch(83.59% 0 102.07);
+  --color-grey-04: oklch(92.79% 0 102.07);
+  --color-grey-10: oklch(100% 0 0);
 
-  --red-hue: 0deg;
-  --red-sat: 100%;
-  --red-lit: 50%;
+  --color-red: oklch(65.58% 0.2296 23.86);
+  --color-darkpurple: oklch(19.64% 0.012 300.48);
+  --color-eggwhite: oklch(98.16% 0.002 247.84);
 
-  --red: hsl(
-    var(--red-hue)
-    var(--red-sat)
-    var(--red-lit)
-  );
+  /* color semantic */
+  --color-default-foreground: black;
+  --color-default-background: white;
+  --color-error: var(--color-red);
 
-  --dark-red: hsl(
-    var(--red-hue)
-    var(--red-sat)
-    calc(var(--red-lit) - 20%)
-  );*/
-
+  /* spacing */
   --page-padding: 30px;
 
+  /* fonts */
   --font-size: 1.4rem;
+  --font-weight: 300;
   --font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  --font-big: normal 200 2em var(--font-family);
-  --font-h1: normal 200 1.4em var(--font-family);
-  --font-h2: normal 300 1.2em var(--font-family);
-  --font-regular: normal 200 1em var(--font-family);
-  --font-small: normal 200 0.8em var(--font-family);
-  --font-tiny: normal 200 0.7em var(--font-family);
+
+  --font-big: normal var(--font-weight) 2em var(--font-family);
+  --font-h1: normal var(--font-weight) 1.4em var(--font-family);
+  --font-h2: normal 500 1.2em var(--font-family);
+  --font-regular: normal var(--font-weight) 1em var(--font-family);
+  --font-small: normal var(--font-weight) 0.8em var(--font-family);
+  --font-tiny: normal var(--font-weight) 0.7em var(--font-family);
 }
 
-// ================================
-// general
-// ================================
+/*
+================================
+general
+================================
+*/
 #app {
-  font: normal 200 var(--font-size) 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  color: var(--color-font);
+  font: normal var(--font-weight) var(--font-size) var(--font-family); /* set font root */
+  color: var(--color-default-foreground);
 }
 
 ::selection {
-  color: var(--color-background);
-  background: var(--color-font);
+  color: var(--color-default-background);
+  background: var(--color-default-foreground);
 }
 
 main {
@@ -87,7 +88,7 @@ input:not([type='submit']):not([type='checkbox']) {
   font-size: 1.5em;
   color: inherit;
   background: none;
-  border-bottom: solid 1px var(--color-font);
+  border-bottom: solid 1px var(--color-default-foreground);
   width: 100%;
 
   &:focus {
@@ -100,7 +101,7 @@ input:not([type='submit']):not([type='checkbox']) {
 }
 
 .checkbox-wrapper {
-  &:not[hidden] {
+  &:not([hidden]) {
     display: flex;
   }
   align-items: center;
@@ -113,7 +114,7 @@ input[type='checkbox'] {
   appearance: none;
   height: var(--size);
   width: var(--size);
-  border: solid 1px var(--color-font);
+  border: solid 1px var(--color-default-foreground);
   cursor: pointer;
 
   &:hover {
@@ -121,7 +122,7 @@ input[type='checkbox'] {
   }
 
   &:checked {
-    background: var(--color-font);
+    background: var(--color-default-foreground);
   }
 }
 
@@ -154,7 +155,7 @@ textarea {
 .button-small {
   display: inline-block;
   background: none;
-  border: solid 1px var(--color-font);
+  border: solid 1px var(--color-default-foreground);
   color: inherit;
   font: var(--font-small);
   letter-spacing: 0.05em;
@@ -162,8 +163,8 @@ textarea {
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: var(--color-font);
-    color: var(--color-background);
+    background: var(--color-default-foreground);
+    color: var(--color-default-background);
   }
 
   &:disabled {
@@ -172,24 +173,24 @@ textarea {
   }
 
   &.invert {
-    border-color: var(--color-background);
+    border-color: var(--color-default-background);
 
     &:hover:not(:disabled) {
-      background: var(--color-background);
-      color: var(--color-font);
+      background: var(--color-default-background);
+      color: var(--color-default-foreground);
     }
   }
 }
 
 .button-add {
   --size: 80px;
-  background: var(--color-font);
+  background: var(--color-default-foreground);
   border: none;
   display: block;
   height: var(--size);
   width: var(--size);
   border-radius: var(--size);
-  color: var(--color-background);
+  color: var(--color-default-background);
   cursor: pointer;
 }
 
@@ -213,8 +214,8 @@ textarea {
   }
 
   li[data-selected] {
-    background: var(--color-font);
-    color: var(--color-background);
+    background: var(--color-default-foreground);
+    color: var(--color-default-background);
   }
 
   li[data-filtered] {
@@ -264,8 +265,8 @@ textarea {
   padding: 30px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.17);
   border-radius: 10px;
-  background: var(--color-font);
-  color: var(--color-background);
+  background: var(--color-default-foreground);
+  color: var(--color-default-background);
 }
 
 form {
@@ -287,7 +288,7 @@ form {
   display: flex;
   align-items: baseline;
   justify-content: end;
-  gap: .4em;
+  gap: 0.4em;
 
   input {
     flex: 0 1 6ch !important;
@@ -306,22 +307,20 @@ form {
   }
 }
 
-// ================================
-// app header
-// ================================
+/*
+================================
+app header
+================================
+*/
 #app-header {
   padding: 8px var(--page-padding);
   display: flex;
   justify-content: space-between;
 
   a {
-    font-size: 0.8em;
+    font: var(--font-regular);
     color: inherit;
     text-decoration: none;
-  }
-
-  #app-header__title a {
-    font-weight: 400;
   }
 
   nav {
@@ -331,21 +330,22 @@ form {
     }
 
     li[data-active] a {
-      color: var(--color-background);
-      background: var(--color-font);
+      color: var(--color-default-background);
+      background: var(--color-default-foreground);
     }
 
     a {
-      font-weight: 200;
       padding: 0.3em 0.6em;
       border-radius: 5px;
     }
   }
 }
 
-// ================================
-// contacts
-// ================================
+/*
+================================
+contacts
+================================
+*/
 #contact {
   --list-width: 350px;
 
@@ -372,7 +372,6 @@ form {
     grid-area: list;
 
     #contact-list {
-      .styled-list;
 
       li {
         margin-left: 40px;
@@ -383,7 +382,7 @@ form {
         position: absolute;
         font-weight: 400;
         left: -40px;
-        color: var(--color-font);
+        color: var(--color-default-foreground);
       }
     }
   }
@@ -418,9 +417,11 @@ form {
   }
 }
 
-// ================================
-// order
-// ================================
+/*
+================================
+order
+================================
+*/
 #order {
   --list-width: 400px;
 
@@ -447,8 +448,8 @@ form {
     }
 
     &[open] #calendar-toggle {
-      background: var(--color-font);
-      color: var(--color-background);
+      background: var(--color-default-foreground);
+      color: var(--color-default-background);
     }
 
     &[data-default-date] #calendar-reset {
@@ -478,7 +479,7 @@ form {
         }
 
         &:hover .add-order {
-          // display: block;
+          /* display: block; */
         }
       }
 
@@ -539,7 +540,6 @@ form {
     }
 
     .order-list {
-      .styled-list;
       padding: 0;
       margin: 0.2em 0 1.5em 35px;
 
@@ -554,7 +554,6 @@ form {
     max-width: 750px;
 
     .order-details__info {
-      .card;
       font: var(--font-h1);
 
       a {
@@ -573,11 +572,12 @@ form {
   }
 }
 
-// ================================
-// invoice
-// ================================
+/*
+================================
+invoice
+================================
+*/
 #invoice-list {
-  .styled-list;
 
   li {
     display: flex;
@@ -604,16 +604,11 @@ form {
   }
 }
 
-// ================================
-// subscription
-// ================================
-#subscription-list {
-  .styled-list;
-}
-
-// ================================
-// subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
-// ================================
+/*
+================================
+subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
+================================
+*/
 .list-module {
   --list-width: 450px;
 
@@ -650,9 +645,8 @@ form {
 }
 
 #list-module__details__info {
-  .card;
   font: var(--font-h1);
-  // white-space: pre-line;
+  /* white-space: pre-line; */
 
   a {
     color: inherit;
@@ -728,7 +722,7 @@ form {
     }
 
     td:last-child .button-small {
-      margin-left: .7em;
+      margin-left: 0.7em;
     }
   }
 
@@ -738,12 +732,12 @@ form {
   }
 }
 
-// stand alone container
+/* stand alone container */
 .calendar {
   width: 270px;
   color: white;
   font: var(--font-small);
-  background: var(--color-font);
+  background: var(--color-default-foreground);
 
   td {
     width: calc(100% / 7);
@@ -801,7 +795,7 @@ form {
       }
 
       &[data-current-month]::before {
-        color: var(--color-background);
+        color: var(--color-default-background);
       }
 
       &[data-today] {
@@ -809,7 +803,7 @@ form {
       }
 
       &[data-selected] {
-        background: var(--color-highlight);
+        background: var(--color-error);
         .calendar__day__events {
           color: white;
         }
@@ -825,14 +819,13 @@ form {
       letter-spacing: -0.1em;
       line-height: 0.4em;
       font-size: 1.5em;
-      color: var(--color-highlight);
+      color: var(--color-error);
       overflow: hidden;
     }
   }
 }
 
 .order-items {
-
   tbody tr:first-child td:last-child button {
     display: none;
   }

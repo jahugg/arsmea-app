@@ -8,7 +8,7 @@
     "build": "parcel build ./src/index.html"
   },
   "devDependencies": {
-    "@parcel/transformer-less": "2.6.2",
-    "parcel": "^2.6.2"
+    "@parcel/transformer-less": "^2.10.3",
+    "parcel": "^2.10.3"
   }
 }
