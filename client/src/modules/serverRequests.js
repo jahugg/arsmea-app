@@ -1,19 +1,22 @@
+// API url (use process.env.SERVER for prod)
+const apiUrl = window.appConfig.apiUrl;
+
 // contacts
 export async function contacts(archived = false) {
   let response;
-  if (archived) response = await fetch(`${process.env.SERVER}/api/contactListArchived`);
-  else response = await fetch(`${process.env.SERVER}/api/contactList`);
+  if (archived) response = await fetch(`${apiUrl}/api/contactListArchived`);
+  else response = await fetch(`${apiUrl}/api/contactList`);
   return await response.json();
 }
 
 export async function contactDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/contact/${id}`);
+  const response = await fetch(`${apiUrl}/api/contact/${id}`);
   return await response.json();
 }
 
 export async function deleteContact(id) {
   try {
-    const response = await fetch(`${process.env.SERVER}/api/contact/${id}`, {
+    const response = await fetch(`${apiUrl}/api/contact/${id}`, {
       method: 'DELETE',
     });
   } catch (err) {
@@ -23,7 +26,7 @@ export async function deleteContact(id) {
 
 export async function newContact(data) {
   let searchParams = new URLSearchParams(data);
-  const response = await fetch(`${process.env.SERVER}/api/contact`, {
+  const response = await fetch(`${apiUrl}/api/contact`, {
     method: 'POST',
     body: searchParams,
   });
@@ -31,7 +34,7 @@ export async function newContact(data) {
 }
 
 export async function updateContact(id, data) {
-  const response = await fetch(`${process.env.SERVER}/api/updateContact/${id}`, {
+  const response = await fetch(`${apiUrl}/api/updateContact/${id}`, {
     method: 'POST',
     body: data,
   });
@@ -41,7 +44,7 @@ export async function updateContact(id, data) {
 // orders
 export async function newOrder(data) {
   let searchParams = new URLSearchParams(data);
-  const response = await fetch(`${process.env.SERVER}/api/order`, {
+  const response = await fetch(`${apiUrl}/api/order`, {
     method: 'POST',
     body: searchParams,
   });
@@ -49,17 +52,17 @@ export async function newOrder(data) {
 }
 
 export async function orders() {
-  let response = await fetch(`${process.env.SERVER}/api/orderList`);
+  let response = await fetch(`${apiUrl}/api/orderList`);
   return await response.json();
 }
 
 export async function ordersByContact(contactId) {
-  let response = await fetch(`${process.env.SERVER}/api/ordersByContact/${contactId}`);
+  let response = await fetch(`${apiUrl}/api/ordersByContact/${contactId}`);
   return await response.json();
 }
 
 export async function ordersByInvoice(invoiceId) {
-  let response = await fetch(`${process.env.SERVER}/api/ordersByInvoice/${invoiceId}`);
+  let response = await fetch(`${apiUrl}/api/ordersByInvoice/${invoiceId}`);
   return await response.json();
 }
 
@@ -70,7 +73,7 @@ export async function ordersWithinRange(start, end) {
 
   try {
     let response;
-    response = await fetch(`${process.env.SERVER}/api/ordersWithinRange/?start=${startDateString}&end=${endDateString}`);
+    response = await fetch(`${apiUrl}/api/ordersWithinRange/?start=${startDateString}&end=${endDateString}`);
     return await response.json();
   } catch (err) {
     console.log(err);
@@ -78,12 +81,12 @@ export async function ordersWithinRange(start, end) {
 }
 
 export async function orderDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/order/${id}`);
+  const response = await fetch(`${apiUrl}/api/order/${id}`);
   return await response.json();
 }
 
 export async function updateOrder(id, data) {
-  const response = await fetch(`${process.env.SERVER}/api/updateOrder/${id}`, {
+  const response = await fetch(`${apiUrl}/api/updateOrder/${id}`, {
     method: 'POST',
     body: data,
   });
@@ -92,7 +95,7 @@ export async function updateOrder(id, data) {
 
 export async function deleteOrder(id) {
   try {
-    const response = await fetch(`${process.env.SERVER}/api/order/${id}`, {
+    const response = await fetch(`${apiUrl}/api/order/${id}`, {
       method: 'DELETE',
     });
   } catch (err) {
@@ -102,13 +105,13 @@ export async function deleteOrder(id) {
 
 // subscriptions
 export async function subscriptions() {
-  let response = await fetch(`${process.env.SERVER}/api/subscriptionList`);
+  let response = await fetch(`${apiUrl}/api/subscriptionList`);
   return await response.json();
 }
 
 export async function newSubscription(data) {
   let searchParams = new URLSearchParams(data);
-  const response = await fetch(`${process.env.SERVER}/api/subscription`, {
+  const response = await fetch(`${apiUrl}/api/subscription`, {
     method: 'POST',
     body: searchParams,
   });
@@ -116,18 +119,18 @@ export async function newSubscription(data) {
 }
 
 export async function subscriptionDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/subscription/${id}`);
+  const response = await fetch(`${apiUrl}/api/subscription/${id}`);
   return await response.json();
 }
 
 export async function subscriptionsByContact(contactId) {
-  let response = await fetch(`${process.env.SERVER}/api/subscriptionsByContact/${contactId}`);
+  let response = await fetch(`${apiUrl}/api/subscriptionsByContact/${contactId}`);
   return await response.json();
 }
 
 export async function deleteSubscription(id) {
   try {
-    const response = await fetch(`${process.env.SERVER}/api/subscription/${id}`, {
+    const response = await fetch(`${apiUrl}/api/subscription/${id}`, {
       method: 'DELETE',
     });
   } catch (err) {
@@ -137,13 +140,13 @@ export async function deleteSubscription(id) {
 
 // invoices
 export async function invoices() {
-  const response = await fetch(`${process.env.SERVER}/api/invoiceList`);
+  const response = await fetch(`${apiUrl}/api/invoiceList`);
   return await response.json();
 }
 
 export async function newInvoice(data) {
   let searchParams = new URLSearchParams(data);
-  const response = await fetch(`${process.env.SERVER}/api/invoice`, {
+  const response = await fetch(`${apiUrl}/api/invoice`, {
     method: 'POST',
     body: searchParams,
   });
@@ -151,12 +154,12 @@ export async function newInvoice(data) {
 }
 
 export async function invoicesByContact(contactId) {
-  let response = await fetch(`${process.env.SERVER}/api/invoicesByContact/${contactId}`);
+  let response = await fetch(`${apiUrl}/api/invoicesByContact/${contactId}`);
   return await response.json();
 }
 
 export async function updateInvoice(id, data) {
-  const response = await fetch(`${process.env.SERVER}/api/updateInvoice/${id}`, {
+  const response = await fetch(`${apiUrl}/api/updateInvoice/${id}`, {
     method: 'POST',
     body: data,
   });
@@ -164,13 +167,13 @@ export async function updateInvoice(id, data) {
 }
 
 export async function invoicesOpen() {
-  const response = await fetch(`${process.env.SERVER}/api/invoiceListOpen`);
+  const response = await fetch(`${apiUrl}/api/invoiceListOpen`);
   return await response.json();
 }
 
 export async function deleteInvoice(id) {
   try {
-    const response = await fetch(`${process.env.SERVER}/api/invoice/${id}`, {
+    const response = await fetch(`${apiUrl}/api/invoice/${id}`, {
       method: 'DELETE',
     });
   } catch (err) {
@@ -179,12 +182,12 @@ export async function deleteInvoice(id) {
 }
 
 export async function invoiceDetails(id) {
-  const response = await fetch(`${process.env.SERVER}/api/invoice/${id}`);
+  const response = await fetch(`${apiUrl}/api/invoice/${id}`);
   return await response.json();
 }
 
 export async function setInvoicePaid(id) {
-  const response = await fetch(`${process.env.SERVER}/api/invoiceSetPaid/${id}`, {
+  const response = await fetch(`${apiUrl}/api/invoiceSetPaid/${id}`, {
     method: 'POST',
   });
   return await response.json();
@@ -192,6 +195,6 @@ export async function setInvoicePaid(id) {
 
 export async function setInvoiceOpen(id) {
   console.log("set open");
-  // const response = await fetch(`${process.env.SERVER}/api/invoiceSetOpen/${id}`);
+  // const response = await fetch(`${apiUrl}/api/invoiceSetOpen/${id}`);
   // return await response.json();
 }

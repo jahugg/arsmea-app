@@ -1,3 +1,7 @@
+window.appConfig = {
+  apiUrl: 'http://localhost:5123',
+};
+
 const defaultPage = 'dashboard';
 const pages = {
   dashboard: {
@@ -59,12 +63,12 @@ function init() {
 async function buildPage(stateObj, addToHistory = true) {
   let pageKey = stateObj.pageKey;
   let page = pages[pageKey];
-  document.title = 'Flourish | ' + page.title;
+  document.title = 'ars mea | ' + page.title;
 
   // update navigation
   const linkList = document.querySelectorAll('#app-navigation li a');
   for (let link of linkList) {
-    listItem = link.closest('li');
+    let listItem = link.closest('li');
     if (link.getAttribute('href') === page.slug) listItem.dataset.active = '';
     else delete listItem.dataset.active;
   }

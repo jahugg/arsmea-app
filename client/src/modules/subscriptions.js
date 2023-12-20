@@ -1,5 +1,8 @@
-import * as request from './serverRequests';
-import { Calendar, DateExt } from './calendar';
+import * as request from './serverRequests.js';
+import { Calendar, DateExt } from './calendar.js';
+
+// API url (use process.env.SERVER for prod)
+const apiUrl = window.appConfig.apiUrl;
 
 export default async function render() {
   const module = document.createElement('div');
@@ -121,7 +124,7 @@ function getSubscriptionListItemEl(data) {
 async function onPrepareNewSubscription() {
   const listSection = document.getElementById('list-module__details');
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/subscription`;
+  form.action = `${apiUrl}/api/subscription`;
   form.method = 'POST';
   form.id = 'new-subscription';
   form.classList.add('form');
@@ -354,7 +357,7 @@ async function getSubscriptionFormEl(id) {
   const wrapper = document.createElement('div');
   wrapper.id = 'subscription-details';
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/updateSubscription`;
+  form.action = `${apiUrl}/api/updateSubscription`;
   form.method = 'POST';
   form.id = 'edit-subscription';
   form.addEventListener('submit', onUpdateSubscription);

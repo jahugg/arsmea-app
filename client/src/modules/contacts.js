@@ -1,5 +1,8 @@
-import * as request from './serverRequests';
-import { DateExt } from './calendar';
+import * as request from './serverRequests.js';
+import { DateExt } from './calendar.js';
+
+// API url (use process.env.SERVER for prod)
+const apiUrl = window.appConfig.apiUrl;
 
 let contacts;
 
@@ -157,7 +160,7 @@ async function onPrepareNewContact(event) {
   const wrapper = document.createElement('div');
   wrapper.id = 'contact-details';
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/contact`;
+  form.action = `${apiUrl}/api/contact`;
   form.method = 'POST';
   form.id = 'new-contact';
   form.addEventListener('submit', onCreateNewContact);
@@ -409,7 +412,7 @@ async function getContactFormEl(id) {
   const wrapper = document.createElement('div');
   wrapper.id = 'contact-details';
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/updateContact`;
+  form.action = `${apiUrl}/api/updateContact`;
   form.method = 'POST';
   form.id = 'edit-contact';
   form.addEventListener('submit', onUpdateContact);

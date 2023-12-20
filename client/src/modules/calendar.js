@@ -1,5 +1,3 @@
-import * as request from './serverRequests';
-
 export class Calendar {
   constructor() {
     this.today = new DateExt();

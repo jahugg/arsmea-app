@@ -1,5 +1,7 @@
-import * as request from './serverRequests';
-import { Calendar, DateExt } from './calendar';
+import * as request from './serverRequests.js';
+
+// API url (use process.env.SERVER for prod)
+const apiUrl = window.appConfig.apiUrl;
 
 export default async function render() {
   const module = document.createElement('div');
@@ -66,7 +68,7 @@ export default async function render() {
 function onPrepareNewItem() {
   const listSection = document.getElementById('list-module__details');
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/order`;
+  form.action = `${apiUrl}/api/order`;
   form.method = 'POST';
   form.classList.add('new-item-form', 'form');
   form.addEventListener('submit', onCreateItem);
