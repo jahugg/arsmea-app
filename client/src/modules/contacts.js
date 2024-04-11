@@ -1,5 +1,8 @@
-import * as request from './serverRequests';
-import { DateExt } from './calendar';
+import * as request from './serverRequests.js';
+import { DateExt } from './calendar.js';
+
+// API url (use process.env.SERVER for prod)
+const apiUrl = window.appConfig.apiUrl;
 
 let contacts;
 
@@ -8,7 +11,7 @@ export default async function render() {
   module.classList.add('list-module');
   module.id = 'contact';
   module.innerHTML = `
-    <div id="list-module__controls">
+    <div id="list-module__controls" class="card">
       <div>
         <form id="search-contact" role="search">
           <label id="search-contact__label" for="search-contact__input">Search</label>
@@ -21,7 +24,7 @@ export default async function render() {
         </div>
       </div>
 
-      <button id="add-contact-btn" class="button-add" type="button">New Contact</button>
+      <button id="add-contact-btn" class="button-small" type="button">Create Contact</button>
     </div>
     <div id="contact-list-section">
       <div id="contact-list-wrapper">
@@ -157,13 +160,13 @@ async function onPrepareNewContact(event) {
   const wrapper = document.createElement('div');
   wrapper.id = 'contact-details';
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/contact`;
+  form.action = `${apiUrl}/api/contact`;
   form.method = 'POST';
   form.id = 'new-contact';
   form.addEventListener('submit', onCreateNewContact);
   form.innerHTML = `
   <section class="content-controls">
-    <input type="submit" class="button-small" value="Create"/>
+    <input type="submit" class="button-small" value="Save"/>
     <button type="button" class="button-small" id="discard-contact-btn">Discard</button>
   </section>
 
@@ -174,7 +177,7 @@ async function onPrepareNewContact(event) {
   <input type="text" pattern="[^0-9]*" name="lastname" id="new-contact__lastname" placeholder="Muster" />
 
   <label for="new-contact__phone">Phone</label>
-  <input type="tel" name="phone" id="new-contact__phone" placeholder="+41 XXX XX XX" />
+  <input type="tel" name="phone" id="new-contact__phone" placeholder="+41" />
 
   <details>
     <summary class="button-small">More fields</summary>
@@ -242,7 +245,7 @@ async function onSearchContact(event) {
   for (const item of contactListItems) item.dataset.filtered = '';
 
   const searchString = event.target.value.toLowerCase();
-  const searchResults = contacts.filter((item) => `${item.firstname.toLowerCase()} ${item.lastname.toLowerCase()}`.includes(searchString));
+  const searchResults = contacts.filter((item) => `${item.firstname?.toLowerCase()} ${item.lastname?.toLowerCase()}`.includes(searchString));
   for (const item of searchResults) {
     const contactListItem = document.querySelector(`#contact-list li[data-contact-id="${item.id}"]`);
     if (contactListItem) delete contactListItem.dataset.filtered;
@@ -270,6 +273,7 @@ async function getContactListEl(archived = false) {
   const contacts = await request.contacts(archived);
   const contactList = document.createElement('ul');
   contactList.id = 'contact-list';
+  contactList.classList.add('styled-list');
 
   let orderLetter;
 
@@ -343,60 +347,61 @@ async function getContactDetailsEl(id) {
   wrapper.appendChild(contactDetails);
 
   // display orders of contact
-  const orders = await request.ordersByContact(id);
-  if (orders.length) {
-    const orderTitle = document.createElement('h2');
-    orderTitle.innerHTML = 'Orders';
-    wrapper.appendChild(orderTitle);
+  // const orders = await request.ordersByContact(id);
+  // console.log(orders);
+  // if (orders.length) {
+  //   const orderTitle = document.createElement('h2');
+  //   orderTitle.innerHTML = 'Orders';
+  //   wrapper.appendChild(orderTitle);
 
-    const orderListEl = document.createElement('ul');
-    orderListEl.classList.add('list-condensed');
-    for (let order of orders) {
-      const { id, datetime_due, amount } = order;
-      let dueDate = new DateExt(datetime_due);
-      let dateString = `${String(dueDate.getDate()).padStart(2, '0')}.${dueDate.getMonth()}.${dueDate.getFullYear()}`;
-      let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+  //   const orderListEl = document.createElement('ul');
+  //   orderListEl.classList.add('list-condensed');
+  //   for (let order of orders) {
+  //     const { id, datetime_due, amount } = order;
+  //     let dueDate = new DateExt(datetime_due);
+  //     let dateString = `${String(dueDate.getDate()).padStart(2, '0')}.${dueDate.getMonth()}.${dueDate.getFullYear()}`;
+  //     let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
 
-      const orderEl = document.createElement('li');
-      orderEl.dataset.orderId = id;
-      orderEl.dataset.date = dueDate.getDateString();
-      orderEl.innerHTML = `<a href="/orders?id=${id}">
-      <time datetime="${dueDate.toLocaleDateString()}">${dateString}, ${timeString} h,</time>
-      <span class="price">${amount} CHF</span>
-    </a>`;
-      orderListEl.appendChild(orderEl);
-    }
+  //     const orderEl = document.createElement('li');
+  //     orderEl.dataset.orderId = id;
+  //     orderEl.dataset.date = dueDate.getDateString();
+  //     orderEl.innerHTML = `<a href="/orders?id=${id}">
+  //     <time datetime="${dueDate.toLocaleDateString()}">${dateString}, ${timeString} h,</time>
+  //     <span class="price">${amount} CHF</span>
+  //   </a>`;
+  //     orderListEl.appendChild(orderEl);
+  //   }
 
-    wrapper.appendChild(orderListEl);
-  }
+  //   wrapper.appendChild(orderListEl);
+  // }
 
   // display invoices of contact
-  const invoices = await request.invoicesByContact(id);
-  if (invoices.length) {
-    const invoiceTitle = document.createElement('h2');
-    invoiceTitle.innerHTML = 'Invoices';
-    wrapper.appendChild(invoiceTitle);
+  // const invoices = await request.invoicesByContact(id);
+  // if (invoices.length) {
+  //   const invoiceTitle = document.createElement('h2');
+  //   invoiceTitle.innerHTML = 'Invoices';
+  //   wrapper.appendChild(invoiceTitle);
 
-    const invoiceListEl = document.createElement('ul');
-    invoiceListEl.classList.add('list-condensed');
-    for (let invoice of invoices) {
-      const { id, date_due, status, amount } = invoice;
-      let dueDate = new DateExt(date_due);
-      let dateString = `${String(dueDate.getDate()).padStart(2, '0')}.${dueDate.getMonth()}.${dueDate.getFullYear()}`;
+  //   const invoiceListEl = document.createElement('ul');
+  //   invoiceListEl.classList.add('list-condensed');
+  //   for (let invoice of invoices) {
+  //     const { id, date_due, status, amount } = invoice;
+  //     let dueDate = new DateExt(date_due);
+  //     let dateString = `${String(dueDate.getDate()).padStart(2, '0')}.${dueDate.getMonth()}.${dueDate.getFullYear()}`;
 
-      const invoiceEl = document.createElement('li');
-      invoiceEl.dataset.invoiceId = id;
-      invoiceEl.dataset.date = dueDate.getDateString();
-      invoiceEl.innerHTML = `<a href="/invoices?id=${id}">
-      <time datetime="${dueDate.toLocaleDateString()}">${dateString},</time>
-      <span class="price">${amount} CHF,</span>
-      <span class="status">${status}</span>
-    </a>`;
-      invoiceListEl.appendChild(invoiceEl);
-    }
+  //     const invoiceEl = document.createElement('li');
+  //     invoiceEl.dataset.invoiceId = id;
+  //     invoiceEl.dataset.date = dueDate.getDateString();
+  //     invoiceEl.innerHTML = `<a href="/invoices?id=${id}">
+  //     <time datetime="${dueDate.toLocaleDateString()}">${dateString},</time>
+  //     <span class="price">${amount} CHF,</span>
+  //     <span class="status">${status}</span>
+  //   </a>`;
+  //     invoiceListEl.appendChild(invoiceEl);
+  //   }
 
-    wrapper.appendChild(invoiceListEl);
-  }
+  //   wrapper.appendChild(invoiceListEl);
+  // }
 
   return wrapper;
 }
@@ -408,7 +413,7 @@ async function getContactFormEl(id) {
   const wrapper = document.createElement('div');
   wrapper.id = 'contact-details';
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/updateContact`;
+  form.action = `${apiUrl}/api/updateContact`;
   form.method = 'POST';
   form.id = 'edit-contact';
   form.addEventListener('submit', onUpdateContact);
@@ -424,12 +429,10 @@ async function getContactFormEl(id) {
       <input type="hidden" id="edit-contact__id" name="id" value="${id}">
 
     <label for="edit-contact__firstname">First name</label>
-    <input required type="text" pattern="[^0-9]*" name="firstname" autocapitalize="words" id="edit-contact__firstname" placeholder="Hanna" value="${
-      firstname ? firstname : ''
+    <input required type="text" pattern="[^0-9]*" name="firstname" autocapitalize="words" id="edit-contact__firstname" placeholder="Hanna" value="${firstname ? firstname : ''
     }" />
     <label for="edit-contact__lastname">Last name</label>
-    <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Muster" value="${
-      lastname ? lastname : ''
+    <input type="text" pattern="[^0-9]*" name="lastname" autocapitalize="words" id="edit-contact__lastname" placeholder="Muster" value="${lastname ? lastname : ''
     }" />
     <label for="edit-contact__phone">Phone</label>
     <input type="tel" name="phone" id="edit-contact__phone" placeholder="+41 XXX XX XX" value="${phone ? phone : ''}" />
@@ -438,8 +441,7 @@ async function getContactFormEl(id) {
     <input type="email" name="email" id="edit-contact__email" placeholder="hanna.muster@email.com" value="${email ? email : ''}" />
 
     <label for="edit-contact__address">Address</label>
-    <textarea name="address" form="edit-contact" name="address" id="edit-contact__address" placeholder="Musterweg 34&#10;4321 Moon">${
-      address ? address : ''
+    <textarea name="address" form="edit-contact" name="address" id="edit-contact__address" placeholder="Musterweg 34&#10;4321 Moon">${address ? address : ''
     }</textarea>
 
     <label for="edit-contact__company">Company</label>
@@ -453,12 +455,13 @@ async function getContactFormEl(id) {
 
   const deleteBtn = form.querySelector('#delete-contact-btn');
   deleteBtn.addEventListener('click', onDeleteContact);
-  const orders = await request.ordersByContact(id);
-  const invoices = await request.invoicesByContact(id);
-  if (orders.length || invoices.length) {
-    deleteBtn.title = "Contacts with orders or invoices can't be deleted.";
-    deleteBtn.setAttribute('disabled', 'true');
-  }
+
+  // const orders = await request.ordersByContact(id);
+  // const invoices = await request.invoicesByContact(id);
+  // if (orders.length || invoices.length) {
+  //   deleteBtn.title = "Contacts with orders or invoices can't be deleted.";
+  //   deleteBtn.setAttribute('disabled', 'true');
+  // }
 
   const archiveBtn = form.querySelector('#archive-contact-btn');
   archiveBtn.addEventListener('click', onArchiveContact);

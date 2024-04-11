@@ -1,50 +1,55 @@
-import * as request from './serverRequests';
-import { Calendar, DateExt } from './calendar';
+import * as request from './serverRequests.js';
 
-const calendar = new Calendar();
-defaultView = {};
+// API url (use process.env.SERVER for prod)
+const apiUrl = window.appConfig.apiUrl;
 
-/**
- * Add two numbers together
- * @param  {Number} num1 The first number
- * @param  {Number} num2 The second number
- * @return {Number}      The total of the two numbers
- * @todo Write the documentation.
- */
 export default async function render() {
-  // set default date range
-  let startDate = new DateExt();
-  startDate.setDate(startDate.getDate() - 2);
-  let endDate = new DateExt(startDate);
-  endDate.setDate(startDate.getDate() + 17);
-  defaultView = { start: startDate, end: endDate };
-
   const module = document.createElement('div');
   module.classList.add('list-module');
-  module.id = 'order';
   module.innerHTML = `
-    <div id="list-module__controls">
-      <form id="search-order" role="search">
-        <label id="search-order__label" for="search-order__input">Search</label>
-        <input list="contact-list-main" name="contactName" id="search-order__input" placeholder="Contact Name..." autocomplete="off" required pattern=""/>
-        <datalist id="contact-list-main"></datalist>
-        <input type="hidden" name="contactId" class="contact-id" value="0">
-      </form>
-      <button id="add-order-btn" type="button" class="button-add">New Order</button>
-    </div>
-    <div id="order-list-section">
-        <div id="order-list-wrapper"></div>
-    </div>
-    <div id="order-detail-section">
-    </div>`;
+      <section id="list-module__controls" class="card">
+        <form class="search-form" role="search">
+          <label class="search-form__input">
+            Search by contact
+            <input list="contact-list-main" type="text" pattern="[^0-9]*" name="contactName" placeholder="Hanna Muster" autocomplete="off" required/>
+          </label>
+          <datalist id="contact-list-main"></datalist>
+          <input type="hidden" name="contactId" class="contact-id" value="0">
+        </form>
+        <button class="add-item-btn button-small" type="button">Create Order</button>
+      </section>
+      <section id="list-module__list"></section>
+      <section id="list-module__details"></section>`;
 
-  const addButton = module.querySelector('#add-order-btn');
-  addButton.addEventListener('click', onPrepareNewOrder);
+  // add item button behaviour
+  const addButton = module.querySelector('.add-item-btn');
+  addButton.addEventListener('click', onPrepareNewItem);
 
-  // search orders by contact
-  const searchForm = module.querySelector('#search-order');
-  searchForm.addEventListener('submit', onSearchOrder);
+  // handle search form
+  const contactIdInput = module.querySelector('.search-form .contact-id');
+  const searchInput = module.querySelector('.search-form__input');
+  searchInput.addEventListener('input', (event) => {
+    // update hidden contact id field. set to 0 if no matching contact.
+    const value = event.target.value;
+    let contactId = 0;
 
+    // check if input matches a current client
+    for (const item of datalist.children) {
+      if (item.value === value) contactId = item.dataset.contactId;
+    }
+    // write value to form field (hidden)
+    contactIdInput.value = contactId;
+  });
+
+  // search items by contact
+  const searchForm = module.querySelector('.search-form');
+  searchForm.addEventListener('submit', onSearchItem);
+
+  const listSectionEl = module.querySelector('#list-module__list');
+  const itemList = getListEl(await request.orders());
+  listSectionEl.replaceChildren(itemList);
+
+  // populate datalist with clients
   const datalist = module.querySelector('#contact-list-main');
   const contacts = await request.contacts();
   let patternString = '';
@@ -54,481 +59,331 @@ export default async function render() {
     option.dataset.contactId = id;
     option.value = `${firstname} ${lastname}`;
     datalist.appendChild(option);
-
     patternString += `${firstname} ${lastname}|`;
   }
-
-  // save current contact id
-  const contactIdInput = module.querySelector('#search-order .contact-id');
-  const searchInput = module.querySelector('#search-order__input');
-  searchInput.pattern = patternString;
-  searchInput.addEventListener('input', (event) => {
-    const value = event.target.value;
-    let contactId = 0;
-    for (const item of datalist.children) {
-      item.value === value ? (contactId = item.dataset.contactId) : '';
-    }
-    contactIdInput.value = contactId;
-  });
-
-  // prepare calendar
-  const calendarEl = document.createElement('details');
-  calendarEl.id = 'orders-calendar';
-  calendarEl.dataset.defaultDate = '';
-  calendarEl.innerHTML = `<summary>
-      <span id="calendar-toggle" class="button-small">${new DateExt().nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.getDate()}.</span
-      ><button id="calendar-reset" type="button" class="button-small">Reset</button>
-    </summary>
-    <div id="calendar-details"></div>`;
-
-  // const calendarToggle = calendarEl.querySelector('#calendar-toggle');
-  // calendarToggle.addEventListener('click', (event) => {
-  //   const detailsEl = event.target.closest('details');
-  //   if (!detailsEl.open) {
-  //     document.addEventListener('mouseup', closeCalendarDetails);
-  //   }
-  // });
-
-  // function closeCalendarDetails(event) {
-  //   if (!event.target.closest('#orders-calendar')) {
-  //     calendarEl.removeAttribute('open');
-  //     document.removeEventListener('mouseup', closeCalendarDetails);
-  //   }
-  // }
-
-  const calendarResetBtn = calendarEl.querySelector('#calendar-reset');
-  calendarResetBtn.addEventListener('click', async (event) => {
-    event.target.closest('#orders-calendar').dataset.defaultDate = '';
-
-    const calendarToggle = document.getElementById('calendar-toggle');
-    calendarToggle.innerHTML = `${new DateExt().nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.getDate()}`;
-
-    const orderListWrapper = module.querySelector('#order-list-wrapper');
-    const orderListEl = await getDayListEl(defaultView.start, defaultView.end);
-    orderListWrapper.replaceChild(orderListEl, document.getElementById('orders-calendar').nextElementSibling);
-  });
-
-  const calendarDetails = calendarEl.querySelector('#calendar-details');
-  calendarDetails.replaceChildren(calendar.getHTML());
-
-  const orderListWrapper = module.querySelector('#order-list-wrapper');
-  orderListWrapper.appendChild(calendarEl);
-
-  const orderListEl = await getDayListEl(defaultView.start, defaultView.end);
-  orderListWrapper.appendChild(orderListEl);
 
   return module;
 }
 
-export function init() {
-  const url = new URL(window.location);
-  let orderId = url.searchParams.get('id');
-  if (orderId) selectOrder(orderId);
-  calendar.populateCalendar();
-  updateCalendar(); // why is this necessary for eventlistener to fire?
-  document.addEventListener('monthloaded', updateCalendar);
-}
-
-async function onSearchOrder(event) {
-  event.preventDefault();
-  const data = new FormData(event.target);
-  id = data.get('contactId');
-
-  // display orders of contact
-  const orderList = await request.ordersByContact(id);
-  const orderListWrapper = document.getElementById('order-list-wrapper');
-  if (orderList.length) {
-    const orderListEl = getOrderListEl(orderList);
-    orderListWrapper.replaceChildren(orderListEl);
-  } else orderListWrapper.innerHTML = 'No orders yet. Add Order.';
-}
-
-async function onClickCalendarDay(event) {
-  const target = event.target.closest('.calendar__day');
-  const selectedDate = new DateExt(target.dataset.date);
-  const orderListWrapper = document.getElementById('order-list-wrapper');
-
-  const calendarToggle = document.getElementById('calendar-toggle');
-  calendarToggle.innerHTML = `${selectedDate.nameOfMonth()} ${selectedDate.getDate()}. ${selectedDate.getFullYear()}`;
-
-  const orderList = await request.ordersWithinRange(selectedDate, selectedDate);
-  const replaceEl = document.getElementById('orders-calendar').nextSibling;
-
-  let newContent;
-
-  if (orderList.length !== 0) newContent = getOrderListEl(orderList);
-  else {
-    newContent = document.createElement('div');
-    newContent.innerHTML = 'No Orders here. Add order...';
-  }
-
-  orderListWrapper.replaceChild(newContent, replaceEl);
-
-  const calendar = document.getElementById('orders-calendar');
-  delete calendar.dataset.defaultDate;
-}
-
-async function updateCalendar() {
-  // populate calendar with orders
-  const firstDateOfView = calendar.datesOfView[0];
-  const lastDateOfView = calendar.datesOfView[calendar.datesOfView.length - 1];
-  const orderOfView = await request.ordersWithinRange(firstDateOfView, lastDateOfView);
-
-  if (orderOfView)
-    for (const order of orderOfView) {
-      const thisDate = new DateExt(order.datetime_due);
-      const date = thisDate.getDateString();
-
-      // add event to calendar
-      const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
-      const ordersEl = document.querySelector(selector);
-      if (ordersEl) ordersEl.innerHTML += '&middot;';
-    }
-
-  const calendarDays = document.getElementsByClassName('calendar__day');
-  for (const day of calendarDays) {
-    day.addEventListener('click', onClickCalendarDay);
-  }
-}
-
-async function selectOrder(id) {
-  try {
-    // get order details
-    const orderDetails = await getOrderDetailsEl(id);
-    const detailsWrapper = document.querySelector('#order-detail-section');
-    detailsWrapper.replaceChildren(orderDetails);
-
-    // mark selected list item
-    const orderList = document.querySelectorAll('.order-list__order');
-    for (let order of orderList)
-      if (order.dataset.orderId == id) order.dataset.selected = '';
-      else delete order.dataset.selected;
-
-    // add order id to url
-    const url = new URL(window.location);
-    url.searchParams.set('id', id);
-    const state = { pageKey: "orders", id: id };
-    window.history.replaceState(state, '', url);
-  } catch (error) {
-    console.log(error);
-    // const firstChild = document.querySelector('.order-list__order');
-    // if (firstChild) selectOrder(Number(firstChild.dataset.invoiceId)); // if present select first item
-    // else if (document.querySelector('#order-detail-section')) {
-    //   document.querySelector('#order-detail-section').replaceChildren(); // if no item present clear details
-    // }
-  }
-}
-
-async function onPrepareNewOrder(event) {
-  const orderDetailsWrapper = document.getElementById('order-detail-section');
-  const wrapper = document.createElement('div');
-  wrapper.id = 'order-details';
+function onPrepareNewItem() {
+  const listSection = document.getElementById('list-module__details');
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/order`;
+  form.action = `${apiUrl}/api/order`;
   form.method = 'POST';
-  form.id = 'new-order';
-  form.addEventListener('submit', onCreateNewOrder);
-  form.innerHTML = `
-    <section class="content-controls">
-      <input type="submit" class="button-small" value="Create Order"/>
-      <button type="button" class="button-small" id="discard-order-btn">Discard</button>
+  form.classList.add('new-item-form', 'form');
+  form.addEventListener('submit', onCreateItem);
+  form.innerHTML = `<section class="list-module__details__controls">
+        <input type="submit" class="button-small" value="Save"/>
+        <button type="button" class="button-small discard-btn">Discard</button>
     </section>
-    <div id="new-order__input" class="form__input-group">
-      <label for="new-order__contact">Client</label>
-      <input list="contact-list" name="contactName" id="new-order__contact" autocomplete="off" placeholder="Hans Muster" required />
-      <datalist id="contact-list"></datalist>
-      <input type="hidden" name="contactId" id="contact-id" value="0">
-    </div>
-    <div class="form__input-group">
-      <label for="new-order__due">Due Date</label>
-      <input type="datetime-local" name="due" id="new-order__due" required />
-    </div>
-    <div class="form__input-group">
-        <label for="new-order__amount">Price</label>
-        <input id="new-order__amount" name="amount" type="number" min="0.00" max="10000.00" step="0.1" required />CHF
-    </div>
-    <div class="form__input-group">
-      <label for="new-order__description">Description</label>
-      <textarea name="description" id="new-order__description" placeholder="Notes"></textarea>
-    </div>`;
+    
+    <label>
+      <span class="label-text">Client</span>
+      <input list="contact-list" name="contactName" placeholder="Hanna Muster" autocomplete="off" required />
+    </label>
+    <datalist id="contact-list"></datalist>
+    <input type="hidden" name="contactId" id="contact-id" value="0" />
 
-  wrapper.appendChild(form);
-  orderDetailsWrapper.replaceChildren(wrapper);
+    <label>
+    <span class="label-text">Due Date</span>
+      <input type="datetime-local" name="dueDatetime" required />
+    </label>
 
-  const discardBtn = document.getElementById('discard-order-btn');
-  discardBtn.addEventListener('click', () => document.querySelector('#order-detail-section').replaceChildren());
+    <fieldset>
+      <legend><span>Items</span> <button type="button" id="add-item" class="button-small invert">Add</button></legend>
+      <table class="order-items">
+        <tbody>
+        </tbody>
+      </table>
 
-  const orderListItems = document.querySelectorAll('#order-list li');
-  for (const item of orderListItems) delete item.dataset.selected;
+      <label class="price-total">
+        <span class="label-text">Total</span>
+        <div class="form__input-unit">
+          <output>0</output>
+          <span class="unit">CHF</span>
+        </div>
+      </label>
+    </fieldset>
 
-  const datalist = wrapper.querySelector('#contact-list');
-  const contacts = await request.contacts();
-  for (const contact of contacts) {
-    const { id, firstname, lastname } = contact;
-    const option = document.createElement('option');
-    option.dataset.contactId = id;
-    option.value = `${firstname} ${lastname}`;
-    datalist.appendChild(option);
+    <label>
+      <span class="label-text">Delivery</span>
+      <select name="delivery" required>
+          <option value="pickup">Pick-Up</option>
+          <option value="deliver">Deliver</option>
+      </select>
+    </label>
+
+    <label>
+      <span class="label-text">Notes</span>
+      <textarea rows="1" name="notes" placeholder="Leave a note"></textarea>
+    </label>
+
+    <label>
+      <span class="label-text">Repeat</span>
+      <select name="interval" required>
+          <option value="none">None</option>
+          <option value="7">Every week</option>
+          <option value="14">Every 2 weeks</option>
+          <option value="28">Every month</option>
+          <option disabled>──────────</option>
+          <option value="custom">Custom</option>
+      </select>
+    </label>`;
+
+  listSection.replaceChildren(form);
+
+  // add first default item
+  addItem();
+
+  // handle on discard button
+  const discardBtnEl = form.querySelector('.discard-btn');
+  discardBtnEl.addEventListener('click', () => document.querySelector('#list-module__details').replaceChildren());
+
+  // add repeat select eventlistener
+  const intervalEl = form.querySelector('select[name="interval"]');
+  intervalEl.addEventListener('input', onSelectRepeat);
+
+  // add repeat select eventlistener
+  const deliveryEl = form.querySelector('select[name="delivery"]');
+  deliveryEl.addEventListener('input', onSelectDelivery);
+
+  // add autoresize behaviour
+  const textarea = form.querySelector('textarea[name="notes"]');
+  textarea.addEventListener('input', onTextareaInput);
+
+  // add add item eventlistener
+  const addItemBtnEl = form.querySelector('#add-item');
+  addItemBtnEl.addEventListener('click', () => addItem());
+
+  // handle on textarea input
+  // auto resize textarea
+  function onTextareaInput(event) {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
   }
 
-  // check if given contact is new
-  const contactInput = wrapper.querySelector('#new-order__contact');
-  const contactIdInput = wrapper.querySelector('#contact-id');
-  contactInput.addEventListener('input', (event) => {
+  // handle on delivery selection
+  function onSelectDelivery(event) {
     const value = event.target.value;
-    let contactId = 0;
-    for (const item of datalist.children) {
-      if (item.value === value) contactId = item.dataset.contactId;
+    const deliveryContainer = event.target.closest('label');
+
+    if (value === 'pickup') {
+      // remove frequency input
+      removeInputGroupOf('textarea[name="deliveryAddress"]');
+
+      // remove delivery item
+      let itemEl = form.querySelector('#order-item-delivery');
+      if (itemEl) itemEl.remove();
+    } else if (value === 'deliver') {
+      // add delivery address container
+      let deliveryAddressEl = document.querySelector('textarea[name="deliveryAddress"]');
+      if (!deliveryAddressEl) {
+        const deliveryAddressContainer = document.createElement('label');
+        deliveryAddressContainer.innerHTML = `<span class="label-text">Address</span>
+          <textarea name="deliveryAddress" rows="2" placeholder="Hauserstrasse 128\n8400 Winterthur"></textarea>`;
+
+        deliveryContainer.after(deliveryAddressContainer);
+
+        // add autoresize behaviour
+        const textarea = form.querySelector('textarea[name="deliveryAddress"]');
+        textarea.addEventListener('input', onTextareaInput);
+
+        // add order item
+        addItem('Delivery');
+      }
     }
-    contactIdInput.value = contactId;
-    if (contactIdInput.value == 0 && contactInput.value !== '') {
-      contactInput.parentNode.dataset.newContact = '';
-    } else delete contactInput.parentNode.dataset.newContact;
-  });
-}
-
-async function onCreateNewOrder(event) {
-  event.preventDefault();
-  const data = new FormData(event.target);
-  const response = await request.newOrder(data);
-  const id = response.id;
-
-  // add order to current list
-  const date = new DateExt(data.get('due'));
-  const dayEl = document.querySelector(`.day-list__day[data-date="${date.getDateString()}"]`);
-  // adding orders to days should be outsourced into separate function to avoid duplicate code
-
-  selectOrder(id);
-}
-
-async function onEditOrder(event) {
-  const id = event.target.dataset.orderId;
-  const contactDetailsWrapper = document.getElementById('order-detail-section');
-  const form = await getOrderFormEl(id);
-  contactDetailsWrapper.replaceChildren(form);
-}
-
-async function onUpdateOrder(event) {
-  event.preventDefault();
-  const data = new URLSearchParams(new FormData(event.target));
-  const orderId = data.get('id');
-  let response = await request.updateOrder(orderId, data);
-
-  const orderDetailsWrapper = document.getElementById('order-detail-section');
-  const orderDetails = await getOrderDetailsEl(orderId);
-  orderDetailsWrapper.replaceChildren(orderDetails);
-}
-
-async function onDeleteOrder(event) {
-  const orderId = event.target.dataset.orderId;
-
-  if (window.confirm('Delete Order?')) {
-    const result = await request.deleteOrder(orderId);
-    const orderItem = document.querySelector(`.order-list__order[data-order-id="${orderId}"]`);
-    orderItem.remove();
-
-    const orderDetailsWrapper = document.getElementById('order-detail-section');
-    orderDetailsWrapper.innerHTML = '';
-  }
-}
-
-async function getOrderDetailsEl(id) {
-  const { datetime_placed, datetime_due, amount, description, status, contact_id, firstname, lastname, invoice_id } = await request.orderDetails(id);
-
-  const datePlaced = new DateExt(datetime_placed);
-  const dateDue = new DateExt(datetime_due);
-  const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
-  const timeString = `${dateDue.getHours()}:${String(dateDue.getMinutes()).padStart(2, '0')}`;
-  const dueString = `${dateDue.getDate()}. ${dateDue.nameOfMonth()} ${dateDue.getFullYear()}, ${timeString}`;
-
-  const wrapper = document.createElement('div');
-  wrapper.id = 'order-details';
-  wrapper.innerHTML = `
-  <section class="content-controls">
-    <button type="button" id="edit-btn" class="button-small" data-order-id="${id}">Edit</button>
-  </section>
-  <div class="order-details__info">
-    <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
-    <time datetime="${dateDue.getDateString()} ${timeString}">${dueString}</time>
-    <div> ${amount ? amount + ' CHF' : ''} <a href="/invoices?id=${invoice_id}">go to invoice</a></div>
-    ${description ? `<div>${description}</div>` : ''}
-    <div>${status}</div>
-  </div>`;
-
-  const editBtn = wrapper.querySelector('#edit-btn');
-  editBtn.addEventListener('click', onEditOrder);
-
-  return wrapper;
-}
-
-async function getOrderFormEl(id) {
-  const data = await request.orderDetails(id);
-  const { datetime_due, status, amount, description, invoice_id } = data;
-
-  const wrapper = document.createElement('div');
-  wrapper.id = 'order-details';
-  const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/updateOrder`;
-  form.method = 'POST';
-  form.id = 'edit-order';
-  form.addEventListener('submit', onUpdateOrder);
-  form.innerHTML = `<section class="content-controls">
-      <input type="submit" class="button-small" value="Done" />
-      <button type="button" id="delete-order-btn" class="button-small" data-order-id="${id}">Delete Order</button>
-    </section>
-
-    <input type="hidden" id="edit-order__id" name="id" value="${id}">
-    <div>
-      <label for="edit-order__due">Due Date</label>
-      <input type="datetime-local" name="duedate" id="edit-order__due" value="${datetime_due ? datetime_due : ''}" />
-    </div>
-    <div>
-        <label for="edit-order__status">Status</label>
-        <select id="edit-order__status" name="status">
-            <option value="open">Open</option>
-            <option value="ready">Ready</option>
-            <option value="delivered">Delivered</option>
-        </select>
-    </div>
-    <div>
-        <label for="edit-order__amount">Price</label>
-        <input id="edit-order__amount" name="amount" type="number" min="0.00" max="10000.00" step="0.1" value="${amount}"/>CHF
-        <input type="hidden" id="edit-invoice__id" name="invoiceId" value="${invoice_id}">
-    </div>
-    <div>
-      <label for="edit-order__description">Description</label>
-      <textarea name="description" id="edit-order__description" placeholder="Notes">${description ? description : ''}</textarea>
-    </div>`;
-
-  // select current status
-  const statusOptions = form.querySelectorAll('#edit-order__status option');
-  for (let option of statusOptions) {
-    if (option.value === status) option.setAttribute('selected', 'true');
-  }
-  wrapper.appendChild(form);
-
-  const deleteBtn = wrapper.querySelector('#delete-order-btn');
-  deleteBtn.addEventListener('click', onDeleteOrder);
-
-  return wrapper;
-}
-
-function getOrderListEl(orderList) {
-  const orderListEl = document.createElement('ul');
-  orderListEl.classList.add('order-list');
-
-  let total = 0;
-
-  for (const order of orderList) {
-    const { id, datetime_due, status, amount, firstname, lastname } = order;
-    let dueDate = new DateExt(datetime_due);
-    let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
-    let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
-
-    const orderEl = document.createElement('li');
-    orderEl.classList.add('order-list__order');
-    orderEl.dataset.orderId = id;
-    orderEl.dataset.date = dueDate.getDateString();
-    orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
-            <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
-            <span class="price">${amount} CHF</span>`;
-    orderEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
-    orderListEl.appendChild(orderEl);
-
-    total += amount;
   }
 
-  const totalEl = document.createElement('li');
-  totalEl.innerHTML = `Total ${total} CHF`;
-  orderListEl.appendChild(totalEl);
+  // handle on repeat selection
+  function onSelectRepeat(event) {
+    const value = event.target.value;
+    const repeatContainer = event.target.closest('label');
 
-  return orderListEl;
-}
+    // handle end repeat type
+    if (value === 'none') {
+      // remove end type
+      removeInputGroupOf('select[name="endType"]');
 
-async function getDayListEl(startDate, endDate) {
-  const orderList = await request.ordersWithinRange(startDate, endDate);
+      // remove frequency input
+      removeInputGroupOf('input[name="frequency"]');
 
-  const dayListEl = document.createElement('ul');
-  dayListEl.id = 'day-list';
+      // remove end date input
+      removeInputGroupOf('input[name="endDate"]');
+    } else {
+      // add end type
+      let endTypeEl = form.querySelector('select[name="endType"]');
+      if (!endTypeEl) {
+        const endTypeContainer = document.createElement('label');
+        endTypeContainer.innerHTML = `<span class="label-text">End</span>
+          <select name="endType" required>
+              <option value="never">Never</option>
+              <option value="after">After</option>
+              <option value="date">On Date</option>
+          </select>`;
 
-  const dateDiff = startDate.diffInDaysTo(endDate);
-  let i = 0;
-  do {
-    const date = new DateExt(startDate);
-    date.setDate(date.getDate() + i);
+        repeatContainer.after(endTypeContainer);
+        endTypeEl = endTypeContainer.querySelector('select[name="endType"]');
+        endTypeEl.addEventListener('input', onSelectRepeatEnd);
+      }
+    }
 
-    const dateString = date.getDateString();
-    const dateStringLong = `${String(date.getDate()).padStart(2, 0)}.`;
+    // handle custom interval
+    if (value === 'custom') {
+      // add custom interval
+      let customIntervalEl = form.querySelector('input[name="customInterval"]');
+      if (!customIntervalEl) {
+        const customIntervalContainer = document.createElement('label');
+        customIntervalContainer.innerHTML = `<span class="label-text">Every</span>
+          <div class="form__input-unit">
+            <input name="customInterval" type="number" min="0" max="10000" step="1" placeholder="21" required />
+            <span class="unit">days</span>
+          </div>`;
 
-    const dayEl = document.createElement('li');
-    dayEl.classList.add('day-list__day');
-    dayEl.dataset.date = dateString;
-    date.getDay() == 1 ? (dayEl.dataset.weekStart = '') : '';
+        repeatContainer.after(customIntervalContainer);
+      }
+    } else {
+      // remove custom interval
+      removeInputGroupOf('input[name="customInterval"]');
+    }
+  }
 
-    const today = new DateExt();
-    let weekday;
-    date < today.setHours(0, 0, 0, 0) ? (dayEl.dataset.past = '') : '';
-    if (today.getDateString() === dateString) {
-      weekday = 'Today';
-      dayEl.dataset.today = '';
-    } else weekday = date.nameOfWeekday();
+  // handle on repeat end selection
+  function onSelectRepeatEnd(event) {
+    const value = event.target.value;
+    const repeatEndContainer = event.target.closest('label');
 
-    const details = document.createElement('details');
-    dayEl.appendChild(details);
-    details.innerHTML = `<summary class="day-list__summary">
-        <span class="dots"></span>
-        <time datetime="${dateString}">${dateStringLong}</time>
-        <span class="weekday">${weekday}</span>
-        <button type="button" class="add-order" hidden>Add Order</button>
-        <span class="total"><span>
-      </summary>`;
-    dayListEl.appendChild(dayEl);
+    // handle frequency input
+    if (value === 'after') {
+      // add frequency container
+      let frequencyEl = document.querySelector('input[name="frequency"]');
+      if (!frequencyEl) {
+        const frequencyContainer = document.createElement('label');
+        frequencyContainer.innerHTML = `<span class="label-text">End after</span>
+          <div class="form__input-unit">
+            <input type="number" name="frequency" min="2" max="10000" step="1" placeholder="5" required />
+            <span class="unit">times</span>
+          </div>`;
 
-    const addOrderBtn = dayListEl.querySelector('.add-order');
-    addOrderBtn.addEventListener('click', (e) => console.log(e));
-    // this is not working yet. might be due to details default event.
-    if (orderList) {
-      const ordersOfDate = orderList.filter(function (order) {
-        const dueDate = new DateExt(order.datetime_due);
-        return dateString === dueDate.getDateString();
+        repeatEndContainer.after(frequencyContainer);
+      }
+    } else {
+      // remove frequency input
+      removeInputGroupOf('input[name="frequency"]');
+    }
+
+    // handle end date input
+    if (value === 'date') {
+      let endDateEl = document.querySelector('input[name="endDate"]');
+      if (!endDateEl) {
+        const endDateEl = document.createElement('label');
+        endDateEl.innerHTML = `<span class="label-text">End On</span>
+          <input type="date" name="endDate" required />`;
+
+        repeatEndContainer.after(endDateEl);
+      }
+    } else {
+      // remove end date input
+      removeInputGroupOf('input[name="endDate"]');
+    }
+  }
+
+  // remove input group
+  function removeInputGroupOf(selector) {
+    let el = document.querySelector(selector);
+    if (el) {
+      container = el.closest('label');
+      container.remove();
+    }
+  }
+
+  // add new item to form
+  function addItem(text) {
+    let tableBodyEl = form.querySelector('.order-items tbody');
+    let itemEl = document.createElement('tr');
+    let descriptionEl = document.createElement('td');
+
+    if (text) {
+      itemEl.id = `order-item-${text.toLowerCase()}`;
+      descriptionEl.innerHTML = `<input name="description[]" value="${text}" required ${text === 'Delivery' ? 'disabled' : ''}/>`;
+    } else descriptionEl.innerHTML = `<input name="description[]" placeholder="Bouquet" required />`;
+
+    itemEl.appendChild(descriptionEl);
+
+    let priceEl = document.createElement('td');
+    priceEl.innerHTML = `<div class="form__input-unit">
+        <input name="price[]" type="number" min="0.00" max="10000.00" step="0.1" placeholder="60" required />
+        <span class="unit">CHF</span>
+      </div>`;
+
+    let inputEl = priceEl.querySelector('input');
+    inputEl.addEventListener('input', () => updateOrderTotal());
+    itemEl.appendChild(priceEl);
+
+    let actionEl = document.createElement('td');
+    let deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.innerHTML = 'X';
+    deleteBtn.addEventListener('click', removeItem);
+    deleteBtn.classList.add('button-small', 'invert');
+
+    // if delivery item deletion reset delivery to pick-up
+    if (text === 'Delivery')
+      deleteBtn.addEventListener('click', () => {
+        let deliveryTypeEl = form.querySelector('select[name="delivery"]');
+        deliveryTypeEl.value = 'pickup';
+        deliveryTypeEl.dispatchEvent(new Event('input'));
       });
 
-      if (ordersOfDate.length) {
-        const orderListEl = document.createElement('ul');
-        orderListEl.classList.add('order-list');
-        details.appendChild(orderListEl);
+    actionEl.appendChild(deleteBtn);
+    itemEl.appendChild(actionEl);
 
-        let total = 0;
+    tableBodyEl.appendChild(itemEl);
+  }
 
-        for (const order of ordersOfDate) {
-          const { id, datetime_due, status, amount, firstname, lastname } = order;
-          let dueDate = new DateExt(datetime_due);
-          let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
-          let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+  function updateOrderTotal() {
+    let outputEl = form.querySelector('label.price-total output');
+    let priceElAll = form.querySelectorAll('table.order-items input[type="number"');
+    let total = 0;
 
-          const orderEl = document.createElement('li');
-          orderEl.classList.add('order-list__order');
-          orderEl.dataset.orderId = id;
-          orderEl.dataset.date = dueDate.getDateString();
-          orderEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
-            <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
-            <span class="price">${amount} CHF</span>`;
-          orderEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
-          orderListEl.appendChild(orderEl);
+    // sumup all prices
+    for (price of priceElAll) total += Number(price.value);
 
-          total += amount;
+    // output total
+    outputEl.innerHTML = total;
+  }
 
-          // add dots to summary
-          const dotEl = details.querySelector('.dots');
-          dotEl.innerHTML += '&middot';
-        }
-        const totalEl = details.querySelector('.total');
-        totalEl.innerHTML = `${total} CHF`;
-      } else dayEl.dataset.empty = '';
+  function removeItem(event) {
+    let itemEl = event.target.closest('tr');
+    itemEl.remove();
+    updateOrderTotal();
+  }
+}
+
+function onCreateItem() { }
+
+function onSearchItem(event) {
+  event.preventDefault();
+  console.log('search item');
+}
+
+/**
+ * build list element
+ * @param {Object} list data list
+ */
+function getListEl(list) {
+  const listEl = document.createElement('ul');
+
+  if (list.length) {
+    for (let item of subscriptions) {
+      const itemEl = getListItemEl(item);
+      listEl.appendChild(itemEl);
     }
+  } else listEl.innerHTML = 'No Items Found';
 
-    i++;
-  } while (i <= dateDiff);
+  return listEl;
+}
 
-  return dayListEl;
+function getListItemEl(item) {
+  let itemEl = document.createElement('div');
+  return itemEl;
 }

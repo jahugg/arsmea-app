@@ -134,6 +134,21 @@ export default class DBService {
     }
   }
 
+  async selectAllOrders() {
+    try {
+      const query = this.db
+        .prepare(`SELECT * 
+        FROM orders
+        INNER JOIN contacts 
+          ON orders.contact_id = contacts.id 
+        ORDER BY date_placed`);
+      const list = query.all();
+      return list;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async insertMultipleOrders(data) {
     // data format: [{},{},{}]
     try {
@@ -157,20 +172,6 @@ export default class DBService {
         WHERE orders.id = ?`);
       const order = query.get(id);
       return order;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async selectAllOrders() {
-    try {
-      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, contacts.firstname, contacts.lastname
-        FROM orders 
-        INNER JOIN contacts 
-        ON orders.contact_id = contacts.id 
-        ORDER BY orders.datetime_due, orders.status`);
-      const orderList = query.all();
-      return orderList;
     } catch (error) {
       console.log(error);
     }
@@ -358,7 +359,7 @@ export default class DBService {
 
       // delete invoices
       query = this.db.prepare('DELETE FROM invoices WHERE id = ?');
-      query.run(invoiceId); 
+      query.run(invoiceId);
 
       return result;
     } catch (error) {

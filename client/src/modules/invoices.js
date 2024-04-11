@@ -1,5 +1,8 @@
-import * as request from './serverRequests';
-import { Calendar, DateExt } from './calendar';
+import * as request from './serverRequests.js';
+import { Calendar, DateExt } from './calendar.js';
+
+// API url (use process.env.SERVER for prod)
+const apiUrl = window.appConfig.apiUrl;
 
 export default async function render() {
   const module = document.createElement('div');
@@ -92,7 +95,7 @@ async function onPrepareNewInvoice(event) {
   const wrapper = document.createElement('div');
   wrapper.id = 'invoice-details';
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/invoice`;
+  form.action = `${apiUrl}/api/invoice`;
   form.method = 'POST';
   form.id = 'new-invoice';
   form.addEventListener('submit', onCreateNewInvoice);
@@ -250,7 +253,7 @@ async function getInvoiceFormEl(id) {
   const wrapper = document.createElement('div');
   wrapper.id = 'invoice-details';
   const form = document.createElement('form');
-  form.action = `${process.env.SERVER}/api/updateInvoice`;
+  form.action = `${apiUrl}/api/updateInvoice`;
   form.method = 'POST';
   form.id = 'edit-invoice';
   form.addEventListener('submit', onUpdateInvoice);
@@ -369,6 +372,7 @@ async function getInvoiceFormEl(id) {
 function getInvoiceListEl(invoiceList) {
   const listEl = document.createElement('ul');
   listEl.id = 'invoice-list';
+  listEl.classList.add('styled-list');
   // openOnly ? (listEl.dataset.filter = 'open') : (listEl.dataset.filter = 'all');
 
   if (invoiceList.length) {
