@@ -15,6 +15,7 @@ html {
 
 body {
   margin: 0;
+  background: black;
 }
 
 /*
@@ -24,24 +25,40 @@ custom properties
 */
 :root {
   /* color palette */
+  /* greyscale */
   --color-grey-00: oklch(0% 0 0);
-  --color-grey-01: oklch(42.03% 0 102.07);
-  --color-grey-02: oklch(63.34% 0 102.07);
-  --color-grey-03: oklch(83.59% 0 102.07);
-  --color-grey-04: oklch(92.79% 0 102.07);
+  --color-grey-01: oklch(20% 0 0);
+  --color-grey-02: oklch(40% 0 0);
+  --color-grey-03: oklch(60% 0 0);
+  --color-grey-04: oklch(80% 0 0);
   --color-grey-10: oklch(100% 0 0);
 
+  /* custom colors */
   --color-red: oklch(65.58% 0.2296 23.86);
   --color-darkpurple: oklch(19.64% 0.012 300.48);
-  --color-eggwhite: oklch(98.16% 0.002 247.84);
+  --color-darkblue: oklch(16.4% 0.007 271);
+  --color-eggwhite: oklch(92.43% 0.002 247.84);
+  --color-purple: oklch(62.94% 0.163 307.06);
+  --color-yellow: oklch(90% 0.1871 100.59);
 
   /* color semantic */
-  --color-default-foreground: black;
-  --color-default-background: white;
+  --color-text-default: var(--color-eggwhite);
+  --color-text-inverted: var(--color-darkpurple);
+  --color-background-default: var(--color-darkpurple);
+  --color-background-inverted: var(--color-eggwhite);
+  --color-border-default: var(--color-grey-03);
+  --color-card: var(--color-darkblue);
+  --color-highlight: var(--color-purple);
   --color-error: var(--color-red);
+  --color-button-foreground: var(--color-eggwhite);
+  --color-button-background: var(--color-purple);
 
   /* spacing */
-  --page-padding: 30px;
+  --padding-page: 30px;
+
+  /* radius */
+  --radius-small: 2px;
+  --radius-medium: 8px;
 
   /* fonts */
   --font-size: 1.4rem;
@@ -54,6 +71,9 @@ custom properties
   --font-regular: normal var(--font-weight) 1em var(--font-family);
   --font-small: normal var(--font-weight) 0.8em var(--font-family);
   --font-tiny: normal var(--font-weight) 0.7em var(--font-family);
+
+  /* borders */
+  --border-input: solid 1px var(--color-border-default);
 }
 
 /*
@@ -63,16 +83,18 @@ general
 */
 #app {
   font: normal var(--font-weight) var(--font-size) var(--font-family); /* set font root */
-  color: var(--color-default-foreground);
+  color: var(--color-text-default);
+  background: var(--color-background-default);
+  min-height: 100vh;
 }
 
 ::selection {
-  color: var(--color-default-background);
-  background: var(--color-default-foreground);
+  color: var(--color-text-inverted);
+  background: var(--color-highlight);
 }
 
 main {
-  margin: var(--page-padding);
+  padding: var(--padding-page);
 }
 
 ul {
@@ -88,15 +110,15 @@ input:not([type='submit']):not([type='checkbox']) {
   font-size: 1.5em;
   color: inherit;
   background: none;
-  border-bottom: solid 1px var(--color-default-foreground);
+  border-bottom: var(--border-input);
   width: 100%;
 
   &:focus {
     outline: none;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-grey-01);
   }
   &::placeholder {
-    color: var(--color-grey-03);
+    color: var(--color-grey-02);
   }
 }
 
@@ -114,21 +136,22 @@ input[type='checkbox'] {
   appearance: none;
   height: var(--size);
   width: var(--size);
-  border: solid 1px var(--color-default-foreground);
+  border: var(--border-input);
   cursor: pointer;
 
   &:hover {
-    background: var(--color-grey-02);
+    background: var(--color-grey-01);
   }
 
   &:checked {
-    background: var(--color-default-foreground);
+    background: var(--color-highlight);
   }
 }
 
 textarea {
-  background: rgba(255, 255, 255, 0.1);
+  background: none;
   border: none;
+  border-bottom: var(--border-input);
   resize: none;
   color: inherit;
   font: var(--font-regular);
@@ -137,11 +160,11 @@ textarea {
 
   &:focus {
     outline: none;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-grey-01);
   }
 
   &::placeholder {
-    color: var(--color-grey-03);
+    color: var(--color-grey-02);
   }
 }
 
@@ -149,49 +172,41 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  margin-bottom: var(--page-padding);
+  margin-bottom: var(--padding-page);
 }
 
 .button-small {
   display: inline-block;
+  color: var(--color-button-background);
   background: none;
-  border: solid 1px var(--color-default-foreground);
-  color: inherit;
+  border: solid 1px var(--color-button-background);
+  border-radius: var(--radius-small);
   font: var(--font-small);
   letter-spacing: 0.05em;
   padding: 2px 10px;
   cursor: pointer;
+  transition: background 0.1s ease-out, border 0.1s ease-out, color 0.1s ease-out;
 
   &:hover:not(:disabled) {
-    background: var(--color-default-foreground);
-    color: var(--color-default-background);
+    background: var(--color-button-background);
+    color: var(--color-button-foreground);
   }
 
   &:disabled {
     color: var(--color-grey-02);
-    border-color: var(--color-grey-02);
-  }
-
-  &.invert {
-    border-color: var(--color-default-background);
-
-    &:hover:not(:disabled) {
-      background: var(--color-default-background);
-      color: var(--color-default-foreground);
-    }
+    border-color: var(--color-grey-01);
   }
 }
 
 .button-add {
-  --size: 80px;
-  background: var(--color-default-foreground);
+  display: inline-block;
+  color: var(--color-button-foreground);
+  background: var(--color-button-background);
+  font: var(--font-small);
+  letter-spacing: 0.05em;
   border: none;
-  display: block;
-  height: var(--size);
-  width: var(--size);
-  border-radius: var(--size);
-  color: var(--color-default-background);
   cursor: pointer;
+  padding: 2px 10px;
 }
 
 .styled-list {
@@ -214,8 +229,8 @@ textarea {
   }
 
   li[data-selected] {
-    background: var(--color-default-foreground);
-    color: var(--color-default-background);
+    background: var(--color-background-inverted);
+    color: var(--color-text-inverted);
   }
 
   li[data-filtered] {
@@ -262,11 +277,9 @@ textarea {
 }
 
 .card {
-  padding: 30px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.17);
-  border-radius: 10px;
-  background: var(--color-default-foreground);
-  color: var(--color-default-background);
+  padding: 1em 1.3em;
+  border-radius: var(--radius-medium);
+  background: var(--color-card);
 }
 
 form {
@@ -313,7 +326,7 @@ app header
 ================================
 */
 #app-header {
-  padding: 8px var(--page-padding);
+  padding: 8px var(--padding-page);
   display: flex;
   justify-content: space-between;
 
@@ -330,8 +343,8 @@ app header
     }
 
     li[data-active] a {
-      color: var(--color-default-background);
-      background: var(--color-default-foreground);
+      color: var(--color-text-inverted);
+      background: var(--color-background-inverted);
     }
 
     a {
@@ -352,7 +365,7 @@ contacts
   display: grid;
   grid-template-columns: minmax(min-content, var(--list-width)) 1fr;
   grid-template-rows: 120px auto;
-  gap: var(--page-padding);
+  gap: var(--padding-page);
   grid-template-areas:
     'control control'
     'list detail';
@@ -372,7 +385,6 @@ contacts
     grid-area: list;
 
     #contact-list {
-
       li {
         margin-left: 40px;
       }
@@ -382,7 +394,7 @@ contacts
         position: absolute;
         font-weight: 400;
         left: -40px;
-        color: var(--color-default-foreground);
+        color: var(--color-highlight);
       }
     }
   }
@@ -402,12 +414,12 @@ contacts
         margin-top: 2em;
       }
       summary {
-        margin: var(--page-padding);
+        margin: var(--padding-page);
         list-style: none;
         text-align: center;
         width: 70%;
         max-width: 250px;
-        margin: var(--page-padding) auto;
+        margin: var(--padding-page) auto;
       }
 
       details[open] > summary {
@@ -428,7 +440,7 @@ order
   display: grid;
   grid-template-columns: var(--list-width) 1fr;
   grid-template-rows: 120px auto;
-  gap: var(--page-padding);
+  gap: var(--padding-page);
   grid-template-areas:
     'control control'
     'list detail';
@@ -448,8 +460,8 @@ order
     }
 
     &[open] #calendar-toggle {
-      background: var(--color-default-foreground);
-      color: var(--color-default-background);
+      background: red;
+      color: yellow;
     }
 
     &[data-default-date] #calendar-reset {
@@ -578,7 +590,6 @@ invoice
 ================================
 */
 #invoice-list {
-
   li {
     display: flex;
   }
@@ -615,7 +626,7 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
   display: grid;
   grid-template-columns: var(--list-width) 1fr;
   grid-template-rows: 120px auto;
-  gap: var(--page-padding);
+  gap: var(--padding-page);
   grid-template-areas:
     'control control'
     'list details';
@@ -625,7 +636,7 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
   grid-area: control;
   display: flex;
   justify-content: space-between;
-  align-items: top;
+  align-items: center;
 }
 
 #list-module__list {
@@ -641,7 +652,7 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  margin-bottom: var(--page-padding);
+  margin-bottom: var(--padding-page);
 }
 
 #list-module__details__info {
@@ -667,21 +678,17 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
 }
 
 .form {
-  > label,
-  > fieldset {
-    margin-top: 1em;
-    background: black;
-    color: white;
-    padding: 1em 1.3em;
-    border-radius: 8px;
+  label,
+  fieldset {
+    margin-top: 3em;
+    color: inherit;
+    padding: 0;
     border: none;
-  }
-
-  label {
     display: block;
   }
 
   label.price-total {
+    margin-top: 0;
     display: flex;
     justify-content: space-between;
   }
@@ -713,7 +720,6 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
 
   table {
     border: none;
-    border-bottom: solid 1px white;
     border-collapse: collapse;
     border-spacing: 0px;
 
@@ -737,7 +743,7 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
   width: 270px;
   color: white;
   font: var(--font-small);
-  background: var(--color-default-foreground);
+  background: red;
 
   td {
     width: calc(100% / 7);
@@ -795,7 +801,7 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
       }
 
       &[data-current-month]::before {
-        color: var(--color-default-background);
+        color: yellow;
       }
 
       &[data-today] {

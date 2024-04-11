@@ -359,7 +359,7 @@ export default class DBService {
 
       // delete invoices
       query = this.db.prepare('DELETE FROM invoices WHERE id = ?');
-      query.run(invoiceId); 
+      query.run(invoiceId);
 
       return result;
     } catch (error) {

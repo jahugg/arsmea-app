@@ -7,7 +7,7 @@ export default async function render() {
   const module = document.createElement('div');
   module.classList.add('list-module');
   module.innerHTML = `
-      <section id="list-module__controls">
+      <section id="list-module__controls" class="card">
         <form class="search-form" role="search">
           <label class="search-form__input">
             Search by contact
@@ -16,7 +16,7 @@ export default async function render() {
           <datalist id="contact-list-main"></datalist>
           <input type="hidden" name="contactId" class="contact-id" value="0">
         </form>
-        <button class="add-item-btn" class="button-add" type="button">Add Order</button>
+        <button class="add-item-btn button-small" type="button">Create Order</button>
       </section>
       <section id="list-module__list"></section>
       <section id="list-module__details"></section>`;
@@ -73,16 +73,16 @@ function onPrepareNewItem() {
   form.classList.add('new-item-form', 'form');
   form.addEventListener('submit', onCreateItem);
   form.innerHTML = `<section class="list-module__details__controls">
-        <input type="submit" class="button-small" value="Create"/>
+        <input type="submit" class="button-small" value="Save"/>
         <button type="button" class="button-small discard-btn">Discard</button>
     </section>
-
+    
     <label>
       <span class="label-text">Client</span>
       <input list="contact-list" name="contactName" placeholder="Hanna Muster" autocomplete="off" required />
     </label>
     <datalist id="contact-list"></datalist>
-    <input type="hidden" name="contactId" id="contact-id" value="0">
+    <input type="hidden" name="contactId" id="contact-id" value="0" />
 
     <label>
     <span class="label-text">Due Date</span>
@@ -105,34 +105,30 @@ function onPrepareNewItem() {
       </label>
     </fieldset>
 
-    <fieldset>
-      <label>
+    <label>
       <span class="label-text">Delivery</span>
-        <select name="delivery" required>
-            <option value="pickup">Pick-Up</option>
-            <option value="deliver">Deliver</option>
-        </select>
-      </label>
-    </fieldset>
+      <select name="delivery" required>
+          <option value="pickup">Pick-Up</option>
+          <option value="deliver">Deliver</option>
+      </select>
+    </label>
 
     <label>
-    <span class="label-text">Notes</span>
+      <span class="label-text">Notes</span>
       <textarea rows="1" name="notes" placeholder="Leave a note"></textarea>
     </label>
-    
-    <fieldset>
-      <label>
+
+    <label>
       <span class="label-text">Repeat</span>
-        <select name="interval" required>
-            <option value="none">None</option>
-            <option value="7">Every week</option>
-            <option value="14">Every 2 weeks</option>
-            <option value="28">Every month</option>
-            <option disabled>──────────</option>
-            <option value="custom">Custom</option>
-        </select>
-      </label>
-    </fieldset>`;
+      <select name="interval" required>
+          <option value="none">None</option>
+          <option value="7">Every week</option>
+          <option value="14">Every 2 weeks</option>
+          <option value="28">Every month</option>
+          <option disabled>──────────</option>
+          <option value="custom">Custom</option>
+      </select>
+    </label>`;
 
   listSection.replaceChildren(form);
 
@@ -363,7 +359,7 @@ function onPrepareNewItem() {
   }
 }
 
-function onCreateItem() {}
+function onCreateItem() { }
 
 function onSearchItem(event) {
   event.preventDefault();
