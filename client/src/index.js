@@ -30,6 +30,14 @@ const pages = {
   },
 };
 
+/**
+ * Initializes the application by setting up event listeners for DOMContentLoaded and popstate events.
+ * Navigates to the current URL after the content has been loaded and builds the page based on the URL's state object.
+ * Handles history navigation events by building the page corresponding to the state object or falling back to the default page.
+ * Builds navigation links based on the pages object and sets up event listeners for click events.
+ *
+ * @returns {void}
+ */
 function init() {
   // navigate to current URL after content has been loaded
   document.addEventListener('DOMContentLoaded', function () {
@@ -59,6 +67,16 @@ function init() {
   navigation.replaceChildren(list);
 }
 
+/**
+ * Builds a page based on the provided state object and updates browser history if specified.
+ * Sets the document title, updates navigation based on the active page, and pushes a new history entry if addToHistory is true.
+ * Loads the module associated with the page and renders its content to the target element.
+ * Optionally initializes the module if an init function exists.
+ *
+ * @param {Object} stateObj - The state object representing the page state.
+ * @param {boolean} [addToHistory=true] - Indicates whether to add the page to browser history.
+ * @returns {Promise<void>} A promise that resolves after the page is built and rendered.
+ */
 async function buildPage(stateObj, addToHistory = true) {
   let pageKey = stateObj.pageKey;
   let page = pages[pageKey];
@@ -87,12 +105,16 @@ async function buildPage(stateObj, addToHistory = true) {
   const module = await page.module;
   const content = await module.default(); // render
   target.replaceChildren(content);
-  module.init?.(); // if function exists
+  module.init?.(); // initialize if init function exists
 }
 
 /**
- * Prevent local links from reloading entire page
- * @param {Object} event event data
+ * Handles clicks on page links.
+ * Prevents the default action, checks if the clicked link is within the same host as the current window,
+ * and builds a page based on the URL if it matches the current host.
+ *
+ * @param {Event} event - The click event.
+ * @returns {void}
  */
 function handlePageLinks(event) {
   event.preventDefault();
@@ -103,6 +125,15 @@ function handlePageLinks(event) {
   }
 }
 
+/**
+ * Builds a state object from the given URL.
+ * Iterates through the pages object to find a matching slug in the URL's pathname
+ * and assigns the corresponding page key to the state object. 
+ * If the URL contains an 'id' query parameter, it assigns it to the state object.
+ *
+ * @param {URL} url - The URL object from which to build the state object.
+ * @returns {Object} The state object built from the URL.
+ */
 function buildStateObjFromUrl(url) {
   let pageKey = '';
   for (let key in pages) if (pages[key].slug === url.pathname) pageKey = key;

@@ -96,6 +96,11 @@ async function updateArchivedContacts() {
 }
 
 async function selectContact(id) {
+  // reset create contact button
+  const createContactButtonEl = document.getElementById('add-contact-btn');
+  createContactButtonEl.hidden = false;
+
+  // wipe current contact details
   const contactList = document.querySelector('#contact-list');
   let contactDetails = '';
 
@@ -156,6 +161,10 @@ async function onEditContact(event) {
 }
 
 async function onPrepareNewContact(event) {
+  // temporarily hide create contact button
+  const createContactButtonEl = document.getElementById('add-contact-btn');
+  createContactButtonEl.hidden = true;
+
   const contactDetailsWrapper = document.getElementById('contact-detail-section');
   const wrapper = document.createElement('div');
   wrapper.id = 'contact-details';

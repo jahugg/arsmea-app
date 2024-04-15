@@ -176,7 +176,6 @@ textarea {
 }
 
 .button-small {
-  display: inline-block;
   color: var(--color-button-background);
   background: none;
   border: solid 1px var(--color-button-background);
