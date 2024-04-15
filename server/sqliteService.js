@@ -1,7 +1,7 @@
-import Database from 'better-sqlite3';
+import { Database } from "bun:sqlite";
 
 /* Notes:
-updates functions could probably be joined into single function */
+all updates functions could probably be joined into single function */
 
 export default class DBService {
   static db;
@@ -11,14 +11,19 @@ export default class DBService {
 
   // ==========
   // Contacts
+  async insertContact(formData) {
 
-  async insertContact(data) {
-    // delete empty entries
-    Object.keys(data).forEach((key) => !data[key] && data[key] !== undefined && delete data[key]);
-    const dataKeys = Object.keys(data);
-    const dataValues = Object.values(data);
+    // delete empty or undefined entries
+    const dataEntries = formData.entries();
+    for (const [key, value] of dataEntries) {
+      if (!value || value === undefined) {
+        formData.delete(key);
+      }
+    }
 
-    // use array.map to process keys inidividually...
+    // convert keys and values into array
+    const dataKeys = [...formData.keys()];
+    const dataValues = [...formData.values()];
 
     // cunstruct query string
     let queryString = 'INSERT INTO contacts (date_added';
@@ -34,7 +39,9 @@ export default class DBService {
     try {
       const query = this.db.prepare(queryString);
       const result = query.run(dataValues);
-      return result.lastInsertRowid;
+      // bun does not seam to have the better-sqlite lastInsertRowId shorthand.
+      const { id } = this.db.query("SELECT last_insert_rowid() as id").get();
+      return id;
     } catch (error) {
       console.log(error);
     }
@@ -50,9 +57,11 @@ export default class DBService {
     }
   }
 
-  async selectContacts() {
+  async selectContacts(archived = false) {
     try {
-      const query = this.db.prepare('SELECT id, firstname, lastname, archived FROM contacts WHERE archived = 0 ORDER BY lastname COLLATE NOCASE');
+      let query;
+      if (archived) query = this.db.prepare('SELECT id, firstname, lastname, archived FROM contacts WHERE archived = 1 ORDER BY lastname COLLATE NOCASE');
+      else query = this.db.prepare('SELECT id, firstname, lastname, archived FROM contacts WHERE archived = 0 ORDER BY lastname COLLATE NOCASE');
       const contactList = query.all();
       return contactList;
     } catch (error) {
@@ -60,22 +69,13 @@ export default class DBService {
     }
   }
 
-  async selectArchivedContacts() {
-    try {
-      const query = this.db.prepare('SELECT id, firstname, lastname FROM contacts WHERE archived = 1 ORDER BY lastname');
-      const contactList = query.all();
-      return contactList;
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  async updateContact(formData) {
+    const id = formData.get("id");
+    formData.delete("id");
 
-  async updateContact(data) {
-    const id = data.id;
-    delete data.id;
-
-    const dataKeys = Object.keys(data);
-    const dataValues = Object.values(data);
+    // convert keys and values into array
+    const dataKeys = [...formData.keys()];
+    const dataValues = [...formData.values()];
 
     // cunstruct query string
     let queryString = 'UPDATE contacts SET ';
@@ -104,7 +104,7 @@ export default class DBService {
     }
   }
 
-  async searchContacts(string) {
+  async searchContactByName(string) {
     try {
       const query = this.db.prepare('SELECT * FROM contacts WHERE archived = 1 AND firstname LIKE ? OR lastname LIKE ?');
       const contactList = query.all(`%${string}%`, `%${string}%`);

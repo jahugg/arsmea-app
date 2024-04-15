@@ -76,13 +76,13 @@ export async function init() {
 }
 
 async function updateContactList(archived = false) {
+  contacts = await request.contacts(archived);  // update contacts
+
   const contactListWrapper = document.querySelector('#contact-list-wrapper');
   const contactList = await getContactListEl(archived);
   contactListWrapper.replaceChildren(contactList);
 
-  // save current contacts for later (search)
-  contacts = await request.contacts(archived);
-
+  // check for archived contacts
   updateArchivedContacts();
 }
 
@@ -209,8 +209,8 @@ async function onPrepareNewContact(event) {
 
 async function onCreateNewContact(event) {
   event.preventDefault();
-  const data = new FormData(event.target);
-  const response = await request.newContact(data);
+  const formData = new FormData(event.target);
+  const response = await request.createContact(formData);
   const id = response.id;
 
   await updateContactList();
@@ -257,9 +257,9 @@ async function onSearchContact(event) {
 
 async function onUpdateContact(event) {
   event.preventDefault();
-  const data = new URLSearchParams(new FormData(event.target));
-  const contactId = data.get('id');
-  let response = await request.updateContact(contactId, data);
+  const formData = new FormData(event.target);
+  const contactId = formData.get('id');
+  let response = await request.updateContact(contactId, formData);
 
   await updateContactList();
 
@@ -270,7 +270,7 @@ async function onUpdateContact(event) {
 }
 
 async function getContactListEl(archived = false) {
-  const contacts = await request.contacts(archived);
+  // const contacts = await request.contacts(archived);
   const contactList = document.createElement('ul');
   contactList.id = 'contact-list';
   contactList.classList.add('styled-list');

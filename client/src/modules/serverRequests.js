@@ -3,42 +3,52 @@ const apiUrl = window.appConfig.apiUrl;
 
 // contacts
 export async function contacts(archived = false) {
-  let response;
-  if (archived) response = await fetch(`${apiUrl}/api/contactListArchived`);
-  else response = await fetch(`${apiUrl}/api/contactList`);
-  return await response.json();
+  console.log("get contacts: " + archived);
+  try {
+    let response;
+    if (archived) response = await fetch(`${apiUrl}/api/contacts?archived=true`);
+    else response = await fetch(`${apiUrl}/api/contacts`);
+    return await response.json();
+  } catch (error) { throw error; }
 }
 
 export async function contactDetails(id) {
-  const response = await fetch(`${apiUrl}/api/contact/${id}`);
-  return await response.json();
+  try {
+    const response = await fetch(`${apiUrl}/api/contact?id=${id}`);
+    return await response.json();
+  } catch (error) { throw error; }
 }
 
 export async function deleteContact(id) {
   try {
-    const response = await fetch(`${apiUrl}/api/contact/${id}`, {
-      method: 'DELETE',
+    const response = await fetch(`${apiUrl}/api/contact?id=${id}`, {
+      method: "DELETE",
     });
-  } catch (err) {
-    console.log(err);
+  } catch (error) { throw error; }
+}
+
+export async function createContact(formData) {
+  try {
+    const response = await fetch(`${apiUrl}/api/contact`, {
+      method: 'POST',
+      body: formData,
+    });
+    return await response.json();
   }
+  catch (error) { throw error; }
 }
 
-export async function newContact(data) {
-  let searchParams = new URLSearchParams(data);
-  const response = await fetch(`${apiUrl}/api/contact`, {
-    method: 'POST',
-    body: searchParams,
-  });
-  return await response.json();
-}
+export async function updateContact(id, formData) {
+  try {
+    const url = new URL(`${apiUrl}/api/contact`);
+    url.searchParams.append('id', id);
 
-export async function updateContact(id, data) {
-  const response = await fetch(`${apiUrl}/api/updateContact/${id}`, {
-    method: 'POST',
-    body: data,
-  });
-  return await response.json();
+    const response = await fetch(url, {
+      method: 'PUT',
+      body: formData,
+    });
+    return response;
+  } catch (error) { throw error; }
 }
 
 // orders
