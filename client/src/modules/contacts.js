@@ -11,11 +11,11 @@ export default async function render() {
   module.classList.add('list-module');
   module.id = 'contact';
   module.innerHTML = `
-    <div id="list-module__controls" class="card">
+    <div id="list-module__controls">
       <div>
         <form id="search-contact" role="search">
-          <label id="search-contact__label" for="search-contact__input">Search</label>
-          <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Contact Name..." autocomplete="off" required/>
+          <label id="search-contact__label" for="search-contact__input">Search Contact</label>
+          <input type="text" pattern="[^0-9]*" name="input" id="search-contact__input" placeholder="Name..." autocomplete="off" required/>
         </form>
 
         <div id="archive-toggle-wrapper" class="checkbox-wrapper" hidden>
@@ -172,6 +172,7 @@ async function onPrepareNewContact(event) {
   form.action = `${apiUrl}/api/contact`;
   form.method = 'POST';
   form.id = 'new-contact';
+  form.classList.add("card");
   form.addEventListener('submit', onCreateNewContact);
   form.innerHTML = `
   <section class="content-controls">
@@ -314,6 +315,7 @@ async function getContactDetailsEl(id) {
   const wrapper = document.createElement('div');
   const contactDetails = document.createElement('div');
   contactDetails.id = 'contact-details';
+  contactDetails.classList.add("card");
 
   const controls = document.createElement('section');
   controls.classList.add('content-controls');
@@ -425,6 +427,7 @@ async function getContactFormEl(id) {
   form.action = `${apiUrl}/api/updateContact`;
   form.method = 'POST';
   form.id = 'edit-contact';
+  form.classList.add("card");
   form.addEventListener('submit', onUpdateContact);
   form.innerHTML = `
     <section class="content-controls">

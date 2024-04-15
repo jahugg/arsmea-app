@@ -2,6 +2,7 @@ window.appConfig = {
   apiUrl: 'http://localhost:5123',
 };
 
+// Object with all pages and reference to the contents
 const pages = {
   dashboard: {
     title: 'Dashboard',
@@ -137,11 +138,8 @@ function handlePageLinks(event) {
 function buildStateObjFromUrl(url) {
   let pageKey = '';
   for (let key in pages) if (pages[key].slug === url.pathname) pageKey = key;
-
   let stateObj = { pageKey: pageKey };
-
   if (url.searchParams.get('id')) stateObj.id = url.searchParams.get('id');
-
   return stateObj;
 }
 
