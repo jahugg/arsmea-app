@@ -2,7 +2,6 @@ window.appConfig = {
   apiUrl: 'http://localhost:5123',
 };
 
-const defaultPage = 'dashboard';
 const pages = {
   dashboard: {
     title: 'Dashboard',

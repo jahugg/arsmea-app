@@ -25,8 +25,8 @@ const server = Bun.serve({
     // CONTACTS: get list of contacts
     if (method === 'GET' && path === '/api/contacts') {
       const archived = url.searchParams.get('archived');
-      const contactList = await db.selectContacts(archived);
-      return Response.json(contactList, { ...CORS_HEADERS, status: 200 });
+      const contacts = await db.selectContacts(archived);
+      return Response.json(contacts, { ...CORS_HEADERS, status: 200 });
     }
 
     // CONTACTS: create contact
@@ -55,7 +55,7 @@ const server = Bun.serve({
     if (method === "DELETE" && path === '/api/contact') {
       const id = url.searchParams.get('id');
       const result = await db.deleteContact(id);
-      return Response(null, { ...CORS_HEADERS, status: 200 });
+      return Response(null, { ...CORS_HEADERS, status: 204 });
 
       // check if contact has open orders
       // const orderList = await db.selectOrdersByContactId(id);
@@ -70,23 +70,16 @@ const server = Bun.serve({
     // CONTACTS: search contact
     if (method === "GET" && path === '/api/contact/search') {
       const string = url.searchParams.get('string');
-      const contactList = await db.searchContactByName(string);
-      return Response.json(contactList, { ...CORS_HEADERS });
+      const contacts = await db.searchContactByName(string);
+      return Response.json(contacts, { ...CORS_HEADERS, status: 200 });
     }
 
     // Handle other paths or methods
-    return Response("Page not found", { status: 404 });
+    return Response("Page not found", { ...CORS_HEADERS, status: 404 });
   },
 });
 
 console.log(`Listening on ${server.url}`);
-
-
-// app.get('/api/searchContacts/:string', async (request, response) => {
-//   const { string } = request.params;
-//   const contactList = await db.searchContacts(string);
-//   response.json(contactList);
-// });
 
 // // orders
 // app.post('/api/order', async (request, response) => {

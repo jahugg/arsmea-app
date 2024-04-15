@@ -3,25 +3,28 @@ const apiUrl = window.appConfig.apiUrl;
 
 // contacts
 export async function contacts(archived = false) {
-  console.log("get contacts: " + archived);
   try {
-    let response;
-    if (archived) response = await fetch(`${apiUrl}/api/contacts?archived=true`);
-    else response = await fetch(`${apiUrl}/api/contacts`);
+    const url = new URL(`${apiUrl}/api/contacts`);
+    if (archived) url.searchParams.append('archived', archived);
+    const response = await fetch(url);
     return await response.json();
   } catch (error) { throw error; }
 }
 
 export async function contactDetails(id) {
   try {
-    const response = await fetch(`${apiUrl}/api/contact?id=${id}`);
+    const url = new URL(`${apiUrl}/api/contact`);
+    url.searchParams.append('id', id);
+    const response = await fetch(url);
     return await response.json();
   } catch (error) { throw error; }
 }
 
 export async function deleteContact(id) {
   try {
-    const response = await fetch(`${apiUrl}/api/contact?id=${id}`, {
+    const url = new URL(`${apiUrl}/api/contact`);
+    url.searchParams.append('id', id);
+    const response = await fetch(url, {
       method: "DELETE",
     });
   } catch (error) { throw error; }
@@ -29,7 +32,8 @@ export async function deleteContact(id) {
 
 export async function createContact(formData) {
   try {
-    const response = await fetch(`${apiUrl}/api/contact`, {
+    const url = new URL(`${apiUrl}/api/contact`);
+    const response = await fetch(url, {
       method: 'POST',
       body: formData,
     });
