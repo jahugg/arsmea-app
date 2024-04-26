@@ -7,7 +7,7 @@ export default async function render() {
   const module = document.createElement('div');
   module.classList.add('list-module');
   module.innerHTML = `
-      <section id="list-module__controls" class="card">
+      <section id="list-module__controls">
         <form class="search-form" role="search">
           <label class="search-form__input">
             Search by contact
@@ -52,7 +52,8 @@ export default async function render() {
   // populate datalist with clients
   const datalist = module.querySelector('#contact-list-main');
   const contacts = await request.contacts();
-  let patternString = '';
+  let patternString = ''; // define allowed patterns for input field
+
   for (const contact of contacts) {
     const { id, firstname, lastname } = contact;
     const option = document.createElement('option');
@@ -65,12 +66,12 @@ export default async function render() {
   return module;
 }
 
-function onPrepareNewItem() {
+async function onPrepareNewItem() {
   const listSection = document.getElementById('list-module__details');
   const form = document.createElement('form');
   form.action = `${apiUrl}/api/order`;
   form.method = 'POST';
-  form.classList.add('new-item-form', 'form');
+  form.classList.add('new-item-form', 'form', 'card');
   form.addEventListener('submit', onCreateItem);
   form.innerHTML = `<section class="list-module__details__controls">
         <input type="submit" class="button-small" value="Save"/>
@@ -79,7 +80,7 @@ function onPrepareNewItem() {
     
     <label>
       <span class="label-text">Client</span>
-      <input list="contact-list" name="contactName" placeholder="Hanna Muster" autocomplete="off" required />
+      <input list="contact-list" id="new-order__contact" name="contactName" placeholder="Hanna Muster" autocomplete="off" required />
     </label>
     <datalist id="contact-list"></datalist>
     <input type="hidden" name="contactId" id="contact-id" value="0" />
@@ -131,6 +132,33 @@ function onPrepareNewItem() {
     </label>`;
 
   listSection.replaceChildren(form);
+
+  // populate datalist with clients
+  const datalist = form.querySelector('#contact-list');
+  const contacts = await request.contacts();
+
+  for (const contact of contacts) {
+    const { id, firstname, lastname } = contact;
+    const option = document.createElement('option');
+    option.value = `${firstname} ${lastname}`;
+    option.dataset.contactId = id;
+    datalist.appendChild(option);
+  }
+
+  // check if given contact is new
+  const contactInput = form.querySelector('#new-order__contact');
+  const contactIdInput = form.querySelector('#contact-id');
+  contactInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    let contactId = 0;
+    for (const item of datalist.children) {
+      if (item.value === value) contactId = item.dataset.contactId;
+    }
+    contactIdInput.value = contactId;
+    if (contactIdInput.value == 0 && contactInput.value !== '') {
+      contactInput.parentNode.dataset.newContact = '';
+    } else delete contactInput.parentNode.dataset.newContact;
+  });
 
   // add first default item
   addItem();
@@ -291,7 +319,7 @@ function onPrepareNewItem() {
   function removeInputGroupOf(selector) {
     let el = document.querySelector(selector);
     if (el) {
-      container = el.closest('label');
+      const container = el.closest('label');
       container.remove();
     }
   }
@@ -300,13 +328,12 @@ function onPrepareNewItem() {
   function addItem(text) {
     let tableBodyEl = form.querySelector('.order-items tbody');
     let itemEl = document.createElement('tr');
-    let descriptionEl = document.createElement('td');
 
+    let descriptionEl = document.createElement('td');
     if (text) {
       itemEl.id = `order-item-${text.toLowerCase()}`;
-      descriptionEl.innerHTML = `<input name="description[]" value="${text}" required ${text === 'Delivery' ? 'disabled' : ''}/>`;
+      descriptionEl.innerHTML = `<input name="description[]" value="${text}" required ${text === 'Delivery' ? 'readonly' : ''}/>`;
     } else descriptionEl.innerHTML = `<input name="description[]" placeholder="Bouquet" required />`;
-
     itemEl.appendChild(descriptionEl);
 
     let priceEl = document.createElement('td');
@@ -346,7 +373,7 @@ function onPrepareNewItem() {
     let total = 0;
 
     // sumup all prices
-    for (price of priceElAll) total += Number(price.value);
+    for (const price of priceElAll) total += Number(price.value);
 
     // output total
     outputEl.innerHTML = total;
@@ -359,7 +386,19 @@ function onPrepareNewItem() {
   }
 }
 
-function onCreateItem() { }
+async function onCreateItem(event) {
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const response = await request.createOrder(data);
+  // const id = response.id;
+
+  // // add order to current list
+  // const date = new DateExt(data.get('due'));
+  // const dayEl = document.querySelector(`.day-list__day[data-date="${date.getDateString()}"]`);
+  // // adding orders to days should be outsourced into separate function to avoid duplicate code
+
+  // selectOrder(id);
+}
 
 function onSearchItem(event) {
   event.preventDefault();

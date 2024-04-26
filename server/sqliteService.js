@@ -89,9 +89,7 @@ export default class DBService {
       const query = this.db.prepare(queryString);
       const result = query.run(dataValues);
       return result;
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) { throw error; }
   }
 
   async deleteContact(id) {
@@ -144,9 +142,7 @@ export default class DBService {
         ORDER BY date_placed`);
       const list = query.all();
       return list;
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) { throw error; }
   }
 
   async insertMultipleOrders(data) {

@@ -691,7 +691,7 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
   }
 
   select {
-    background: hsl(0, 0%, 12%);
+    background: var(--color-grey-05);
     width: 100%;
     font: inherit;
     color: inherit;

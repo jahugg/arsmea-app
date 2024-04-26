@@ -22,6 +22,15 @@ const server = Bun.serve({
       return Response(null, { ...CORS_HEADERS, status: 204 });
     }
 
+    // CONTACTS: get contact details
+    if (method === 'GET' && path === '/api/contacts') {
+      const id = url.searchParams.get('id');
+      if (id) { // don't send response if no ID is present
+        const contact = await db.selectContactById(id);
+        return Response.json(contact, { ...CORS_HEADERS, status: 200 });
+      }
+    }
+
     // CONTACTS: get list of contacts
     if (method === 'GET' && path === '/api/contacts') {
       const archived = url.searchParams.get('archived');
@@ -30,21 +39,14 @@ const server = Bun.serve({
     }
 
     // CONTACTS: create contact
-    if (method === "POST" && path === '/api/contact') {
+    if (method === "POST" && path === '/api/contacts') {
       const formData = await req.formData();
       const contactId = await db.insertContact(formData);
       return Response.json({ id: contactId }, { ...CORS_HEADERS, status: 200 });
     }
 
-    // CONTACTS: get contact details
-    if (method === 'GET' && path === '/api/contact') {
-      const id = url.searchParams.get('id');
-      const contact = await db.selectContactById(id);
-      return Response.json(contact, { ...CORS_HEADERS, status: 200 });
-    }
-
     // CONTACTS: update existing contact
-    if (method === 'PUT' && path === '/api/contact') {
+    if (method === 'PUT' && path === '/api/contacts') {
       const id = url.searchParams.get('id');
       const formData = await req.formData();
       const contact = await db.updateContact(formData);
@@ -52,7 +54,7 @@ const server = Bun.serve({
     }
 
     // CONTACTS: delete contact
-    if (method === "DELETE" && path === '/api/contact') {
+    if (method === "DELETE" && path === '/api/contacts') {
       const id = url.searchParams.get('id');
       const result = await db.deleteContact(id);
       return Response(null, { ...CORS_HEADERS, status: 204 });
@@ -68,11 +70,41 @@ const server = Bun.serve({
     }
 
     // CONTACTS: search contact
-    if (method === "GET" && path === '/api/contact/search') {
+    if (method === "GET" && path === '/api/contacts/search') {
       const string = url.searchParams.get('string');
       const contacts = await db.searchContactByName(string);
       return Response.json(contacts, { ...CORS_HEADERS, status: 200 });
     }
+
+    // ORDERS: get list of orders
+    if (method === 'GET' && path === '/api/orders') {
+      const orders = await db.selectAllOrders();
+      return Response.json(orders, { ...CORS_HEADERS, status: 200 });
+    }
+
+    // CONTACTS: create order
+    if (method === "POST" && path === '/api/orders') {
+      const formData = await req.formData();
+      const contactName = formData.get('contactName');
+      const contactId = formData.get('contactId');
+
+      // optionaly create new contact by extracing first and lastname
+      if (contactId == 0) {
+        const nameParts = contactName.split(' ');
+        const [firstname, ...lastnameParts] = nameParts;
+
+        const contactFormData = new FormData();
+        contactFormData.append('firstname', firstname);
+        contactFormData.append('lastname', lastnameParts.join(' '));
+
+        const newContactId = await db.insertContact(contactFormData);
+        formData.set("contactId", newContactId);
+      }
+      // const orderId = await db.insertOrder(data);
+      return Response.json({ id: "7" }, { ...CORS_HEADERS, status: 200 });
+    }
+
+
 
     // Handle other paths or methods
     return Response("Page not found", { ...CORS_HEADERS, status: 404 });

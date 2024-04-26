@@ -13,16 +13,18 @@ export async function contacts(archived = false) {
 
 export async function contactDetails(id) {
   try {
-    const url = new URL(`${apiUrl}/api/contact`);
+    const url = new URL(`${apiUrl}/api/contacts`);
     url.searchParams.append('id', id);
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: "GET",
+    });
     return await response.json();
   } catch (error) { throw error; }
 }
 
 export async function deleteContact(id) {
   try {
-    const url = new URL(`${apiUrl}/api/contact`);
+    const url = new URL(`${apiUrl}/api/contacts`);
     url.searchParams.append('id', id);
     const response = await fetch(url, {
       method: "DELETE",
@@ -32,19 +34,18 @@ export async function deleteContact(id) {
 
 export async function createContact(formData) {
   try {
-    const url = new URL(`${apiUrl}/api/contact`);
+    const url = new URL(`${apiUrl}/api/contacts`);
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
     });
     return await response.json();
-  }
-  catch (error) { throw error; }
+  } catch (error) { throw error; }
 }
 
 export async function updateContact(id, formData) {
   try {
-    const url = new URL(`${apiUrl}/api/contact`);
+    const url = new URL(`${apiUrl}/api/contacts`);
     url.searchParams.append('id', id);
 
     const response = await fetch(url, {
@@ -56,17 +57,19 @@ export async function updateContact(id, formData) {
 }
 
 // orders
-export async function newOrder(data) {
-  let searchParams = new URLSearchParams(data);
-  const response = await fetch(`${apiUrl}/api/order`, {
-    method: 'POST',
-    body: searchParams,
-  });
-  return await response.json();
+export async function createOrder(formData) {
+  try {
+    const url = new URL(`${apiUrl}/api/orders`);
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    return await response.json();
+  } catch (error) { throw error; }
 }
 
 export async function orders() {
-  let response = await fetch(`${apiUrl}/api/orderList`);
+  let response = await fetch(`${apiUrl}/api/orders`);
   return await response.json();
 }
 
