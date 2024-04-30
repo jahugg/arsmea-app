@@ -44,6 +44,7 @@ custom properties
   --color-text-default: var(--color-altblack);
   --color-text-inverted: var(--color-altwhite);
   --color-text-placeholder: var(--color-grey-05);
+  --color-text-highlight: var(--color-purple);
   --color-background-default: var(--color-altwhite);
   --color-background-inverted: var(--color-altblack);
   --color-border-default: var(--color-altblack);
@@ -74,7 +75,7 @@ custom properties
   --font-h2: normal 500 1.2em var(--font-family);
   --font-regular: normal var(--font-weight) 1em var(--font-family);
   --font-small: normal var(--font-weight) 0.8em var(--font-family);
-  --font-tiny: normal var(--font-weight) 0.7em var(--font-family);
+  --font-tiny: italic var(--font-weight) 0.7em var(--font-family);
 
   /* borders */
   --border-input: solid 1px var(--color-border-default);
@@ -273,14 +274,18 @@ textarea {
   box-shadow: var(--effects-shadow-default);
 }
 
-.form__input-group {
+.form__input-group,
+form label {
   margin-top: 2em;
+  position: relative;
 
   &[data-new-contact]::after {
-    content: 'Client not found. New client will be created.';
+    content: '⚠ New Contact';
     font: var(--font-tiny);
-    color: red;
+    color: var(--color-text-highlight);
     position: absolute;
+    left: 0;
+    top: 100%;
   }
 }
 

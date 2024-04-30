@@ -100,8 +100,8 @@ const server = Bun.serve({
         const newContactId = await db.insertContact(contactFormData);
         formData.set("contactId", newContactId);
       }
-      // const orderId = await db.insertOrder(data);
-      return Response.json({ id: "7" }, { ...CORS_HEADERS, status: 200 });
+      const orderId = await db.insertOrder(formData);
+      return Response.json({ id: orderId }, { ...CORS_HEADERS, status: 200 });
     }
 
 

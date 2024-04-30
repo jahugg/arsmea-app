@@ -62,17 +62,26 @@ export async function init() {
   const contactId = url.searchParams.get('id');
   if (contactId) selectContact(contactId);
 
-  // handle key controls
-  window.addEventListener('keydown', function (event) {
+  // Handle key controls
+  // Define the event listener function
+  function handleKeyControls(event) {
     switch (event.key) {
       case 'ArrowDown':
+        event.preventDefault();
         selectNextContact();
         break;
       case 'ArrowUp':
+        event.preventDefault();
         selectPreviousContact();
         break;
+      default:
+        // Handle other key events here
+        break;
     }
-  });
+  }
+
+  // Add the event listener
+  // window.addEventListener('keydown', handleKeyControls);
 }
 
 async function updateContactList(archived = false) {
@@ -173,7 +182,7 @@ async function onPrepareNewContact(event) {
   form.method = 'POST';
   form.id = 'new-contact';
   form.classList.add("card");
-  form.addEventListener('submit', onCreateNewContact);
+  form.addEventListener('submit', onCreateContact);
   form.innerHTML = `
   <section class="content-controls">
     <input type="submit" class="button-small" value="Save"/>
@@ -217,7 +226,7 @@ async function onPrepareNewContact(event) {
   for (const item of contactListItems) delete item.dataset.selected;
 }
 
-async function onCreateNewContact(event) {
+async function onCreateContact(event) {
   event.preventDefault();
   const formData = new FormData(event.target);
   const response = await request.createContact(formData);

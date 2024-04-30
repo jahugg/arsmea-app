@@ -72,7 +72,7 @@ async function onPrepareNewItem() {
   form.action = `${apiUrl}/api/order`;
   form.method = 'POST';
   form.classList.add('new-item-form', 'form', 'card');
-  form.addEventListener('submit', onCreateItem);
+  form.addEventListener('submit', onCreateOrder);
   form.innerHTML = `<section class="list-module__details__controls">
         <input type="submit" class="button-small" value="Save"/>
         <button type="button" class="button-small discard-btn">Discard</button>
@@ -386,11 +386,12 @@ async function onPrepareNewItem() {
   }
 }
 
-async function onCreateItem(event) {
+async function onCreateOrder(event) {
   event.preventDefault();
   const data = new FormData(event.target);
   const response = await request.createOrder(data);
-  // const id = response.id;
+  const id = response.id;
+  console.log("new order id: " + id);
 
   // // add order to current list
   // const date = new DateExt(data.get('due'));

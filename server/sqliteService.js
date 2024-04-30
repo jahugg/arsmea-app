@@ -114,22 +114,28 @@ export default class DBService {
 
   // ==========
   // Orders
-  async insertOrder(data) {
+  async insertOrder(formData) {
     try {
-      const { contactId, due, amount, description } = data;
-      let query = this.db.prepare(`INSERT INTO invoices (contact_id, amount, date_issue, date_due)
-      VALUES (?, ?, date('now'), date('now','+15 day'))`);
-      let result = query.run(contactId, amount);
-      const invoiceId = result.lastInsertRowid;
+      const contactId = formData.get("contactId");
+      const description = formData.get("description");
 
-      query = this.db.prepare(`INSERT INTO 
-        orders (contact_id, invoice_id, datetime_placed, datetime_due, description, status)
-      VALUES (?, ?, datetime('now'), ?, ?, 'open')`);
-      result = query.run(contactId, invoiceId, due, description);
-      return result.lastInsertRowid;
-    } catch (error) {
-      console.log(error);
-    }
+      // insert order
+      const query = this.db.prepare(`INSERT INTO 
+        orders (contact_id, description, status, datetime_placed)
+      VALUES (?, ?, 'open', datetime('now'))`);
+      const result = query.run(contactId, description);
+      const { id } = this.db.query("SELECT last_insert_rowid() as id").get();
+      return id;
+    } catch (error) { throw error; }
+
+    // insert invoice
+    // let query = this.db.prepare(`INSERT INTO invoices (contact_id, amount, date_issue, date_due)
+    //   VALUES (?, ?, date('now'), date('now','+15 day'))`);
+    // let result = query.run(contactId, amount);
+    // const invoiceId = result.lastInsertRowid;
+
+
+    // insert order items
   }
 
   async selectAllOrders() {
@@ -139,7 +145,7 @@ export default class DBService {
         FROM orders
         INNER JOIN contacts 
           ON orders.contact_id = contacts.id 
-        ORDER BY date_placed`);
+        ORDER BY datetime_placed`);
       const list = query.all();
       return list;
     } catch (error) { throw error; }
