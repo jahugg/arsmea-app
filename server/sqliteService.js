@@ -120,9 +120,10 @@ export default class DBService {
       const description = formData.get("description");
 
       // insert order
-      const query = this.db.prepare(`INSERT INTO 
-        orders (contact_id, description, status, datetime_placed)
-      VALUES (?, ?, 'open', datetime('now'))`);
+      const query = this.db.prepare(`
+        INSERT INTO orders (contact_id, description, status, datetime_placed)
+        VALUES (?, ?, 'open', datetime('now'))
+      `);
       const result = query.run(contactId, description);
       const { id } = this.db.query("SELECT last_insert_rowid() as id").get();
       return id;
