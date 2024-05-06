@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { sortAndDeduplicateDiagnostics } from "typescript";
 
 /* Notes:
 all updates functions could probably be joined into single function */
@@ -34,13 +35,13 @@ export default class DBService {
     dataKeys.forEach(() => {
       queryString += `, ?`;
     });
-    queryString += `)`;
+    queryString += `) RETURNING id`;
 
     try {
-      const query = this.db.prepare(queryString);
-      const result = query.run(dataValues);
-      // bun does not seam to have the better-sqlite lastInsertRowId shorthand.
-      const { id } = this.db.query("SELECT last_insert_rowid() as id").get();
+      const query = this.db.query(queryString);
+      const result = await query.get(dataValues);
+      const id = result.id;
+
       return id;
     } catch (error) {
       console.log(error);
@@ -112,31 +113,81 @@ export default class DBService {
     }
   }
 
-  // ==========
-  // Orders
+  /**
+   * Inserts a new order into the database.
+   * @async
+   * @param {FormData} formData - The form data containing order details.
+   * @returns {number} - The ID of the newly inserted order.
+   */
   async insertOrder(formData) {
     try {
+      // Validate form data
+      if (!formData || !(formData instanceof FormData)) {
+        throw new Error("Invalid form data provided");
+      }
+
+      // Extract form data
       const contactId = formData.get("contactId");
-      const description = formData.get("description");
+      const notes = formData.get("notes");
+      const dueDatetime = formData.get("dueDatetime");
+      const description = formData.getAll("description[]");
+      let price = formData.getAll("price[]").map(value => Number(value, 10));
 
-      // insert order
-      const query = this.db.prepare(`
-        INSERT INTO orders (contact_id, description, status, datetime_placed)
-        VALUES (?, ?, 'open', datetime('now'))
-      `);
-      const result = query.run(contactId, description);
-      const { id } = this.db.query("SELECT last_insert_rowid() as id").get();
-      return id;
+      // Validate form fields
+      // if (!contactId || !notes || !dueDatetime || !description || !price || description.length !== price.length) {
+      //   throw new Error("Incomplete or invalid form data provided");
+      // }
+
+      // combine description and price into a single array
+      const orderItems = description.map((text, index) => ({
+        description: text,
+        price: price[index]
+      }));
+
+      // determine total price
+      let totalPrice = 0;
+      for (const value of price)
+        totalPrice += value;
+
+      // create transation for new order
+      const orderTransaction = this.db.transaction(() => {
+
+        // insert order
+        const orderQuery = this.db.prepare(`
+          INSERT INTO orders (contact_id, notes, datetime_placed)
+          VALUES (?, ?, datetime('now')) RETURNING id;
+        `);
+        const result = orderQuery.get(contactId, notes);
+        const orderId = result.id;
+
+        // insert invoice
+        const invoiceQuery = this.db.prepare(`
+          INSERT INTO order_invoices (order_id, amount_total, status, date_issued, date_due)
+          VALUES (?, ?, 'open', date('now'), date('now','+15 day'))
+        `);
+        invoiceQuery.run(orderId, totalPrice);
+
+        // insert order items
+        const itemQuery = this.db.prepare(`
+          INSERT INTO order_items (order_id, type, description, price, status, datetime_due)
+          VALUES (?, 'item', ?, ?, 'open', ?)
+        `);
+
+        for (const item of orderItems)
+          itemQuery.run(orderId, item.description, item.price, dueDatetime);
+
+        return orderId;
+      });
+
+      // run transation
+      const orderId = orderTransaction();
+
+      return orderId;
     } catch (error) { throw error; }
-
-    // insert invoice
-    // let query = this.db.prepare(`INSERT INTO invoices (contact_id, amount, date_issue, date_due)
-    //   VALUES (?, ?, date('now'), date('now','+15 day'))`);
-    // let result = query.run(contactId, amount);
-    // const invoiceId = result.lastInsertRowid;
 
 
     // insert order items
+
   }
 
   async selectAllOrders() {

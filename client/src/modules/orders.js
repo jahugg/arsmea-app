@@ -412,13 +412,14 @@ function onSearchItem(event) {
  */
 function getListEl(list) {
   const listEl = document.createElement('ul');
+  console.log(list);
 
-  if (list.length) {
-    for (let item of subscriptions) {
-      const itemEl = getListItemEl(item);
-      listEl.appendChild(itemEl);
-    }
-  } else listEl.innerHTML = 'No Items Found';
+  // if (list.length) {
+  //   for (let item of subscriptions) {
+  //     const itemEl = getListItemEl(item);
+  //     listEl.appendChild(itemEl);
+  //   }
+  // } else listEl.innerHTML = 'No Items Found';
 
   return listEl;
 }
