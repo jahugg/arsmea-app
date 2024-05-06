@@ -1,4 +1,5 @@
 import * as request from './serverRequests.js';
+import { Calendar, DateExt } from './calendar.js';
 
 // API url (use process.env.SERVER for prod)
 const apiUrl = window.appConfig.apiUrl;
@@ -391,7 +392,6 @@ async function onCreateOrder(event) {
   const data = new FormData(event.target);
   const response = await request.createOrder(data);
   const id = response.id;
-  console.log("new order id: " + id);
 
   // // add order to current list
   // const date = new DateExt(data.get('due'));
@@ -412,7 +412,24 @@ function onSearchItem(event) {
  */
 function getListEl(list) {
   const listEl = document.createElement('ul');
-  console.log(list);
+  listEl.classList.add('order-list', 'styled-list');
+
+  for (const item of list) {
+    const { id, datetime_due, datetime_completed, description, status, price, firstname, lastname } = item;
+    let dueDate = new DateExt(datetime_due);
+    let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
+    let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+
+    const itemEl = document.createElement('li');
+    itemEl.classList.add('order-list__order');
+    itemEl.dataset.orderId = id;
+    itemEl.dataset.date = dueDate.getDateString();
+    itemEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
+            <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
+            <span class="price">${price} CHF</span>`;
+    itemEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
+    listEl.appendChild(itemEl);
+  }
 
   // if (list.length) {
   //   for (let item of subscriptions) {

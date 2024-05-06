@@ -134,9 +134,9 @@ export default class DBService {
       let price = formData.getAll("price[]").map(value => Number(value, 10));
 
       // Validate form fields
-      // if (!contactId || !notes || !dueDatetime || !description || !price || description.length !== price.length) {
-      //   throw new Error("Incomplete or invalid form data provided");
-      // }
+      if (!contactId || !dueDatetime || !description || !price || description.length !== price.length) {
+        throw new Error("Incomplete or invalid form data provided");
+      }
 
       // combine description and price into a single array
       const orderItems = description.map((text, index) => ({
@@ -192,12 +192,14 @@ export default class DBService {
 
   async selectAllOrders() {
     try {
-      const query = this.db
-        .prepare(`SELECT * 
-        FROM orders
-        INNER JOIN contacts 
-          ON orders.contact_id = contacts.id 
-        ORDER BY datetime_placed`);
+      const query = this.db.prepare(`
+        SELECT order_items.*, 
+               contacts.firstname, contacts.lastname
+        FROM order_items
+        INNER JOIN orders ON order_items.order_id = orders.id
+        INNER JOIN contacts ON orders.contact_id = contacts.id
+        ORDER BY order_items.datetime_due
+      `);
       const list = query.all();
       return list;
     } catch (error) { throw error; }
