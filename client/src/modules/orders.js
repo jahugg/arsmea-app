@@ -4,6 +4,8 @@ import { Calendar, DateExt } from './calendar.js';
 // API url (use process.env.SERVER for prod)
 const apiUrl = window.appConfig.apiUrl;
 
+const calendar = new Calendar();
+
 export default async function render() {
   const module = document.createElement('div');
   module.classList.add('list-module');
@@ -46,6 +48,7 @@ export default async function render() {
   const searchForm = module.querySelector('.search-form');
   searchForm.addEventListener('submit', onSearchItem);
 
+  // populate order list
   const listSectionEl = module.querySelector('#list-module__list');
   const itemList = getListEl(await request.orders());
   listSectionEl.replaceChildren(itemList);
@@ -64,7 +67,66 @@ export default async function render() {
     patternString += `${firstname} ${lastname}|`;
   }
 
+  // draw calendar
+  const detailsEl = module.querySelector('#list-module__details');
+  detailsEl.replaceChildren(calendar.getHTML());
+
+  const calendarEl = module.querySelector('.calendar');
+  calendarEl.classList.add("card");
+
   return module;
+}
+
+export function init() {
+  calendar.populateCalendar();
+  updateCalendar(); // why is this necessary for eventlistener to fire?
+  document.addEventListener('monthloaded', updateCalendar);
+}
+
+async function updateCalendar() {
+
+  // // populate calendar with orders
+  const firstDateOfView = calendar.datesOfView[0];
+  const lastDateOfView = calendar.datesOfView[calendar.datesOfView.length - 1];
+  const orderOfView = await request.ordersWithinRange(firstDateOfView, lastDateOfView);
+
+  if (orderOfView)
+    for (const order of orderOfView) {
+      const thisDate = new DateExt(order.datetime_due);
+      const date = thisDate.getDateString();
+
+      // add event to calendar
+      const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
+      const ordersEl = document.querySelector(selector);
+      if (ordersEl) ordersEl.innerHTML += '&middot;';
+    }
+
+  const calendarDays = document.getElementsByClassName('calendar__day');
+  for (const day of calendarDays)
+    day.addEventListener('click', onClickCalendarDay);
+}
+
+async function onClickCalendarDay(event) {
+  const target = event.target.closest('.calendar__day');
+  const selectedDate = new DateExt(target.dataset.date);
+
+  // const calendarToggle = document.getElementById('calendar-toggle');
+  // calendarToggle.innerHTML = `${selectedDate.nameOfMonth()} ${selectedDate.getDate()}. ${selectedDate.getFullYear()}`;
+
+  const orderList = await request.ordersWithinRange(selectedDate, selectedDate);
+  let contentEl;
+
+  if (orderList.length) contentEl = getListEl(orderList);
+  else {
+    contentEl = document.createElement('div');
+    contentEl.innerHTML = 'No Orders.';
+  }
+
+  const listWrapper = document.getElementById('list-module__list');
+  listWrapper.replaceChildren(contentEl);
+
+  // const calendar = document.getElementById('orders-calendar');
+  // delete calendar.dataset.defaultDate;
 }
 
 async function onPrepareNewItem() {

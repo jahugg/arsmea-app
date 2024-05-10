@@ -15,9 +15,7 @@ export async function contactDetails(id) {
   try {
     const url = new URL(`${apiUrl}/api/contacts`);
     url.searchParams.append('id', id);
-    const response = await fetch(url, {
-      method: "GET",
-    });
+    const response = await fetch(url);
     return await response.json();
   } catch (error) { throw error; }
 }
@@ -84,17 +82,17 @@ export async function ordersByInvoice(invoiceId) {
 }
 
 export async function ordersWithinRange(start, end) {
-  // get String and set Time
+  // get string and set Time
   const startDateString = start.getDateString() + 'T00:00';
   const endDateString = end.getDateString() + 'T23:59';
 
   try {
-    let response;
-    response = await fetch(`${apiUrl}/api/ordersWithinRange/?start=${startDateString}&end=${endDateString}`);
+    const url = new URL(`${apiUrl}/api/orders`);
+    url.searchParams.append('start', startDateString);
+    url.searchParams.append('end', endDateString);
+    const response = await fetch(url);
     return await response.json();
-  } catch (err) {
-    console.log(err);
-  }
+  } catch (error) { throw error; }
 }
 
 export async function orderDetails(id) {

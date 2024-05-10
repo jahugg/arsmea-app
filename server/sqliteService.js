@@ -205,6 +205,48 @@ export default class DBService {
     } catch (error) { throw error; }
   }
 
+
+  /**
+   * Select relevant orders.
+   * Includes orders from two days ago up until two weeks. Selects the next 10 entries
+   * to avoid empty lists if no orders are present in the next two weeks.
+   * @async
+   * @param {FormData} formData - The form data containing order details.
+   * @returns {number} - The ID of the newly inserted order.
+   */
+  async selectRelevantOrders() {
+    try {
+      // set default date range
+      const today = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 2);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 17);
+
+      const query = this.db.prepare(`
+        SELECT order_items.*, 
+              contacts.firstname, contacts.lastname
+        FROM order_items
+        INNER JOIN orders ON order_items.order_id = orders.id
+        INNER JOIN contacts ON orders.contact_id = contacts.id
+        WHERE order_items.datetime_due BETWEEN ? AND ?
+
+        UNION
+
+        SELECT order_items.*, 
+              contacts.firstname, contacts.lastname
+        FROM order_items
+        INNER JOIN orders ON order_items.order_id = orders.id
+        INNER JOIN contacts ON orders.contact_id = contacts.id
+        WHERE order_items.datetime_due >= ?
+        ORDER BY order_items.datetime_due
+        LIMIT 10
+      `);
+      const list = query.all(startDate.toISOString(), endDate.toISOString(), today.toISOString());
+      return list;
+    } catch (error) { throw error; }
+  }
+
   async insertMultipleOrders(data) {
     // data format: [{},{},{}]
     try {
@@ -305,20 +347,18 @@ export default class DBService {
 
   async selectOrdersWithinRange(startDate, endDate) {
     try {
-      const query = this.db.prepare(`SELECT orders.id, orders.datetime_due, orders.status, 
-        contacts.firstname, contacts.lastname, invoices.amount
-        FROM orders 
-        INNER JOIN contacts 
-          ON orders.contact_id = contacts.id 
-        INNER JOIN invoices
-          ON orders.invoice_id = invoices.id
-        WHERE orders.datetime_due BETWEEN ? AND ?
-        ORDER BY orders.datetime_due, orders.status`);
-      const ordersList = query.all(startDate, endDate);
-      return ordersList;
-    } catch (error) {
-      console.log(error);
-    }
+      const query = this.db.prepare(`
+        SELECT order_items.*, 
+               contacts.firstname, contacts.lastname
+        FROM order_items
+        INNER JOIN orders ON order_items.order_id = orders.id
+        INNER JOIN contacts ON orders.contact_id = contacts.id
+        WHERE order_items.datetime_due BETWEEN ? AND ?
+        ORDER BY order_items.datetime_due
+      `);
+      const list = query.all(startDate, endDate);
+      return list;
+    } catch (error) { throw error; }
   }
 
   // ==========

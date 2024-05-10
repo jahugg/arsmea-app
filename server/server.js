@@ -22,20 +22,19 @@ const server = Bun.serve({
       return Response(null, { ...CORS_HEADERS, status: 204 });
     }
 
-    // CONTACTS: get contact details
+    // CONTACTS: get contact details or list of contacts
     if (method === 'GET' && path === '/api/contacts') {
       const id = url.searchParams.get('id');
-      if (id) { // don't send response if no ID is present
+
+      if (id) { // return contact details
         const contact = await db.selectContactById(id);
         return Response.json(contact, { ...CORS_HEADERS, status: 200 });
-      }
-    }
 
-    // CONTACTS: get list of contacts
-    if (method === 'GET' && path === '/api/contacts') {
-      const archived = url.searchParams.get('archived');
-      const contacts = await db.selectContacts(archived);
-      return Response.json(contacts, { ...CORS_HEADERS, status: 200 });
+      } else {  // return list of all contacts
+        const archived = url.searchParams.get('archived');
+        const contacts = await db.selectContacts(archived);
+        return Response.json(contacts, { ...CORS_HEADERS, status: 200 });
+      }
     }
 
     // CONTACTS: create contact
@@ -78,8 +77,18 @@ const server = Bun.serve({
 
     // ORDERS: get list of orders
     if (method === 'GET' && path === '/api/orders') {
-      const orders = await db.selectAllOrders();
-      return Response.json(orders, { ...CORS_HEADERS, status: 200 });
+      const start = url.searchParams.get('start');
+      const end = url.searchParams.get('end');
+
+      // select all orders
+      if (!start || !end) {
+        const orders = await db.selectRelevantOrders();
+        return Response.json(orders, { ...CORS_HEADERS, status: 200 });
+
+      } else {  // select orders within date range
+        const orders = await db.selectOrdersWithinRange(start, end);
+        return Response.json(orders, { ...CORS_HEADERS, status: 200 });
+      }
     }
 
     // CONTACTS: create order
@@ -103,8 +112,6 @@ const server = Bun.serve({
       const orderId = await db.insertOrder(formData);
       return Response.json({ id: orderId }, { ...CORS_HEADERS, status: 200 });
     }
-
-
 
     // Handle other paths or methods
     return Response("Page not found", { ...CORS_HEADERS, status: 404 });
@@ -154,6 +161,13 @@ console.log(`Listening on ${server.url}`);
 //   response.json({ success: result });
 // });
 
+// app.get('/api/ordersWithinRange/', async (request, response) => {
+//   const start = request.query.start;
+//   const end = request.query.end;
+//   const ordersList = await db.selectOrdersWithinRange(start, end);
+//   response.json(ordersList);
+// });
+
 // app.get('/api/ordersByContact/:id', async (request, response) => {
 //   const { id } = request.params;
 //   const orderList = await db.selectOrdersByContactId(id);
@@ -164,13 +178,6 @@ console.log(`Listening on ${server.url}`);
 //   const { id } = request.params;
 //   const orderList = await db.selectOrdersByInvoiceId(id);
 //   response.json(orderList);
-// });
-
-// app.get('/api/ordersWithinRange/', async (request, response) => {
-//   const start = request.query.start;
-//   const end = request.query.end;
-//   const ordersList = await db.selectOrdersWithinRange(start, end);
-//   response.json(ordersList);
 // });
 
 // // subscriptions
