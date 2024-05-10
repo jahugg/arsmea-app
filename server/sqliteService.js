@@ -224,8 +224,9 @@ export default class DBService {
       endDate.setDate(startDate.getDate() + 17);
 
       const query = this.db.prepare(`
-        SELECT order_items.*, 
-              contacts.firstname, contacts.lastname
+        SELECT order_items.*,
+               orders.id,
+               contacts.firstname, contacts.lastname
         FROM order_items
         INNER JOIN orders ON order_items.order_id = orders.id
         INNER JOIN contacts ON orders.contact_id = contacts.id
@@ -233,13 +234,14 @@ export default class DBService {
 
         UNION
 
-        SELECT order_items.*, 
-              contacts.firstname, contacts.lastname
+        SELECT order_items.*,
+               orders.id,
+               contacts.firstname, contacts.lastname
         FROM order_items
         INNER JOIN orders ON order_items.order_id = orders.id
         INNER JOIN contacts ON orders.contact_id = contacts.id
         WHERE order_items.datetime_due >= ?
-        ORDER BY order_items.datetime_due
+        ORDER BY order_items.datetime_due, orders.id
         LIMIT 10
       `);
       const list = query.all(startDate.toISOString(), endDate.toISOString(), today.toISOString());

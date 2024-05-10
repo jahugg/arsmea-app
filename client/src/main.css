@@ -635,6 +635,16 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
 
 #list-module__list {
   grid-area: list;
+
+  h1 {
+    font: var(--font-small);
+  }
+
+  summary: var(--font-regular);
+
+  details {
+    margin-bottom: .2em;
+  }
 }
 
 #list-module__details {
@@ -794,7 +804,7 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
 
       &[data-today] {
         border: var(--border-regular);
-        
+
         &::before {
           font-weight: bold;
         }

@@ -473,25 +473,79 @@ function onSearchItem(event) {
  * @param {Object} list data list
  */
 function getListEl(list) {
-  const listEl = document.createElement('ul');
-  listEl.classList.add('order-list', 'styled-list');
+  const dayListEl = document.createElement('ul');
+  let lastDayEl;
+  let lastOrderDetailsEl;
+  let lastOrderListEl;
+  let lastDate = new DateExt();
+  let lastOrderId = 0;
 
   for (const item of list) {
-    const { id, datetime_due, datetime_completed, description, status, price, firstname, lastname } = item;
-    let dueDate = new DateExt(datetime_due);
-    let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
-    let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
 
+    const { id, order_id, datetime_due, datetime_completed, description, status, price, firstname, lastname } = item;
+    const dueDate = new DateExt(datetime_due);
+    const dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
+    const timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+
+    // add day title if order is due on a different date
+    if (lastDate.getDateString() !== dueDate.getDateString()) {
+
+      lastDate = dueDate; // update last date
+
+      lastDayEl = document.createElement('li'); // create new day element
+      dayListEl.appendChild(lastDayEl);
+
+      // add day title
+      const dayTitleEl = document.createElement('h1');
+      dayTitleEl.textContent = `${dueDate.nameOfWeekday()}, ${dueDate.getDate()}. ${dueDate.nameOfMonth()}`;
+      lastDayEl.appendChild(dayTitleEl);
+    }
+
+    // add new order to day if item belongs to a different order
+    if (lastOrderId !== order_id) {
+      lastOrderId = order_id // update last order id
+
+      // add dropdown list
+      lastOrderDetailsEl = document.createElement('details');
+      lastOrderDetailsEl.classList.add('card');
+      lastDayEl.appendChild(lastOrderDetailsEl);
+
+      // add order title
+      const orderSummaryEl = document.createElement('summary');
+      orderSummaryEl.textContent = `${timeString} ${firstname} ${lastname}`;
+      lastOrderDetailsEl.appendChild(orderSummaryEl);
+
+      // add new order list
+      lastOrderListEl = document.createElement('ul'); // create new list for order
+      lastOrderDetailsEl.appendChild(lastOrderListEl);
+    }
+
+    // add item list element
     const itemEl = document.createElement('li');
-    itemEl.classList.add('order-list__order');
-    itemEl.dataset.orderId = id;
-    itemEl.dataset.date = dueDate.getDateString();
-    itemEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
-            <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
-            <span class="price">${price} CHF</span>`;
-    itemEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
-    listEl.appendChild(itemEl);
+    itemEl.textContent = `${description} ${price} CHF`;
+    lastOrderListEl.appendChild(itemEl);
   }
+
+
+  // const listEl = document.createElement('ul');
+  // listEl.classList.add('order-list', 'styled-list');
+
+  // for (const item of list) {
+  //   const { id, datetime_due, datetime_completed, description, status, price, firstname, lastname } = item;
+  //   let dueDate = new DateExt(datetime_due);
+  //   let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
+  //   let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+
+  //   const itemEl = document.createElement('li');
+  //   itemEl.classList.add('order-list__order');
+  //   itemEl.dataset.orderId = id;
+  //   itemEl.dataset.date = dueDate.getDateString();
+  //   itemEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
+  //           <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
+  //           <span class="price">${price} CHF</span>`;
+  //   itemEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
+  //   listEl.appendChild(itemEl);
+  // }
 
   // if (list.length) {
   //   for (let item of subscriptions) {
@@ -500,7 +554,7 @@ function getListEl(list) {
   //   }
   // } else listEl.innerHTML = 'No Items Found';
 
-  return listEl;
+  return dayListEl;
 }
 
 function getListItemEl(item) {
