@@ -242,7 +242,7 @@ export default class DBService {
         INNER JOIN contacts ON orders.contact_id = contacts.id
         WHERE order_items.datetime_due >= ?
         ORDER BY order_items.datetime_due, orders.id
-        LIMIT 10
+        LIMIT 20
       `);
       const list = query.all(startDate.toISOString(), endDate.toISOString(), today.toISOString());
       return list;

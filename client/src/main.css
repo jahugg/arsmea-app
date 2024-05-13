@@ -32,7 +32,7 @@ custom properties
   --color-grey-03: oklch(60% 0 0);
   --color-grey-04: oklch(80% 0 0);
   --color-grey-05: oklch(90% 0 0);
-  --color-grey-06: oklch(97% 0 0);
+  --color-grey-06: oklch(94% 0 0);
   --color-grey-10: oklch(100% 0 0);
 
   /* custom colors */
@@ -55,7 +55,7 @@ custom properties
   --color-button-foreground: var(--color-altwhite);
   --color-button-background: var(--color-purple);
 
-  /* spacing */
+  /* absolute spacing */
   --padding-page: 30px;
   --padding-medium: 24px;
 
@@ -68,16 +68,19 @@ custom properties
   --effects-shadow-default: 0 0 10px var(--color-grey-05);
 
   /* fonts */
-  --font-size: 1.4rem;
-  --font-weight: 300;
+  --font-size-base: 1.4rem;
+  --font-weight-regular: 300;
+  --font-weight-bold: 400;
   --font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 
-  --font-big: normal var(--font-weight) 3em var(--font-family);
-  --font-h1: normal var(--font-weight) 1.8em var(--font-family);
-  --font-h2: normal 500 1.2em var(--font-family);
-  --font-regular: normal var(--font-weight) 1em var(--font-family);
-  --font-small: normal var(--font-weight) 0.8em var(--font-family);
-  --font-tiny: italic var(--font-weight) 0.7em var(--font-family);
+  --font-big: normal var(--font-weight-regular) 3em var(--font-family);
+  --font-h1: normal var(--font-weight-regular) 1.8em var(--font-family);
+  --font-h2: normal var(--font-weight-bold) 1.2em var(--font-family);
+  --font-h3: normal var(--font-weight-bold) 1em var(--font-family);
+
+  --font-regular: normal var(--font-weight-regular) 1em var(--font-family);
+  --font-small: normal var(--font-weight-regular) 0.8em var(--font-family);
+  --font-tiny: italic var(--font-weight-regular) 0.7em var(--font-family);
 
   /* borders */
   --border-regular: solid 1px var(--color-border-default);
@@ -89,7 +92,7 @@ general
 ================================
 */
 #app {
-  font: normal var(--font-weight) var(--font-size) var(--font-family); /* set font root */
+  font: normal var(--font-weight-regular) var(--font-size-base) var(--font-family); /* set root font*/
   color: var(--color-text-default);
   background: var(--color-background-default);
   min-height: 100vh;
@@ -213,10 +216,12 @@ textarea {
     cursor: pointer;
     user-select: none;
     transition: transform 0.1s ease-out;
+    display: flex;
 
     &:hover,
     &[data-selected] {
       transform: translateX(-4px);
+      background: var(--color-background-subtle);
     }
   }
 
@@ -258,13 +263,6 @@ textarea {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .price {
-    margin-left: auto;
-    min-width: 7ch;
-    white-space: nowrap;
-    text-align: right;
   }
 }
 
@@ -637,13 +635,32 @@ subscription (SERVES AS TEMPLATE FOR NEW GENERAL STYLES)
   grid-area: list;
 
   h1 {
-    font: var(--font-small);
+    margin: 0;
+    font: var(--font-h3);
+    color: var(--color-text-highlight);
   }
 
-  summary: var(--font-regular);
+  .day-header {
+    display: flex;
+  }
 
-  details {
-    margin-bottom: .2em;
+  .order{
+    display: flex;
+  }
+
+  .order-list {
+    margin-bottom: 2em;
+  }
+
+  .price-tag {
+    margin-left: auto;
+    min-width: 7ch;
+    white-space: nowrap;
+    text-align: right;
+    font: var(--font-small);
+    color: var(--color-text-highlight);
+    padding: 0.2em 0.5em;
+    border-radius: var(--radius-small);
   }
 }
 

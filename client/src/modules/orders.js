@@ -438,6 +438,9 @@ async function onPrepareNewItem() {
     // sumup all prices
     for (const price of priceElAll) total += Number(price.value);
 
+    // round total to two decimal places
+    total = total.toFixed(2);
+
     // output total
     outputEl.innerHTML = total;
   }
@@ -474,90 +477,96 @@ function onSearchItem(event) {
  */
 function getListEl(list) {
   const dayListEl = document.createElement('ul');
-  let lastDayEl;
-  let lastOrderDetailsEl;
-  let lastOrderListEl;
-  let lastDate = new DateExt();
-  let lastOrderId = 0;
 
-  for (const item of list) {
+  if (list.length) {
+    let currentDayEl;
+    let currentOrderListEl;
+    let currentOrderItemEl;
+    let currentDate;
+    let currentOrderId;
+    let currentOrderTotal = 0;
+    let currentDayTotal = 0;
 
-    const { id, order_id, datetime_due, datetime_completed, description, status, price, firstname, lastname } = item;
-    const dueDate = new DateExt(datetime_due);
-    const dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
-    const timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
+    // iterate over list
+    for (const item of list) {
+      const { order_id, datetime_due, status, price, firstname, lastname } = item;
+      const dueDate = new DateExt(datetime_due);
+      const timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
 
-    // add day title if order is due on a different date
-    if (lastDate.getDateString() !== dueDate.getDateString()) {
+      // create a new day
+      if (!currentDate || currentDate.toDateString() !== dueDate.toDateString()) {
 
-      lastDate = dueDate; // update last date
+        // update total for the previous day if not first iteration
+        if (currentDayEl) {
+          const priceTag = currentDayEl.querySelector(".price-tag")
+          priceTag.textContent = ` ${currentDayTotal.toFixed(2)} CHF`;
+        }
 
-      lastDayEl = document.createElement('li'); // create new day element
-      dayListEl.appendChild(lastDayEl);
+        currentDate = dueDate; // update current date
+        currentDayTotal = 0; // reset day total
 
-      // add day title
-      const dayTitleEl = document.createElement('h1');
-      dayTitleEl.textContent = `${dueDate.nameOfWeekday()}, ${dueDate.getDate()}. ${dueDate.nameOfMonth()}`;
-      lastDayEl.appendChild(dayTitleEl);
+        // add day element
+        currentDayEl = document.createElement('li');
+        dayListEl.appendChild(currentDayEl);
+
+        //add day header
+        const dayHeaderEl = document.createElement('div');
+        dayHeaderEl.classList.add("day-header");
+        currentDayEl.appendChild(dayHeaderEl);
+
+        // add day title
+        const dayTitleEl = document.createElement('h1');
+        dayTitleEl.textContent = `${dueDate.nameOfWeekday()}, ${dueDate.getDate()}. ${dueDate.nameOfMonth()}`;
+        dayHeaderEl.appendChild(dayTitleEl);
+
+        // add total price
+        const priceEl = document.createElement('div');
+        priceEl.classList.add("price-tag");
+        dayHeaderEl.appendChild(priceEl);
+
+        // add order list
+        currentOrderListEl = document.createElement('ul');
+        currentOrderListEl.classList.add("order-list", "styled-list");
+        currentDayEl.appendChild(currentOrderListEl);
+      }
+
+      // create a new order
+      if (currentOrderId !== order_id) {
+
+        // update total for the previous order if not first iteration
+        if (currentOrderItemEl) {
+          const priceTag = currentOrderItemEl.querySelector(".price-tag")
+          priceTag.textContent = ` ${currentOrderTotal.toFixed(2)} CHF`;
+        }
+
+        const priceEl = document.createElement('div');
+        priceEl.classList.add("price-tag");
+
+
+        currentOrderId = order_id; // update current order id
+        currentOrderTotal = 0;  // reset order total
+
+        // add order item
+        currentOrderItemEl = document.createElement('li');
+        currentOrderItemEl.classList.add("order");
+        currentOrderItemEl.innerHTML = `${timeString} ${firstname} ${lastname}<div class="price-tag" hidden></div>`;
+        currentOrderListEl.appendChild(currentOrderItemEl);
+      }
+
+      // add item price to totals
+      currentOrderTotal += price;
+      currentDayTotal += price;
     }
 
-    // add new order to day if item belongs to a different order
-    if (lastOrderId !== order_id) {
-      lastOrderId = order_id // update last order id
+    // add totals to last remaining items
+    const priceTagDay = currentDayEl.querySelector(".price-tag")
+    priceTagDay.textContent = ` ${currentDayTotal.toFixed(2)} CHF`;
 
-      // add dropdown list
-      lastOrderDetailsEl = document.createElement('details');
-      lastOrderDetailsEl.classList.add('card');
-      lastDayEl.appendChild(lastOrderDetailsEl);
+    const priceTagOrder = currentOrderItemEl.querySelector(".price-tag")
+    priceTagOrder.textContent = ` ${currentOrderTotal.toFixed(2)} CHF`;
 
-      // add order title
-      const orderSummaryEl = document.createElement('summary');
-      orderSummaryEl.textContent = `${timeString} ${firstname} ${lastname}`;
-      lastOrderDetailsEl.appendChild(orderSummaryEl);
-
-      // add new order list
-      lastOrderListEl = document.createElement('ul'); // create new list for order
-      lastOrderDetailsEl.appendChild(lastOrderListEl);
-    }
-
-    // add item list element
-    const itemEl = document.createElement('li');
-    itemEl.textContent = `${description} ${price} CHF`;
-    lastOrderListEl.appendChild(itemEl);
-  }
-
-
-  // const listEl = document.createElement('ul');
-  // listEl.classList.add('order-list', 'styled-list');
-
-  // for (const item of list) {
-  //   const { id, datetime_due, datetime_completed, description, status, price, firstname, lastname } = item;
-  //   let dueDate = new DateExt(datetime_due);
-  //   let dateString = dueDate.toLocaleDateString().replace(/\//g, '.');
-  //   let timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
-
-  //   const itemEl = document.createElement('li');
-  //   itemEl.classList.add('order-list__order');
-  //   itemEl.dataset.orderId = id;
-  //   itemEl.dataset.date = dueDate.getDateString();
-  //   itemEl.innerHTML = `<time datetime="${timeString}">${timeString}</time> 
-  //           <span class="contact">${firstname} ${lastname ? lastname : ''}</span>
-  //           <span class="price">${price} CHF</span>`;
-  //   itemEl.addEventListener('click', (event) => selectOrder(event.target.closest('li').dataset.orderId));
-  //   listEl.appendChild(itemEl);
-  // }
-
-  // if (list.length) {
-  //   for (let item of subscriptions) {
-  //     const itemEl = getListItemEl(item);
-  //     listEl.appendChild(itemEl);
-  //   }
-  // } else listEl.innerHTML = 'No Items Found';
+  } else dayListEl.textContent = "No Orders";
 
   return dayListEl;
 }
 
-function getListItemEl(item) {
-  let itemEl = document.createElement('div');
-  return itemEl;
-}
