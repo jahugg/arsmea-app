@@ -214,7 +214,7 @@ export default class DBService {
    * @param {FormData} formData - The form data containing order details.
    * @returns {number} - The ID of the newly inserted order.
    */
-  async selectRelevantOrders() {
+  async selectRelevantOrderItems() {
     try {
       // set default date range
       const today = new Date();
@@ -262,15 +262,18 @@ export default class DBService {
     }
   }
 
-  async selectOrderById(id) {
+  async selectOrderItemsByOrderId(id) {
     try {
-      const query = this.db.prepare(`SELECT * FROM orders 
-        INNER JOIN contacts 
-          ON orders.contact_id = contacts.id
-        INNER JOIN invoices
-          ON orders.invoice_id = invoices.id
-        WHERE orders.id = ?`);
-      const order = query.get(id);
+      const query = this.db.prepare(`
+        SELECT order_items.id AS itemId, order_items.description AS itemDescription, order_items.status AS itemStatus, order_items.datetime_due AS itemDue, order_items.datetime_completed AS itemCompleted,
+              orders.id AS orderId, orders.status AS orderStatus, orders.notes AS orderNotes, orders.datetime_placed AS orderPlaced, orders.datetime_completed AS orderCompleted,
+              contacts.id AS contactId, contacts.firstname || ' ' || contacts.lastname AS fullName
+        FROM order_items
+        INNER JOIN orders ON order_items.order_id = orders.id
+        INNER JOIN contacts ON orders.contact_id = contacts.id
+        WHERE orders.id = ?
+      `);
+      const order = query.all(id);
       return order;
     } catch (error) {
       console.log(error);
@@ -347,7 +350,7 @@ export default class DBService {
     }
   }
 
-  async selectOrdersWithinRange(startDate, endDate) {
+  async selectOrderItemsWithinRange(startDate, endDate) {
     try {
       const query = this.db.prepare(`
         SELECT order_items.*, 

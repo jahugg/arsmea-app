@@ -96,8 +96,12 @@ export async function ordersWithinRange(start, end) {
 }
 
 export async function orderDetails(id) {
-  const response = await fetch(`${apiUrl}/api/order/${id}`);
-  return await response.json();
+  try {
+    const url = new URL(`${apiUrl}/api/orders`);
+    url.searchParams.append('id', id);
+    const response = await fetch(url);
+    return await response.json();
+  } catch (error) { throw error; }
 }
 
 export async function updateOrder(id, data) {

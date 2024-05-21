@@ -6,7 +6,15 @@ const apiUrl = window.appConfig.apiUrl;
 
 const calendar = new Calendar();
 
+// set default date range
+let startDate = new DateExt();
+startDate.setDate(startDate.getDate() - 2);
+let endDate = new DateExt(startDate);
+endDate.setDate(startDate.getDate() + 17);
+const defaultView = { start: startDate, end: endDate };
+
 export default async function render() {
+
   const module = document.createElement('div');
   module.classList.add('list-module');
   module.innerHTML = `
@@ -21,7 +29,10 @@ export default async function render() {
         </form>
         <button class="add-item-btn button-small" type="button">Create Order</button>
       </section>
-      <section id="list-module__list"></section>
+      <section id="list-module__list">
+        <section id="list-module__list__filter"></section>
+        <section id="list-module__list__results"></section>
+      </section>
       <section id="list-module__details"></section>`;
 
   // add item button behaviour
@@ -49,7 +60,7 @@ export default async function render() {
   searchForm.addEventListener('submit', onSearchItem);
 
   // populate order list
-  const listSectionEl = module.querySelector('#list-module__list');
+  const listSectionEl = module.querySelector('#list-module__list__results');
   const itemList = getListEl(await request.orders());
   listSectionEl.replaceChildren(itemList);
 
@@ -67,12 +78,29 @@ export default async function render() {
     patternString += `${firstname} ${lastname}|`;
   }
 
-  // draw calendar
-  const detailsEl = module.querySelector('#list-module__details');
-  detailsEl.replaceChildren(calendar.getHTML());
+  // datepicker
+  const datePickerEl = document.createElement('details');
+  datePickerEl.id = 'datepicker';
+  datePickerEl.dataset.defaultDate = '';
+  datePickerEl.innerHTML = `
+    <summary>
+      <span id="calendar-toggle" class="button-small">
+        ${defaultView.start.nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.nameOfMonth()} ${defaultView.end.getDate()}.
+      </span>
+      <button id="datepicker-reset" type="button" class="button-small">Reset</button>
+    </summary>
+    <div id="calendar-details" class="card"></div>
+  `;
 
-  const calendarEl = module.querySelector('.calendar');
-  calendarEl.classList.add("card");
+  const listFilterEl = module.querySelector('#list-module__list__filter');
+  listFilterEl.appendChild(datePickerEl);
+
+  // draw calendar
+  const calendarEl = module.querySelector('#calendar-details');
+  calendarEl.replaceChildren(calendar.getHTML());
+
+  // const calendarEl = module.querySelector('.calendar');
+  // calendarEl.classList.add("card");
 
   return module;
 }
@@ -85,21 +113,34 @@ export function init() {
 
 async function updateCalendar() {
 
-  // // populate calendar with orders
+  // populate calendar with orders
   const firstDateOfView = calendar.datesOfView[0];
   const lastDateOfView = calendar.datesOfView[calendar.datesOfView.length - 1];
   const orderOfView = await request.ordersWithinRange(firstDateOfView, lastDateOfView);
 
-  if (orderOfView)
-    for (const order of orderOfView) {
-      const thisDate = new DateExt(order.datetime_due);
-      const date = thisDate.getDateString();
+  // clear events
+  const eventsEl = document.querySelectorAll(`.calendar__day__events`);
+  for (const el of eventsEl)
+    el.innerHTML = '';
 
-      // add event to calendar
-      const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
-      const ordersEl = document.querySelector(selector);
-      if (ordersEl) ordersEl.innerHTML += '&middot;';
+  // iterate over orders items of calendar view
+  if (orderOfView) {
+    let currentOrderId;
+    for (const orderItem of orderOfView) {
+
+      // only set mark if orderItem belongs to new order
+      if (orderItem.order_id !== currentOrderId) {
+        currentOrderId = orderItem.order_id;
+        const thisDate = new DateExt(orderItem.datetime_due);
+        const date = thisDate.getDateString();
+
+        // add event to calendar
+        const selector = `.calendar__day[data-date="${date}"] .calendar__day__events`;
+        const ordersEl = document.querySelector(selector);
+        if (ordersEl) ordersEl.innerHTML += '&middot;';
+      }
     }
+  }
 
   const calendarDays = document.getElementsByClassName('calendar__day');
   for (const day of calendarDays)
@@ -122,7 +163,7 @@ async function onClickCalendarDay(event) {
     contentEl.innerHTML = 'No Orders.';
   }
 
-  const listWrapper = document.getElementById('list-module__list');
+  const listWrapper = document.getElementById('list-module__list__results');
   listWrapper.replaceChildren(contentEl);
 
   // const calendar = document.getElementById('orders-calendar');
@@ -549,7 +590,12 @@ function getListEl(list) {
         // add order item
         currentOrderItemEl = document.createElement('li');
         currentOrderItemEl.classList.add("order");
+        currentOrderItemEl.dataset.orderId = order_id;
         currentOrderItemEl.innerHTML = `${timeString} ${firstname} ${lastname}<div class="price-tag" hidden></div>`;
+        currentOrderItemEl.addEventListener("click", async (event) => {
+          const orderId = event.target.dataset.orderId;
+          await selectOrder(orderId);
+        })
         currentOrderListEl.appendChild(currentOrderItemEl);
       }
 
@@ -565,8 +611,110 @@ function getListEl(list) {
     const priceTagOrder = currentOrderItemEl.querySelector(".price-tag")
     priceTagOrder.textContent = ` ${currentOrderTotal.toFixed(2)} CHF`;
 
-  } else dayListEl.textContent = "No Orders";
+  } else {
+
+    dayListEl.innerHTML = `No Orders`;
+  }
 
   return dayListEl;
+}
+
+async function getDetailsEl(id) {
+  const orderItems = await request.orderDetails(id);
+
+  if (orderItems) {
+    const { orderId, orderStatus, orderNotes, orderPlaced, orderCompleted, contactId, fullName } = orderItems[0];
+
+    const datePlaced = new DateExt(orderPlaced);
+    const dateCompleted = new DateExt(orderCompleted);
+    const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
+    const completedString = `${dateCompleted.getDate()}. ${dateCompleted.nameOfMonth()} ${dateCompleted.getFullYear()}`;
+
+    const detailsEl = document.createElement('div');
+    detailsEl.id = 'order-details';
+    detailsEl.classList.add("card");
+
+    const controlsEl = document.createElement('section');
+    controlsEl.classList.add("content-controls");
+    controlsEl.innerHTML = `<button type="button" id="edit-btn" class="button-small" data-order-id="${orderId}">Edit</button>`;
+    detailsEl.appendChild(controlsEl);
+
+    const contentEl = document.createElement("div");
+    contentEl.classList.add('order-details__info');
+    contentEl.innerHTML = `
+      <a href="/contacts?id=${contactId}">${fullName}</a>
+      <time datetime="${datePlaced.getDateString()}">${placedString}</time>
+      <p>${orderStatus} ${orderNotes}</p>
+    `;
+    detailsEl.appendChild(contentEl);
+
+    const itemsEl = document.createElement('ul');
+    contentEl.appendChild(itemsEl);
+
+    for (const item of orderItems) {
+
+      const { itemDescription, itemStatus, price, itemDue, itemCompleted } = item;
+      const dateDue = new DateExt(itemDue);
+      const dueString = `${dateDue.getDate()}. ${dateDue.nameOfMonth()} ${dateDue.getFullYear()}`;
+      const timeString = `${dateDue.getHours()}:${String(dateDue.getMinutes()).padStart(2, '0')}`;
+
+      const itemEl = document.createElement('li');
+      itemEl.innerHTML = `${itemDescription, itemStatus, price, dueString, timeString, itemCompleted}`;
+      itemsEl.appendChild(itemEl);
+    }
+
+    return detailsEl;
+  }
+  // const { datetime_placed, datetime_due, amount, description, status, contact_id, firstname, lastname, invoice_id } = await request.orderDetails(id);
+
+  // const datePlaced = new DateExt(datetime_placed);
+  // const dateDue = new DateExt(datetime_due);
+  // const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
+  // const timeString = `${dateDue.getHours()}:${String(dateDue.getMinutes()).padStart(2, '0')}`;
+  // const dueString = `${dateDue.getDate()}. ${dateDue.nameOfMonth()} ${dateDue.getFullYear()}, ${timeString}`;
+
+  // const wrapper = document.createElement('div');
+  // wrapper.id = 'order-details';
+  // wrapper.innerHTML = `
+  // <section class="content-controls">
+  //   <button type="button" id="edit-btn" class="button-small" data-order-id="${id}">Edit</button>
+  // </section>
+  // <div class="order-details__info card">
+  //   <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>
+  //   <time datetime="${dateDue.getDateString()} ${timeString}">${dueString}</time>
+  //   <div> ${amount ? amount + ' CHF' : ''} <a href="/invoices?id=${invoice_id}">go to invoice</a></div>
+  //   ${description ? `<div>${description}</div>` : ''}
+  //   <div>${status}</div>
+  // </div>`;
+
+  // const editBtn = wrapper.querySelector('#edit-btn');
+  // editBtn.addEventListener('click', onEditOrder);
+
+  // return wrapper;
+}
+
+async function selectOrder(id) {
+
+  try {
+    // get details
+    const detailsEl = await getDetailsEl(id);
+    const wrapperEl = document.getElementById('list-module__details');
+    wrapperEl.replaceChildren(detailsEl);
+  } catch (error) { throw error }
+
+  // const detailsWrapper = document.querySelector('#contact-detail-section');
+  // detailsWrapper.replaceChildren(contactDetails);
+
+  // if (contactDetails) {
+  //   for (let item of contactList.children)
+  //     if (item.dataset.contactId == id) item.dataset.selected = '';
+  //     else delete item.dataset.selected;
+
+  //   // add contact id to url
+  //   const url = new URL(window.location);
+  //   url.searchParams.set('id', id);
+  //   const state = { pageKey: "contacts", id: id };
+  //   window.history.replaceState(state, '', url);
+  // }
 }
 

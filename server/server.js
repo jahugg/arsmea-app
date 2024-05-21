@@ -79,14 +79,18 @@ const server = Bun.serve({
     if (method === 'GET' && path === '/api/orders') {
       const start = url.searchParams.get('start');
       const end = url.searchParams.get('end');
+      const id = url.searchParams.get('id');
 
-      // select all orders
-      if (!start || !end) {
-        const orders = await db.selectRelevantOrders();
+      if (id) { // select order by id
+        const orderItems = await db.selectOrderItemsByOrderId(id);
+        return Response.json(orderItems, { ...CORS_HEADERS, status: 200 });
+
+      } else if (start && end) {  // select orders within date range
+        const orders = await db.selectOrderItemsWithinRange(start, end);
         return Response.json(orders, { ...CORS_HEADERS, status: 200 });
 
-      } else {  // select orders within date range
-        const orders = await db.selectOrdersWithinRange(start, end);
+      } else {
+        const orders = await db.selectRelevantOrderItems();
         return Response.json(orders, { ...CORS_HEADERS, status: 200 });
       }
     }
