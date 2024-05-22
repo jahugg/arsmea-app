@@ -265,7 +265,7 @@ export default class DBService {
   async selectOrderItemsByOrderId(id) {
     try {
       const query = this.db.prepare(`
-        SELECT order_items.id AS itemId, order_items.description AS itemDescription, order_items.status AS itemStatus, order_items.datetime_due AS itemDue, order_items.datetime_completed AS itemCompleted,
+        SELECT order_items.id AS itemId, order_items.description AS itemDescription, order_items.status AS itemStatus, order_items.price, order_items.datetime_due AS itemDue, order_items.datetime_completed AS itemCompleted,
               orders.id AS orderId, orders.status AS orderStatus, orders.notes AS orderNotes, orders.datetime_placed AS orderPlaced, orders.datetime_completed AS orderCompleted,
               contacts.id AS contactId, contacts.firstname || ' ' || contacts.lastname AS fullName
         FROM order_items

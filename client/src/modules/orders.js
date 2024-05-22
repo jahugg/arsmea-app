@@ -623,12 +623,15 @@ async function getDetailsEl(id) {
   const orderItems = await request.orderDetails(id);
 
   if (orderItems) {
-    const { orderId, orderStatus, orderNotes, orderPlaced, orderCompleted, contactId, fullName } = orderItems[0];
+    const { orderId, orderStatus, orderNotes, orderPlaced, orderCompleted, itemDue, contactId, fullName } = orderItems[0];
 
     const datePlaced = new DateExt(orderPlaced);
-    const dateCompleted = new DateExt(orderCompleted);
-    const placedString = `${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}`;
-    const completedString = `${dateCompleted.getDate()}. ${dateCompleted.nameOfMonth()} ${dateCompleted.getFullYear()}`;
+    const dateDue = new DateExt(itemDue);
+
+    let dateCompleted;
+
+    if (orderCompleted)
+      dateCompleted = new DateExt(orderCompleted);
 
     const detailsEl = document.createElement('div');
     detailsEl.id = 'order-details';
@@ -636,32 +639,51 @@ async function getDetailsEl(id) {
 
     const controlsEl = document.createElement('section');
     controlsEl.classList.add("content-controls");
-    controlsEl.innerHTML = `<button type="button" id="edit-btn" class="button-small" data-order-id="${orderId}">Edit</button>`;
+    controlsEl.innerHTML = `
+      <button type="button" id="edit-btn" class="button-small" data-order-id="${orderId}">Edit</button>
+      <button type="button" class="button-small" data-order-id="${orderId}">Mark as Done</button>
+    `;
     detailsEl.appendChild(controlsEl);
 
     const contentEl = document.createElement("div");
-    contentEl.classList.add('order-details__info');
+    contentEl.id = 'list-module__details__info';
     contentEl.innerHTML = `
-      <a href="/contacts?id=${contactId}">${fullName}</a>
-      <time datetime="${datePlaced.getDateString()}">${placedString}</time>
-      <p>${orderStatus} ${orderNotes}</p>
+      <time datetime="${dateDue.getDateString()}">${dateDue.getHours()}:${String(dateDue.getMinutes()).padStart(2, '0')}, ${dateDue.nameOfWeekday()}, ${dateDue.getDate()}. ${dateDue.nameOfMonth()} ${dateDue.getFullYear()}</time>
+      <address><a href="/contacts?id=${contactId}">${fullName}</a></address>
+      ${orderNotes ? `<p>${orderNotes}</p>` : ''}
     `;
     detailsEl.appendChild(contentEl);
 
     const itemsEl = document.createElement('ul');
+    itemsEl.classList.add('checklist')
     contentEl.appendChild(itemsEl);
 
     for (const item of orderItems) {
 
-      const { itemDescription, itemStatus, price, itemDue, itemCompleted } = item;
-      const dateDue = new DateExt(itemDue);
-      const dueString = `${dateDue.getDate()}. ${dateDue.nameOfMonth()} ${dateDue.getFullYear()}`;
-      const timeString = `${dateDue.getHours()}:${String(dateDue.getMinutes()).padStart(2, '0')}`;
+      const { itemDescription, itemStatus, price } = item;
 
       const itemEl = document.createElement('li');
-      itemEl.innerHTML = `${itemDescription, itemStatus, price, dueString, timeString, itemCompleted}`;
+      const labelEl = document.createElement('label');
+      labelEl.innerHTML = `
+        <div class="label-content">
+          <div class="description">${itemDescription}</div>
+          <div class="price-tag">${price} CHF</div>
+        </div>
+      `;
+      const inputEl = document.createElement('input');
+      inputEl.type = "checkbox";
+      labelEl.prepend(inputEl);
+      itemEl.appendChild(labelEl);
       itemsEl.appendChild(itemEl);
     }
+
+    // add less important information as sidenote
+    contentEl.innerHTML += `
+      <div class="sidenote">
+        Placed on: <time datetime="${datePlaced.getDateString()}">${datePlaced.getDate()}. ${datePlaced.nameOfMonth()} ${datePlaced.getFullYear()}</time>
+        ${dateCompleted ? `Completed: <time datetime="${dateCompleted.getDateString()}">${dateCompleted.getDate()}. ${dateCompleted.nameOfMonth()} ${dateCompleted.getFullYear()}</time>` : ''}
+      </div>
+    `;
 
     return detailsEl;
   }

@@ -149,11 +149,11 @@ input[type='checkbox'] {
   cursor: pointer;
 
   &:hover {
-    background: var(--color-grey-01);
+    background: var(--color-background-subtle);
   }
 
   &:checked {
-    background: var(--color-highlight);
+    background: var(--color-background-inverted);
   }
 }
 
@@ -644,7 +644,7 @@ Styles
     display: flex;
   }
 
-  .order{
+  .order {
     display: flex;
   }
 
@@ -677,7 +677,6 @@ Styles
 }
 
 #list-module__details__info {
-  font: var(--font-h1);
   /* white-space: pre-line; */
 
   a {
@@ -685,7 +684,38 @@ Styles
   }
 
   address {
+    font: var(--font-h1);
     font-style: inherit;
+  }
+
+  .sidenote {
+    font: var(--font-regular);
+    color: var(--color-text-subtle);
+  }
+
+  .checklist {
+    font: var(--font-h1);
+    margin: 1em 0;
+
+    & li:has(input:checked) {
+      text-decoration: line-through;
+    }
+
+    & label {
+      display: flex;
+      align-items: center;
+
+      & .label-content {
+        flex: auto;
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+      }
+    }
+
+    & input {
+      margin-right: 1em;
+    }
   }
 }
 
