@@ -299,6 +299,7 @@ async function getContactListEl(archived = false) {
   for (let data of contacts) {
     const { id, firstname, lastname } = data;
     let el = document.createElement('li');
+    el.classList.add('nav-item');
     el.dataset.contactId = id;
     el.innerHTML = `${firstname ? firstname : ''} ${lastname ? lastname : ''}`;
     el.addEventListener('click', (event) => selectContact(event.target.dataset.contactId));

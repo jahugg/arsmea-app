@@ -58,6 +58,7 @@ function init() {
   const list = document.createElement('ul');
   for (const key in pages) {
     const listItem = document.createElement('li');
+    listItem.classList.add('nav-item');
     const link = document.createElement('a');
     link.href = pages[key].slug;
     link.innerHTML = pages[key].title;
@@ -84,12 +85,12 @@ async function buildPage(stateObj, addToHistory = true) {
   document.title = 'ars mea | ' + page.title;
 
   // update navigation
-  const linkList = document.querySelectorAll('#app-navigation li a');
-  for (let link of linkList) {
-    let listItem = link.closest('li');
-    if (link.getAttribute('href') === page.slug) listItem.dataset.active = '';
-    else delete listItem.dataset.active;
-  }
+  const navItems = document.querySelectorAll('#app-navigation li');
+  for (let item of navItems)
+    if (item.querySelector("a").getAttribute('href') === page.slug)
+      item.dataset.selected = '';
+    else
+      delete item.dataset.selected;
 
   // push page to browser history
   if (addToHistory) {

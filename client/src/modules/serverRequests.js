@@ -122,6 +122,17 @@ export async function deleteOrder(id) {
   }
 }
 
+// invoices
+export async function invoicesByOrderId(orderId) {
+
+  try {
+    const url = new URL(`${apiUrl}/api/invoices`);
+    url.searchParams.append('orderId', orderId);
+    const response = await fetch(url);
+    return await response.json();
+  } catch (error) { throw error; }
+}
+
 // subscriptions
 export async function subscriptions() {
   let response = await fetch(`${apiUrl}/api/subscriptionList`);

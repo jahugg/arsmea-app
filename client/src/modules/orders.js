@@ -84,19 +84,19 @@ export default async function render() {
   datePickerEl.dataset.defaultDate = '';
   datePickerEl.innerHTML = `
     <summary>
-      <span id="calendar-toggle" class="button-small">
+      <span id="datepicker__toggle" class="nav-item">
         ${defaultView.start.nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.nameOfMonth()} ${defaultView.end.getDate()}.
       </span>
-      <button id="datepicker-reset" type="button" class="button-small">Reset</button>
+      <button id="datepicker__reset" type="button" class="button-small">Reset</button>
     </summary>
-    <div id="calendar-details" class="card"></div>
+    <div id="datepicker__calendar" class="card"></div>
   `;
 
   const listFilterEl = module.querySelector('#list-module__list__filter');
   listFilterEl.appendChild(datePickerEl);
 
   // draw calendar
-  const calendarEl = module.querySelector('#calendar-details');
+  const calendarEl = module.querySelector('#datepicker__calendar');
   calendarEl.replaceChildren(calendar.getHTML());
 
   // const calendarEl = module.querySelector('.calendar');
@@ -109,6 +109,14 @@ export function init() {
   calendar.populateCalendar();
   updateCalendar(); // why is this necessary for eventlistener to fire?
   document.addEventListener('monthloaded', updateCalendar);
+
+  // handle url parameters
+
+  //TODO: select respective calendarday!
+
+  const url = new URL(window.location);
+  const orderId = url.searchParams.get('id');
+  if (orderId) selectOrder(orderId);
 }
 
 async function updateCalendar() {
@@ -168,6 +176,10 @@ async function onClickCalendarDay(event) {
 
   // const calendar = document.getElementById('orders-calendar');
   // delete calendar.dataset.defaultDate;
+}
+
+function selectCalendarDay(date) {
+
 }
 
 async function onPrepareNewItem() {
@@ -499,12 +511,14 @@ async function onCreateOrder(event) {
   const response = await request.createOrder(data);
   const id = response.id;
 
-  // // add order to current list
-  // const date = new DateExt(data.get('due'));
-  // const dayEl = document.querySelector(`.day-list__day[data-date="${date.getDateString()}"]`);
-  // // adding orders to days should be outsourced into separate function to avoid duplicate code
+  // add order to current list
+  const date = new DateExt(data.get('due'));
+  let dayEl = document.querySelector(`.day-header[data-date="${date.getDateString()}"]`);
 
-  // selectOrder(id);
+  // consolidate function to add new order items to existing list
+  // if (!dayEl) {}
+
+  selectOrder(id);
 }
 
 function onSearchItem(event) {
@@ -553,6 +567,7 @@ function getListEl(list) {
         //add day header
         const dayHeaderEl = document.createElement('div');
         dayHeaderEl.classList.add("day-header");
+        dayHeaderEl.dataset.date = dueDate.getDateString();
         currentDayEl.appendChild(dayHeaderEl);
 
         // add day title
@@ -589,7 +604,7 @@ function getListEl(list) {
 
         // add order item
         currentOrderItemEl = document.createElement('li');
-        currentOrderItemEl.classList.add("order");
+        currentOrderItemEl.classList.add("nav-item");
         currentOrderItemEl.dataset.orderId = order_id;
         currentOrderItemEl.innerHTML = `${timeString} ${firstname} ${lastname}<div class="price-tag" hidden></div>`;
         currentOrderItemEl.addEventListener("click", async (event) => {
@@ -658,9 +673,13 @@ async function getDetailsEl(id) {
     itemsEl.classList.add('checklist')
     contentEl.appendChild(itemsEl);
 
+    let totalPrice = 0;
+
     for (const item of orderItems) {
 
       const { itemDescription, itemStatus, price } = item;
+
+      totalPrice += price;
 
       const itemEl = document.createElement('li');
       const labelEl = document.createElement('label');
@@ -670,11 +689,34 @@ async function getDetailsEl(id) {
           <div class="price-tag">${price} CHF</div>
         </div>
       `;
+
       const inputEl = document.createElement('input');
       inputEl.type = "checkbox";
       labelEl.prepend(inputEl);
       itemEl.appendChild(labelEl);
       itemsEl.appendChild(itemEl);
+    }
+
+    // add total price
+    contentEl.innerHTML += `
+      <div>Total
+        <div class="price-tag">${totalPrice}</div>
+      </div>
+    `;
+
+    // get invoices
+    const invoices = await request.invoicesByOrderId(orderId);
+
+    if (invoices) {
+      const invoiceListEl = document.createElement('ul');
+      contentEl.appendChild(invoiceListEl);
+
+      for (const invoice of invoices) {
+        const { date_issued, status, amount_total } = invoice;
+        const invoiceEl = document.createElement('li');
+        invoiceEl.textContent = `${date_issued} ${status} ${amount_total}`;
+        invoiceListEl.appendChild(invoiceEl); 
+      }
     }
 
     // add less important information as sidenote
@@ -722,21 +764,19 @@ async function selectOrder(id) {
     const detailsEl = await getDetailsEl(id);
     const wrapperEl = document.getElementById('list-module__details');
     wrapperEl.replaceChildren(detailsEl);
+
+    // select list element
+    const items = document.querySelectorAll(".order-list li");
+    for (let item of items)
+      if (item.dataset.orderId === id) item.dataset.selected = '';
+      else delete item.dataset.selected;
+
+    // add id to url
+    const url = new URL(window.location);
+    url.searchParams.set('id', id);
+    const state = { pageKey: "orders", id: id };
+    window.history.replaceState(state, '', url);
+
   } catch (error) { throw error }
-
-  // const detailsWrapper = document.querySelector('#contact-detail-section');
-  // detailsWrapper.replaceChildren(contactDetails);
-
-  // if (contactDetails) {
-  //   for (let item of contactList.children)
-  //     if (item.dataset.contactId == id) item.dataset.selected = '';
-  //     else delete item.dataset.selected;
-
-  //   // add contact id to url
-  //   const url = new URL(window.location);
-  //   url.searchParams.set('id', id);
-  //   const state = { pageKey: "contacts", id: id };
-  //   window.history.replaceState(state, '', url);
-  // }
 }
 

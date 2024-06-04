@@ -22,7 +22,7 @@ const server = Bun.serve({
       return Response(null, { ...CORS_HEADERS, status: 204 });
     }
 
-    // CONTACTS: get contact details or list of contacts
+    // CONTACTS: get contacts
     if (method === 'GET' && path === '/api/contacts') {
       const id = url.searchParams.get('id');
 
@@ -95,7 +95,7 @@ const server = Bun.serve({
       }
     }
 
-    // CONTACTS: create order
+    // ORDERS: create order
     if (method === "POST" && path === '/api/orders') {
       const formData = await req.formData();
       const contactName = formData.get('contactName');
@@ -115,6 +115,25 @@ const server = Bun.serve({
       }
       const orderId = await db.insertOrder(formData);
       return Response.json({ id: orderId }, { ...CORS_HEADERS, status: 200 });
+    }
+
+    // INVOICES: get list of invoices
+    if (method === 'GET' && path === '/api/invoices') {
+      const id = url.searchParams.get('id');
+      const orderId = url.searchParams.get('orderId');
+
+      if (id) { // return invoice with id
+        const invoice = await db.selectInvoiceById(id);
+        return Response.json(invoice, { ...CORS_HEADERS, status: 200 });
+
+      } else if (orderId) { // return invoices with order id
+        const invoices = await db.selectInvoicesByOrderId(orderId);
+        return Response.json(invoices, { ...CORS_HEADERS, status: 200 });
+
+      } else {  // return all invoices
+        const invoices = await db.selectInvoices();
+        return Response.json(invoices, { ...CORS_HEADERS, status: 200 });
+      }
     }
 
     // Handle other paths or methods

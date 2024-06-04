@@ -366,6 +366,20 @@ export default class DBService {
     } catch (error) { throw error; }
   }
 
+  async selectInvoicesByOrderId(id) {
+    try {
+      const query = this.db.prepare(`
+        SELECT *
+        FROM order_invoices
+        WHERE order_id = ?
+      `);
+      const invoices = query.all(id);
+      return invoices;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   // ==========
   // Subscriptions
   async insertSubscription(data) {

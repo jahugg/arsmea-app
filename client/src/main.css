@@ -31,7 +31,7 @@ custom properties
   --color-grey-02: oklch(40% 0 0);
   --color-grey-03: oklch(60% 0 0);
   --color-grey-04: oklch(80% 0 0);
-  --color-grey-05: oklch(90% 0 0);
+  --color-grey-05: oklch(93% 0 0);
   --color-grey-06: oklch(94% 0 0);
   --color-grey-10: oklch(100% 0 0);
 
@@ -47,13 +47,15 @@ custom properties
   --color-text-highlight: var(--color-purple);
   --color-background-default: var(--color-altwhite);
   --color-background-inverted: var(--color-altblack);
-  --color-background-subtle: var(--color-grey-06);
+  --color-background-subtle: var(--color-grey-05);
   --color-background-card: var(--color-grey-10);
   --color-border-default: var(--color-altblack);
   --color-highlight: var(--color-purple);
   --color-error: var(--color-highlight);
   --color-button-foreground: var(--color-altwhite);
   --color-button-background: var(--color-purple);
+  --color-navitem-foreground: var(--color-altblack);
+  --color-navitem-background: var(--color-altwhite);
 
   /* absolute spacing */
   --padding-page: 30px;
@@ -61,14 +63,14 @@ custom properties
 
   /* radius */
   --radius-small: 2px;
-  --radius-medium: 8px;
+  --radius-medium: 5px;
   --radius-infinite: 9999px;
 
   /* effects */
   --effects-shadow-default: 0 0 10px var(--color-grey-05);
 
   /* fonts */
-  --font-size-base: 1.4rem;
+  --font-size-base: calc(1rem + 0.25vw); /* credits: https://jameshfisher.com/2024/03/12/a-formula-for-responsive-font-size/ */
   --font-weight-regular: 300;
   --font-weight-bold: 400;
   --font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
@@ -92,7 +94,7 @@ general
 ================================
 */
 #app {
-  font: normal var(--font-weight-regular) var(--font-size-base) var(--font-family); /* set root font*/
+  font: normal var(--font-weight-regular) var(--font-size-base) var(--font-family);
   color: var(--color-text-default);
   background: var(--color-background-default);
   min-height: 100vh;
@@ -211,23 +213,12 @@ textarea {
 
   li {
     position: relative;
-    padding: 4px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.1s ease-out;
     display: flex;
 
     &:hover,
     &[data-selected] {
       transform: translateX(-4px);
-      background: var(--color-background-subtle);
     }
-  }
-
-  li[data-selected] {
-    background: var(--color-background-inverted);
-    color: var(--color-text-inverted);
   }
 
   li[data-filtered] {
@@ -332,16 +323,24 @@ app header
       display: flex;
       gap: 5px;
     }
+  }
+}
 
-    li[data-active] a {
-      color: var(--color-text-inverted);
-      background: var(--color-background-inverted);
-    }
+.nav-item {
+  color: var(--color-navitem-foreground);
+  background: var(--color-navitem-background);
+  border-radius: var(--radius-medium);
+  padding: 0.3em 0.6em;
+  cursor: pointer;
+  transition: all .1s ease-in;
 
-    a {
-      padding: 0.3em 0.6em;
-      border-radius: 5px;
-    }
+  &[data-selected] {
+    color: var(--color-navitem-background);
+    background: var(--color-navitem-foreground);
+  }
+
+  &:hover:not([data-selected]) {
+    background: var(--color-background-subtle);
   }
 }
 
@@ -424,153 +423,21 @@ contacts
 order
 ================================
 */
-#order {
-  --list-width: 400px;
 
-  display: grid;
-  grid-template-columns: var(--list-width) 1fr;
-  grid-template-rows: 120px auto;
-  gap: var(--padding-page);
-  grid-template-areas:
-    'control control'
-    'list detail';
+& #datepicker {
+  margin-bottom: 30px;
 
-  #order-control-section {
-    grid-area: control;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  summary {
+    list-style-type: none;
   }
 
-  #orders-calendar {
-    margin-bottom: 30px;
-
-    summary {
-      list-style-type: none;
-    }
-
-    &[open] #calendar-toggle {
-      background: red;
-      color: yellow;
-    }
-
-    &[data-default-date] #calendar-reset {
-      display: none;
-    }
+  &[data-default-date] #datepicker__reset {
+    display: none;
   }
 
-  #order-list-section {
-    grid-area: list;
-
-    #day-list {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-
-      .day-list__summary {
-        display: flex;
-        align-items: baseline;
-        user-select: none;
-        cursor: pointer;
-        width: 100%;
-        transition: transform 0.1s ease-out;
-
-        .add-order {
-          align-self: center;
-          white-space: nowrap;
-        }
-
-        &:hover .add-order {
-          /* display: block; */
-        }
-      }
-
-      &[data-compact-style] {
-        [data-empty] {
-          display: none;
-        }
-
-        [data-week-start] {
-          margin-top: 0;
-        }
-      }
-
-      [data-today] .day-list__summary {
-        background: var(--color-grey-04);
-        border-radius: 4px;
-      }
-
-      [data-empty] .day-list__summary {
-        cursor: inherit;
-      }
-
-      [data-past] .day-list__summary {
-        color: var(--color-grey-03);
-      }
-
-      [data-week-start] {
-        margin-top: 1.5em;
-      }
-
-      .dots {
-        align-self: center;
-        width: 25px;
-        margin-right: 20px;
-        word-wrap: break-word;
-        color: red;
-        font-size: 1em;
-        letter-spacing: -0.1em;
-        line-height: 0.2em;
-        font-size: 1.7em;
-      }
-
-      .weekday {
-        font: var(--font-h1);
-        padding: 0 0.3em;
-        flex: 0 1 auto;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .total {
-        padding: 0 0.2em;
-        text-align: right;
-        margin-left: auto;
-        white-space: nowrap;
-      }
-    }
-
-    .order-list {
-      padding: 0;
-      margin: 0.2em 0 1.5em 35px;
-
-      li {
-        display: flex;
-      }
-    }
-  }
-
-  #order-detail-section {
-    grid-area: detail;
-    max-width: 750px;
-
-    .order-details__info {
-      font: var(--font-h1);
-
-      a {
-        color: inherit;
-      }
-    }
-
-    .new-order__input {
-      font: var(--font-h1);
-    }
-
-    [data-new-contact]::after {
-      content: 'New Contact!';
-      color: red;
-    }
+  & #datepicker__calendar {
+    position: absolute;
+    z-index: 100;
   }
 }
 
