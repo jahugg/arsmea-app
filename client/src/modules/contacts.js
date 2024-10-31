@@ -24,7 +24,7 @@ export default async function render() {
         </div>
       </div>
 
-      <button id="add-contact-btn" class="button-small" type="button">Create Contact</button>
+      <button id="add-contact-btn" class="button-edit" type="button">Create Contact</button>
     </div>
     <div id="contact-list-section">
       <div id="contact-list-wrapper">
@@ -185,8 +185,8 @@ async function onPrepareNewContact(event) {
   form.addEventListener('submit', onCreateContact);
   form.innerHTML = `
   <section class="content-controls">
-    <input type="submit" class="button-small" value="Save"/>
-    <button type="button" class="button-small" id="discard-contact-btn">Discard</button>
+    <input type="submit" class="button-edit" value="Save"/>
+    <button type="button" class="button-edit" id="discard-contact-btn">Discard</button>
   </section>
 
   <label for="new-contact__firstname">First name</label>
@@ -199,7 +199,7 @@ async function onPrepareNewContact(event) {
   <input type="tel" name="phone" id="new-contact__phone" placeholder="+41" />
 
   <details>
-    <summary class="button-small">More fields</summary>
+    <summary class="button-edit">More fields</summary>
 
     <label for="new-contact__email">Email</label>
     <input type="email" name="email" id="new-contact__email" placeholder="hanna.muster@email.com" />
@@ -299,7 +299,7 @@ async function getContactListEl(archived = false) {
   for (let data of contacts) {
     const { id, firstname, lastname } = data;
     let el = document.createElement('li');
-    el.classList.add('nav-item');
+    el.classList.add('button-navigate');
     el.dataset.contactId = id;
     el.innerHTML = `${firstname ? firstname : ''} ${lastname ? lastname : ''}`;
     el.addEventListener('click', (event) => selectContact(event.target.dataset.contactId));
@@ -337,7 +337,7 @@ async function getContactDetailsEl(id) {
     restoreBtn.innerHTML = 'Restore Contact';
     restoreBtn.id = 'restore-contact-btn';
     restoreBtn.dataset.contactId = id;
-    restoreBtn.classList.add('button-small');
+    restoreBtn.classList.add('button-edit');
     restoreBtn.addEventListener('click', onRestoreContact);
     controls.appendChild(restoreBtn);
   } else {
@@ -346,7 +346,7 @@ async function getContactDetailsEl(id) {
     editBtn.id = 'edit-btn';
     editBtn.innerHTML = 'Edit';
     editBtn.dataset.contactId = id;
-    editBtn.classList.add('button-small');
+    editBtn.classList.add('button-edit');
     editBtn.addEventListener('click', onEditContact);
     controls.appendChild(editBtn);
   }
@@ -442,11 +442,11 @@ async function getContactFormEl(id) {
   form.innerHTML = `
     <section class="content-controls">
 
-      <input type="submit" class="button-small" value="Save Changes"/>
-      <button type="button" id="discard-contact-btn" class="button-small">Discard Changes</button>
+      <input type="submit" class="button-edit" value="Save Changes"/>
+      <button type="button" id="discard-contact-btn" class="button-edit">Discard Changes</button>
 
-      <button type="button" id="delete-contact-btn" class="button-small" data-contact-id="${id}">Delete Contact</button>
-      <button type="button" id="archive-contact-btn" class="button-small" data-contact-id="${id}">Archive Contact</button>
+      <button type="button" id="delete-contact-btn" class="button-edit" data-contact-id="${id}">Delete Contact</button>
+      <button type="button" id="archive-contact-btn" class="button-edit" data-contact-id="${id}">Archive Contact</button>
     </section>
       <input type="hidden" id="edit-contact__id" name="id" value="${id}">
 

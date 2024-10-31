@@ -27,7 +27,7 @@ export default async function render() {
           <datalist id="contact-list-main"></datalist>
           <input type="hidden" name="contactId" class="contact-id" value="0">
         </form>
-        <button class="add-item-btn button-small" type="button">Create Order</button>
+        <button class="add-item-btn button-edit" type="button">Create Order</button>
       </section>
       <section id="list-module__list">
         <section id="list-module__list__filter"></section>
@@ -84,10 +84,10 @@ export default async function render() {
   datePickerEl.dataset.defaultDate = '';
   datePickerEl.innerHTML = `
     <summary>
-      <span id="datepicker__toggle" class="nav-item">
+      <span id="datepicker__toggle" class="button-navigate">
         ${defaultView.start.nameOfMonth()} ${defaultView.start.getDate()}. – ${defaultView.end.nameOfMonth()} ${defaultView.end.getDate()}.
       </span>
-      <button id="datepicker__reset" type="button" class="button-small">Reset</button>
+      <button id="datepicker__reset" type="button" class="button-edit">Reset</button>
     </summary>
     <div id="datepicker__calendar" class="card"></div>
   `;
@@ -190,8 +190,8 @@ async function onPrepareNewItem() {
   form.classList.add('new-item-form', 'form', 'card');
   form.addEventListener('submit', onCreateOrder);
   form.innerHTML = `<section class="list-module__details__controls">
-        <input type="submit" class="button-small" value="Save"/>
-        <button type="button" class="button-small discard-btn">Discard</button>
+        <input type="submit" class="button-edit" value="Save"/>
+        <button type="button" class="button-edit discard-btn">Discard</button>
     </section>
     
     <label>
@@ -207,7 +207,7 @@ async function onPrepareNewItem() {
     </label>
 
     <fieldset>
-      <legend><span>Items</span> <button type="button" id="add-item" class="button-small invert">Add</button></legend>
+      <legend><span>Items</span> <button type="button" id="add-item" class="button-edit invert">Add</button></legend>
       <table class="order-items">
         <tbody>
         </tbody>
@@ -467,7 +467,7 @@ async function onPrepareNewItem() {
     deleteBtn.type = 'button';
     deleteBtn.innerHTML = 'X';
     deleteBtn.addEventListener('click', removeItem);
-    deleteBtn.classList.add('button-small', 'invert');
+    deleteBtn.classList.add('button-edit', 'invert');
 
     // if delivery item deletion reset delivery to pick-up
     if (text === 'Delivery')
@@ -548,13 +548,14 @@ function getListEl(list) {
       const dueDate = new DateExt(datetime_due);
       const timeString = `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`;
 
-      // create a new day
+      // list next day
       if (!currentDate || currentDate.toDateString() !== dueDate.toDateString()) {
 
         // update total for the previous day if not first iteration
         if (currentDayEl) {
           const priceTag = currentDayEl.querySelector(".price-tag")
-          priceTag.textContent = ` ${currentDayTotal.toFixed(2)} CHF`;
+          priceTag.dataset.currency = "chf";
+          priceTag.textContent = ` ${currentDayTotal.toFixed(2)}`;
         }
 
         currentDate = dueDate; // update current date
@@ -577,6 +578,7 @@ function getListEl(list) {
 
         // add total price
         const priceEl = document.createElement('div');
+        priceEl.dataset.currency = "chf";
         priceEl.classList.add("price-tag");
         dayHeaderEl.appendChild(priceEl);
 
@@ -586,16 +588,18 @@ function getListEl(list) {
         currentDayEl.appendChild(currentOrderListEl);
       }
 
-      // create a new order
+      // list next order
       if (currentOrderId !== order_id) {
 
         // update total for the previous order if not first iteration
         if (currentOrderItemEl) {
           const priceTag = currentOrderItemEl.querySelector(".price-tag")
-          priceTag.textContent = ` ${currentOrderTotal.toFixed(2)} CHF`;
+          priceTag.dataset.currency = "chf";
+          priceTag.textContent = ` ${currentOrderTotal.toFixed(2)}`;
         }
 
         const priceEl = document.createElement('div');
+        priceEl.dataset.currency = "chf";
         priceEl.classList.add("price-tag");
 
 
@@ -604,9 +608,9 @@ function getListEl(list) {
 
         // add order item
         currentOrderItemEl = document.createElement('li');
-        currentOrderItemEl.classList.add("nav-item");
+        currentOrderItemEl.classList.add("button-navigate");
         currentOrderItemEl.dataset.orderId = order_id;
-        currentOrderItemEl.innerHTML = `${timeString} ${firstname} ${lastname}<div class="price-tag" hidden></div>`;
+        currentOrderItemEl.innerHTML = `${timeString} ${firstname} ${lastname}<div class="price-tag" data-currency="chf" hidden></div>`;
         currentOrderItemEl.addEventListener("click", async (event) => {
           const orderId = event.target.dataset.orderId;
           await selectOrder(orderId);
@@ -621,10 +625,12 @@ function getListEl(list) {
 
     // add totals to last remaining items
     const priceTagDay = currentDayEl.querySelector(".price-tag")
-    priceTagDay.textContent = ` ${currentDayTotal.toFixed(2)} CHF`;
+    priceTagDay.dataset.currency = "chf";
+    priceTagDay.textContent = ` ${currentDayTotal.toFixed(2)}`;
 
     const priceTagOrder = currentOrderItemEl.querySelector(".price-tag")
-    priceTagOrder.textContent = ` ${currentOrderTotal.toFixed(2)} CHF`;
+    priceTagOrder.dataset.currency = "chf";
+    priceTagOrder.textContent = ` ${currentOrderTotal.toFixed(2)}`;
 
   } else {
 
@@ -650,13 +656,13 @@ async function getDetailsEl(id) {
 
     const detailsEl = document.createElement('div');
     detailsEl.id = 'order-details';
-    detailsEl.classList.add("card");
+    detailsEl.classList.add("card", "order-details");
 
     const controlsEl = document.createElement('section');
     controlsEl.classList.add("content-controls");
     controlsEl.innerHTML = `
-      <button type="button" id="edit-btn" class="button-small" data-order-id="${orderId}">Edit</button>
-      <button type="button" class="button-small" data-order-id="${orderId}">Mark as Done</button>
+      <button type="button" id="edit-btn" class="button-edit" data-order-id="${orderId}">Edit</button>
+      <button type="button" class="button-edit" data-order-id="${orderId}">Mark as Done</button>
     `;
     detailsEl.appendChild(controlsEl);
 
@@ -686,7 +692,7 @@ async function getDetailsEl(id) {
       labelEl.innerHTML = `
         <div class="label-content">
           <div class="description">${itemDescription}</div>
-          <div class="price-tag">${price} CHF</div>
+          <div class="price-tag" data-currency="chf">${price}</div>
         </div>
       `;
 
@@ -698,24 +704,39 @@ async function getDetailsEl(id) {
     }
 
     // add total price
-    contentEl.innerHTML += `
-      <div>Total
-        <div class="price-tag">${totalPrice}</div>
+    if (orderItems.length > 1) {
+      contentEl.innerHTML += `
+      <div class="total-price">
+        Total
+        <div class="price-tag" data-currency="chf">${totalPrice}</div>
       </div>
     `;
+    }
 
     // get invoices
     const invoices = await request.invoicesByOrderId(orderId);
 
     if (invoices) {
+      const invoiceTitleEl = document.createElement('h2');
+      invoiceTitleEl.textContent = "Invoices";
+      contentEl.appendChild(invoiceTitleEl);
+
       const invoiceListEl = document.createElement('ul');
+      invoiceListEl.classList.add("invoice-list");
       contentEl.appendChild(invoiceListEl);
 
       for (const invoice of invoices) {
-        const { date_issued, status, amount_total } = invoice;
+        const { id, date_due, status, amount_total } = invoice;
+        const dateDue = new DateExt(date_due);
         const invoiceEl = document.createElement('li');
-        invoiceEl.textContent = `${date_issued} ${status} ${amount_total}`;
-        invoiceListEl.appendChild(invoiceEl); 
+        invoiceEl.innerHTML = `
+          <a href="/invoices?id=${id}">
+            <time datetime="${date_due}">${dateDue.getDate()}. ${dateDue.nameOfMonth()} ${dateDue.getFullYear()}<time>
+          </a>
+          <div class="status-tag" data-status="neutral">${status}</div>
+          <div class="price-tag" data-currency="chf">${amount_total}</div>
+        `;
+        invoiceListEl.appendChild(invoiceEl);
       }
     }
 
@@ -741,7 +762,7 @@ async function getDetailsEl(id) {
   // wrapper.id = 'order-details';
   // wrapper.innerHTML = `
   // <section class="content-controls">
-  //   <button type="button" id="edit-btn" class="button-small" data-order-id="${id}">Edit</button>
+  //   <button type="button" id="edit-btn" class="button-edit" data-order-id="${id}">Edit</button>
   // </section>
   // <div class="order-details__info card">
   //   <div><a href="/contacts?id=${contact_id}">${firstname} ${lastname ? lastname : ''}</a></div>

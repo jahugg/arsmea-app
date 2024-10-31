@@ -2,32 +2,36 @@ window.appConfig = {
   apiUrl: 'http://localhost:5123',
 };
 
+// Base paths for modules and styles
+const baseModulePath = "./modules/";
+const baseCssPath = "./styles/";
+
 // Object with all pages and reference to the contents
 const pages = {
   dashboard: {
     title: 'Dashboard',
     slug: '/',
-    module: import('./modules/dashboard.js'),
+    module: 'dashboard.js',
   },
   contacts: {
     title: 'Contacts',
     slug: '/contacts',
-    module: import('./modules/contacts.js'),
+    module: 'contacts.js',
   },
   orders: {
     title: 'Orders',
     slug: '/orders',
-    module: import('./modules/orders.js'),
+    module: 'orders.js',
   },
   subscriptions: {
     title: 'Subscriptions',
     slug: '/subscriptions',
-    module: import('./modules/subscriptions.js'),
+    module: 'subscriptions.js',
   },
   invoices: {
     title: 'Invoices',
     slug: '/invoices',
-    module: import('./modules/invoices.js'),
+    module: 'invoices.js',
   },
 };
 
@@ -58,7 +62,7 @@ function init() {
   const list = document.createElement('ul');
   for (const key in pages) {
     const listItem = document.createElement('li');
-    listItem.classList.add('nav-item');
+    listItem.classList.add('button-navigate');
     const link = document.createElement('a');
     link.href = pages[key].slug;
     link.innerHTML = pages[key].title;
@@ -103,11 +107,16 @@ async function buildPage(stateObj, addToHistory = true) {
   }
 
   // load page module
-  const target = document.getElementsByTagName('MAIN')[0];
-  const module = await page.module;
-  const content = await module.default(); // render
-  target.replaceChildren(content);
-  module.init?.(); // initialize if init function exists
+  const mainEl = document.getElementsByTagName("MAIN")[0];
+  try {
+    const module = await import(`${baseModulePath}${page.module}`);
+    const content = await module.default(); // render
+    mainEl.replaceChildren(content);
+    await module.init?.(); // initialize if init function exists
+  } catch (error) {
+    console.error("Error loading page module:", error);
+    mainEl.innerHTML = "<p>Sorry, there was an error loading the page.</p>";
+  }
 }
 
 /**

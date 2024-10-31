@@ -1,346 +1,350 @@
-/*
-================================
-preferred defaults
-================================
-*/
-html {
-  box-sizing: border-box;
-}
-
-*,
-*:before,
-*:after {
-  box-sizing: inherit;
-}
-
-body {
-  margin: 0;
-  background: black;
-}
+/* define layers and cascade */
+@layer reset, variables, global, header;
 
 /*
 ================================
-custom properties
+preferred defaults styles
 ================================
 */
-:root {
-  /* color palette */
-  /* greyscale */
-  --color-grey-00: oklch(0% 0 0);
-  --color-grey-01: oklch(20% 0 0);
-  --color-grey-02: oklch(40% 0 0);
-  --color-grey-03: oklch(60% 0 0);
-  --color-grey-04: oklch(80% 0 0);
-  --color-grey-05: oklch(93% 0 0);
-  --color-grey-06: oklch(94% 0 0);
-  --color-grey-10: oklch(100% 0 0);
+@layer reset {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-  /* custom colors */
-  --color-altblack: oklch(22% 0.007 271);
-  --color-altwhite: oklch(96% 0.002 247.84);
-  --color-purple: oklch(50% 0.4 307.06);
-
-  /* color semantic */
-  --color-text-default: var(--color-altblack);
-  --color-text-inverted: var(--color-altwhite);
-  --color-text-subtle: var(--color-grey-05);
-  --color-text-highlight: var(--color-purple);
-  --color-background-default: var(--color-altwhite);
-  --color-background-inverted: var(--color-altblack);
-  --color-background-subtle: var(--color-grey-05);
-  --color-background-card: var(--color-grey-10);
-  --color-border-default: var(--color-altblack);
-  --color-highlight: var(--color-purple);
-  --color-error: var(--color-highlight);
-  --color-button-foreground: var(--color-altwhite);
-  --color-button-background: var(--color-purple);
-  --color-navitem-foreground: var(--color-altblack);
-  --color-navitem-background: var(--color-altwhite);
-
-  /* absolute spacing */
-  --padding-page: 30px;
-  --padding-medium: 24px;
-
-  /* radius */
-  --radius-small: 2px;
-  --radius-medium: 5px;
-  --radius-infinite: 9999px;
-
-  /* effects */
-  --effects-shadow-default: 0 0 10px var(--color-grey-05);
-
-  /* fonts */
-  --font-size-base: calc(1rem + 0.25vw); /* credits: https://jameshfisher.com/2024/03/12/a-formula-for-responsive-font-size/ */
-  --font-weight-regular: 300;
-  --font-weight-bold: 400;
-  --font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-
-  --font-big: normal var(--font-weight-regular) 3em var(--font-family);
-  --font-h1: normal var(--font-weight-regular) 1.8em var(--font-family);
-  --font-h2: normal var(--font-weight-bold) 1.2em var(--font-family);
-  --font-h3: normal var(--font-weight-bold) 1em var(--font-family);
-
-  --font-regular: normal var(--font-weight-regular) 1em var(--font-family);
-  --font-small: normal var(--font-weight-regular) 0.8em var(--font-family);
-  --font-tiny: italic var(--font-weight-regular) 0.7em var(--font-family);
-
-  /* borders */
-  --border-regular: solid 1px var(--color-border-default);
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 /*
 ================================
-general
+variables
 ================================
 */
-#app {
-  font: normal var(--font-weight-regular) var(--font-size-base) var(--font-family);
-  color: var(--color-text-default);
-  background: var(--color-background-default);
-  min-height: 100vh;
-  padding-top: var(--padding-medium);
-}
+@layer variables {
+  :root {
+    /* color palette */
+    /* greyscale */
+    --color-grey-00: oklch(0% 0 0);
+    --color-grey-01: oklch(20% 0 0);
+    --color-grey-02: oklch(40% 0 0);
+    --color-grey-03: oklch(60% 0 0);
+    --color-grey-04: oklch(80% 0 0);
+    --color-grey-05: oklch(93% 0 0);
+    --color-grey-06: oklch(94% 0 0);
+    --color-grey-10: oklch(100% 0 0);
 
-::selection {
-  color: var(--color-text-inverted);
-  background: var(--color-background-inverted);
-}
+    /* custom colors */
+    --color-altblack: oklch(22% 0.007 271);
+    --color-altwhite: oklch(96% 0.002 247.84);
+    --color-purple: oklch(50% 0.4 307.06);
 
-main {
-  padding: var(--padding-page);
-}
+    /* color semantic */
+    --color-text-default: var(--color-altblack);
+    --color-text-inverted: var(--color-altwhite);
+    --color-text-subtle: var(--color-grey-05);
+    --color-text-highlight: var(--color-purple);
+    --color-background-default: var(--color-altwhite);
+    --color-background-inverted: var(--color-altblack);
+    --color-background-subtle: var(--color-grey-05);
+    --color-background-card: var(--color-grey-10);
+    --color-border-default: var(--color-altblack);
+    --color-highlight: var(--color-purple);
+    --color-error: var(--color-highlight);
+    --color-button-foreground: var(--color-altwhite);
+    --color-button-background: var(--color-purple);
+    --color-navitem-foreground: var(--color-altblack);
+    --color-navitem-background: var(--color-altwhite);
 
-ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+    /* absolute spacing */
+    --padding-page: 30px;
+    --padding-xs: 5px;
+    --padding-medium: 24px;
 
-input:not([type='submit']):not([type='checkbox']) {
-  border: none;
-  padding: 0;
-  font: inherit;
-  font-size: 1.5em;
-  color: inherit;
-  background: none;
-  width: 100%;
+    /* radius */
+    --radius-small: 2px;
+    --radius-medium: 5px;
+    --radius-infinite: 9999px;
 
-  &:focus {
-    outline: none;
+    /* effects */
+    --effects-shadow-default: 0 0 10px var(--color-grey-05);
+
+    /* fonts */
+    --font-size-base: calc(1rem + 0.25vw); /* credits: https://jameshfisher.com/2024/03/12/a-formula-for-responsive-font-size/ */
+    --font-weight-regular: 300;
+    --font-weight-bold: 400;
+    --font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+
+    --font-big: normal var(--font-weight-regular) 3em var(--font-family);
+    --font-h1: normal var(--font-weight-regular) 1.8em var(--font-family);
+    --font-h2: normal var(--font-weight-bold) 1.2em var(--font-family);
+    --font-h3: normal var(--font-weight-bold) 1em var(--font-family);
+
+    --font-regular: normal var(--font-weight-regular) 1em var(--font-family);
+    --font-small: normal var(--font-weight-regular) 0.8em var(--font-family);
+    --font-tiny: italic var(--font-weight-regular) 0.7em var(--font-family);
+
+    /* borders */
+    --border-regular: solid 1px var(--color-border-default);
+    --border-highlight: solid 1px var(--color-highlight);
   }
-  &::placeholder {
-    color: var(--color-text-subtle);
-  }
 }
 
-.checkbox-wrapper {
-  &:not([hidden]) {
-    display: flex;
-  }
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-input[type='checkbox'] {
-  --size: 18px;
-  appearance: none;
-  height: var(--size);
-  width: var(--size);
-  border: var(--border-regular);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--color-background-subtle);
+/*
+================================
+global styles
+================================
+*/
+@layer global {
+  #app {
+    font: normal var(--font-weight-regular) var(--font-size-base) var(--font-family);
+    color: var(--color-text-default);
+    background: var(--color-background-default);
+    min-height: 100vh;
+    padding-top: var(--padding-medium);
   }
 
-  &:checked {
+  ::selection {
+    color: var(--color-text-inverted);
     background: var(--color-background-inverted);
   }
-}
 
-textarea {
-  background: none;
-  border: none;
-  resize: none;
-  color: inherit;
-  font: var(--font-regular);
-  font-size: 1.5em;
-  width: 100%;
-
-  &:focus {
-    outline: none;
+  main {
+    padding: var(--padding-page);
   }
 
-  &::placeholder {
-    color: var(--color-text-subtle);
-  }
-}
-
-.content-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: var(--padding-page);
-}
-
-.button-small {
-  color: var(--color-highlight);
-  background: none;
-  border: solid 1px var(--color-highlight);
-  border-radius: var(--radius-small);
-  font: var(--font-small);
-  letter-spacing: 0.05em;
-  padding: 2px 10px;
-  cursor: pointer;
-  transition: background 0.1s ease-out, border 0.1s ease-out, color 0.1s ease-out;
-
-  &:hover:not(:disabled) {
-    background: var(--color-highlight);
-    color: var(--color-text-inverted);
-  }
-
-  &:disabled {
-    color: var(--color-grey-02);
-    border-color: var(--color-grey-02);
-  }
-}
-
-.styled-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  li {
-    position: relative;
-    display: flex;
-
-    &:hover,
-    &[data-selected] {
-      transform: translateX(-4px);
-    }
-  }
-
-  li[data-filtered] {
-    display: none;
-  }
-
-  time {
-    flex-shrink: 0;
-    width: 6ch;
-  }
-
-  .status {
-    flex-shrink: 0;
-    width: 13ch;
-    margin-right: 1em;
-    font: var(--font-tiny);
-    text-align: center;
-    line-height: 1.7em;
-    border-radius: 20px;
-
-    &[data-status='late'] {
-      background: black;
-      color: white;
-    }
-
-    &[data-status='open'] {
-      border: solid 1px black;
-    }
-  }
-
-  .contact {
-    flex: 1 1 auto;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-.card {
-  padding: 1em 1.3em;
-  border-radius: var(--radius-medium);
-  background: var(--color-background-card);
-  box-shadow: var(--effects-shadow-default);
-}
-
-.form__input-group,
-form label {
-  margin-top: 2em;
-  position: relative;
-
-  &[data-new-contact]::after {
-    content: '⚠ New Contact';
-    font: var(--font-tiny);
-    color: var(--color-text-highlight);
-    position: absolute;
-    left: 0;
-    top: 100%;
-  }
-}
-
-.form__input-unit {
-  display: flex;
-  align-items: baseline;
-  justify-content: end;
-  gap: 0.4em;
-
-  input {
-    flex: 0 1 6ch !important;
-    text-align: right;
-  }
-}
-
-.list-condensed {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  a {
-    text-decoration: none;
+  input:not([type='submit']):not([type='checkbox']) {
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 1.5em;
     color: inherit;
+    background: none;
+    width: 100%;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: var(--color-text-subtle);
+    }
+  }
+
+  .checkbox-wrapper {
+    &:not([hidden]) {
+      display: flex;
+    }
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  input[type='checkbox'] {
+    --size: 18px;
+    appearance: none;
+    height: var(--size);
+    width: var(--size);
+    border: var(--border-regular);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-background-subtle);
+    }
+
+    &:checked {
+      background: var(--color-background-inverted);
+    }
+  }
+
+  textarea {
+    background: none;
+    border: none;
+    resize: none;
+    color: inherit;
+    font: var(--font-regular);
+    font-size: 1.5em;
+    width: 100%;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: var(--color-text-subtle);
+    }
+  }
+
+  .content-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--padding-xs);
+    margin-bottom: var(--padding-medium);
+  }
+
+  .button-edit {
+    color: var(--color-highlight);
+    background: none;
+    border: var(--border-highlight);
+    border-radius: var(--radius-small);
+    font: var(--font-small);
+    padding: 0.3em 1em;
+    cursor: pointer;
+    transition: background 0.1s ease-out, border 0.1s ease-out, color 0.1s ease-out;
+
+    &:hover:not(:disabled) {
+      background: var(--color-highlight);
+      color: var(--color-text-inverted);
+    }
+
+    &:disabled {
+      color: var(--color-grey-02);
+      border-color: var(--color-grey-02);
+    }
+  }
+
+  .button-navigate {
+    color: var(--color-navitem-foreground);
+    background: var(--color-navitem-background);
+    border-radius: var(--radius-medium);
+    padding: 0.3em 0.6em;
+    cursor: pointer;
+    transition: all 0.1s ease-in;
+
+    &[data-selected] {
+      color: var(--color-navitem-background);
+      background: var(--color-navitem-foreground);
+    }
+
+    &:hover:not([data-selected]) {
+      background: var(--color-background-subtle);
+    }
+  }
+
+  .styled-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      position: relative;
+      display: flex;
+
+      &:hover,
+      &[data-selected] {
+        transform: translateX(-4px);
+      }
+    }
+
+    li[data-filtered] {
+      display: none;
+    }
+
+    time {
+      flex-shrink: 0;
+      width: 6ch;
+    }
+
+    .status {
+      flex-shrink: 0;
+      width: 13ch;
+      margin-right: 1em;
+      font: var(--font-tiny);
+      text-align: center;
+      line-height: 1.7em;
+      border-radius: 20px;
+
+      &[data-status='late'] {
+        background: black;
+        color: white;
+      }
+
+      &[data-status='open'] {
+        border: solid 1px black;
+      }
+    }
+
+    .contact {
+      flex: 1 1 auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .card {
+    padding: 1em 1.3em;
+    border-radius: var(--radius-medium);
+    background: var(--color-background-card);
+    box-shadow: var(--effects-shadow-default);
+  }
+
+  .form__input-group,
+  form label {
+    margin-top: 2em;
+    position: relative;
+
+    &[data-new-contact]::after {
+      content: '⚠ New Contact';
+      font: var(--font-tiny);
+      color: var(--color-text-highlight);
+      position: absolute;
+      left: 0;
+      top: 100%;
+    }
+  }
+
+  .form__input-unit {
+    display: flex;
+    align-items: baseline;
+    justify-content: end;
+    gap: 0.4em;
+
+    input {
+      flex: 0 1 6ch !important;
+      text-align: right;
+    }
+  }
+
+  .list-condensed {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
   }
 }
 
 /*
 ================================
-app header
+header styles
 ================================
 */
-#app-header {
-  padding: 0 var(--padding-page);
-  display: flex;
-  justify-content: space-between;
+@layer header {
+  #app-header {
+    padding: 0 var(--padding-page);
+    display: flex;
+    justify-content: space-between;
 
-  a {
-    font: var(--font-regular);
-    color: inherit;
-    text-decoration: none;
-  }
-
-  nav {
-    ul {
-      display: flex;
-      gap: 5px;
+    a {
+      font: var(--font-regular);
+      color: inherit;
+      text-decoration: none;
     }
-  }
-}
 
-.nav-item {
-  color: var(--color-navitem-foreground);
-  background: var(--color-navitem-background);
-  border-radius: var(--radius-medium);
-  padding: 0.3em 0.6em;
-  cursor: pointer;
-  transition: all .1s ease-in;
-
-  &[data-selected] {
-    color: var(--color-navitem-background);
-    background: var(--color-navitem-foreground);
-  }
-
-  &:hover:not([data-selected]) {
-    background: var(--color-background-subtle);
+    nav {
+      ul {
+        display: flex;
+        gap: 5px;
+      }
+    }
   }
 }
 
@@ -477,6 +481,37 @@ invoice
 Styles
 ================================
 */
+
+& .price-tag {
+  background: oklch(0% 0 0 / 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: var(--radius-medium);
+
+  &::after {
+    font-variant-caps: all-small-caps;
+    margin-left: 0.3em;
+    content: attr(data-currency);
+  }
+}
+
+& .status-tag {
+  background: oklch(0% 0 0 / 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: var(--radius-medium);
+
+  &[data-status='critical'] {
+    background: oklch(85% 0.19 15);
+  }
+
+  &[data-status='okay'] {
+    background: oklch(85% 0.19 135);
+  }
+
+  &[data-status='neutral'] {
+    background: oklch(85% 0.19 70);
+  }
+}
+
 .list-module {
   --list-width: 450px;
 
@@ -496,6 +531,21 @@ Styles
   align-items: center;
   border-top: var(--border-regular);
   border-bottom: var(--border-regular);
+}
+
+.order-details {
+  & .total-price {
+    display: flex;
+    justify-content: end;
+    align-items: baseline;
+  }
+
+  & .invoice-list {
+    li {
+      display: flex;
+      align-items: baseline;
+    }
+  }
 }
 
 #list-module__list {
